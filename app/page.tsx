@@ -1,4 +1,5 @@
 import AuthGuard from "../components/auth-guard";
+import LogoutButton from "../components/logout-button";
 const movements = [
   { name: "Supermercado", category: "Alimentación", amount: "-$ 42.500" },
   { name: "Salario", category: "Ingreso mensual", amount: "+$ 850.000" },
@@ -32,6 +33,7 @@ export default function Home() {
       <div className="dashboard">
       <aside className="sidebar">
         <div className="brand">
+          <LogoutButton />
           BALANCE<span>.</span> AI
         </div>
 
