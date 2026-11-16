@@ -44,6 +44,14 @@ export default function MobileMenu() {
               {item}
             </button>
           ))}
+
+          <a
+            className="mobile-nav-item"
+            href="/perfil"
+            onClick={() => setOpen(false)}
+          >
+            Perfil
+          </a>
         </nav>
       )}
     </div>
