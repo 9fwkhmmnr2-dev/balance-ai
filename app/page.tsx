@@ -1,12 +1,6 @@
 import AuthGuard from "../components/auth-guard";
 import LogoutButton from "../components/logout-button";
 const movements = [
-  { name: "Supermercado", category: "Alimentación", amount: "-$ 42.500" },
-  { name: "Salario", category: "Ingreso mensual", amount: "+$ 850.000" },
-  { name: "Transporte", category: "Movilidad", amount: "-$ 18.200" },
-  { name: "Suscripción", category: "Servicios", amount: "-$ 9.500" }
-];
-
 const weeklyActivity = [
   { day: "Lun", height: "45%" },
   { day: "Mar", height: "70%" },
@@ -132,8 +126,7 @@ export default function Home() {
           </article>
         </section>
 
-        <section className="card" style={{ marginTop: 22 }}>
-          <h2 className="section-title">Movimientos recientes</h2>
+        <MovementsManager />
 
           {movements.map((movement) => (
             <div className="movement" key={movement.name}>
