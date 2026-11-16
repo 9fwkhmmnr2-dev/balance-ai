@@ -1,6 +1,6 @@
 import AuthGuard from "../components/auth-guard";
 import LogoutButton from "../components/logout-button";
-const movements = [
+import MovementsManager from "../components/movements-manager";
 const weeklyActivity = [
   { day: "Lun", height: "45%" },
   { day: "Mar", height: "70%" },
@@ -131,16 +131,18 @@ export default function Home() {
           {movements.map((movement) => (
             <div className="movement" key={movement.name}>
               <div>
-                <p className="movement-name">{movement.name}</p>
-                <p className="movement-detail">{movement.category}</p>
-              </div>
-
-              <span className="movement-amount">
-                {movement.amount}
-              </span>
-            </div>
-          ))}
-        </section>
+                {movements.map((movement) => (
+  <div className="movement" key={movement.name}>
+    <div>
+      <p className="movement-name">{movement.name}</p>
+      <p className="movement-detail">{movement.category}</p>
+    </div>
+    <span className="movement-amount">
+      {movement.amount}
+    </span>
+  </div>
+))}
+</section>
 
         <footer
           style={{
