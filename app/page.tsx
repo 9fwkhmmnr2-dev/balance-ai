@@ -3,6 +3,7 @@ import AuthGuard from "../components/auth-guard";
 import LogoutButton from "../components/logout-button";
 import MovementsManager from "../components/movements-manager";
 import MobileMenu from "../components/mobile-menu";
+import OnboardingGate from "../components/onboarding-gate";
 const weeklyActivity = [
   { day: "Lun", height: "45%" },
   { day: "Mar", height: "70%" },
@@ -26,7 +27,9 @@ const navigation = [
 export default function Home() {
   return (
     <AuthGuard>
-            <div className="dashboard">
+  <OnboardingGate>
+    <div className="dashboard">
+      
         <MobileMenu />
 
         <aside className="sidebar">
@@ -143,7 +146,8 @@ export default function Home() {
             BALANCE AI · Personal Finance Intelligence
           </footer>
         </main>
-      </div>
-    </AuthGuard>
+          </div>
+  </OnboardingGate>
+</AuthGuard>
   );
 }
