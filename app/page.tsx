@@ -42,6 +42,16 @@ export default function Home() {
               ))}
             </nav>
 
+            <div className="nav-label" style={{ marginTop: 28 }}>
+              CUENTA
+            </div>
+
+            <nav className="nav-list">
+              <a className="nav-item" href="/perfil">
+                Perfil
+              </a>
+            </nav>
+
             <div style={{ marginTop: "auto", color: "#A8A29E", fontSize: 12 }}>
               Personal Finance Intelligence
               <br />
