@@ -1,4 +1,4 @@
-
+import AuthGuard from "../components/auth-guard";
 const movements = [
   { name: "Supermercado", category: "Alimentación", amount: "-$ 42.500" },
   { name: "Salario", category: "Ingreso mensual", amount: "+$ 850.000" },
@@ -28,7 +28,8 @@ const navigation = [
 
 export default function Home() {
   return (
-    <div className="dashboard">
+    <AuthGuard>
+      <div className="dashboard">
       <aside className="sidebar">
         <div className="brand">
           BALANCE<span>.</span> AI
@@ -157,6 +158,7 @@ export default function Home() {
           BALANCE AI · Personal Finance Intelligence
         </footer>
       </main>
-    </div>
+          </div>
+    </AuthGuard>
   );
 }
