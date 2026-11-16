@@ -1,4 +1,3 @@
-
 import AuthGuard from "../components/auth-guard";
 import LogoutButton from "../components/logout-button";
 import MovementsManager from "../components/movements-manager";
