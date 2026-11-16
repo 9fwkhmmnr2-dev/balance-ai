@@ -1,15 +1,16 @@
+
 "use client";
 
 import { useState } from "react";
 
 const navigation = [
-  "⌂  Inicio",
-  "↔  Movimientos",
-  "▥  Estadísticas",
-  "◎  Objetivos",
-  "◇  Comparador",
-  "✳  Asistente IA",
-  "⚙  Configuración"
+  "Inicio",
+  "Movimientos",
+  "Estadísticas",
+  "Objetivos",
+  "Comparador",
+  "VERA",
+  "Configuración"
 ];
 
 export default function MobileMenu() {
@@ -28,7 +29,7 @@ export default function MobileMenu() {
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
         >
-          {open ? "✕" : "☰"}
+          {open ? "Cerrar" : "Menú"}
         </button>
       </div>
 
