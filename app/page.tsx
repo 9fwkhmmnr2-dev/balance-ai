@@ -2,7 +2,7 @@
 import AuthGuard from "../components/auth-guard";
 import LogoutButton from "../components/logout-button";
 import MovementsManager from "../components/movements-manager";
-
+import MobileMenu from "../components/mobile-menu";
 const weeklyActivity = [
   { day: "Lun", height: "45%" },
   { day: "Mar", height: "70%" },
@@ -26,7 +26,9 @@ const navigation = [
 export default function Home() {
   return (
     <AuthGuard>
-      <div className="dashboard">
+            <div className="dashboard">
+        <MobileMenu />
+
         <aside className="sidebar">
           <div className="brand">
             <LogoutButton />
