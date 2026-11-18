@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import MobileMenu from "./mobile-menu";
 
 type Movement = {
   id: string;
@@ -89,6 +90,7 @@ export default function DashboardStats() {
   return (
     <div className="dashboard-overview">
       <section className="dashboard-identity-card" aria-label="FINANCE.AI">
+        <MobileMenu />
         <div className="dashboard-identity-brand">FINANCE<span>.</span>AI</div>
         <p>Entendé qué está pasando con tu dinero.</p>
       </section>
