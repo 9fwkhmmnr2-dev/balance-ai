@@ -2,15 +2,15 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --canvas: #FAFAF9;
+  --canvas: #F8F7F5;
   --white: #FFFFFF;
   --graphite: #0D0D0D;
-  --gray: #78716C;
-  --muted: #A8A29E;
-  --border: #E8E6E5;
-  --cyan: #3BA6F1;
-  --cyan-dark: #3398E1;
-  --cyan-light: #C1E1F7;
+  --gray: #61594A;
+  --muted: #8F897E;
+  --border: #E3DFD5;
+  --cyan: #F9A600;
+  --cyan-dark: #E89B01;
+  --cyan-light: #F5D78E;
 }
 
 * {
@@ -97,7 +97,7 @@ a {
 
 .nav-item:hover,
 .nav-item.active {
-  background: #EFF8FE;
+  background: #FFF4D9;
   color: var(--cyan-dark);
 }
 
@@ -130,7 +130,7 @@ a {
 
 .demo-label {
   display: inline-block;
-  background: #EFF8FE;
+  background: #FFF4D9;
   color: #267FB9;
   border-radius: 20px;
   padding: 7px 12px;
@@ -315,7 +315,7 @@ a {
     position: relative;
     width: 100%;
     background: #FFFFFF;
-    border-bottom: 1px solid #E8E6E5;
+    border-bottom: 1px solid #E3DFD5;
     z-index: 20;
   }
 
@@ -334,16 +334,16 @@ a {
   }
 
   .mobile-brand span {
-    color: #3BA6F1;
+    color: #F9A600;
   }
 
   .mobile-menu-button {
-    background: #EFF8FE;
-    border: 1px solid #E8E6E5;
+    background: #FFF4D9;
+    border: 1px solid #E3DFD5;
     border-radius: 9px;
     padding: 9px 13px;
     font-size: 19px;
-    color: #3398E1;
+    color: #E89B01;
   }
 
   .mobile-menu-panel {
@@ -359,13 +359,13 @@ a {
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: #78716C;
+    color: #61594A;
     font-size: 14px;
   }
 
   .mobile-nav-item.active {
-    background: #EFF8FE;
-    color: #3398E1;
+    background: #FFF4D9;
+    color: #E89B01;
     font-weight: 700;
   }
 
@@ -387,11 +387,11 @@ a {
   align-items: center;
   justify-content: center;
   padding: 28px 16px;
-  background: #FAFAF9;
+  background: #F8F7F5;
 }
 
 .onboarding-loading {
-  color: #78716C;
+  color: #61594A;
 }
 
 .onboarding-card {
@@ -399,7 +399,7 @@ a {
   max-width: 600px;
   padding: 36px;
   background: #FFFFFF;
-  border: 1px solid #E8E6E5;
+  border: 1px solid #E3DFD5;
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(13, 13, 13, 0.04);
 }
@@ -412,11 +412,11 @@ a {
 }
 
 .onboarding-brand span {
-  color: #3BA6F1;
+  color: #F9A600;
 }
 
 .onboarding-step {
-  color: #3398E1;
+  color: #E89B01;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -431,7 +431,7 @@ a {
 }
 
 .onboarding-description {
-  color: #78716C;
+  color: #61594A;
   font-size: 14px;
   line-height: 1.7;
   margin-bottom: 28px;
@@ -449,7 +449,7 @@ a {
 }
 
 .onboarding-field > label span {
-  color: #A8A29E;
+  color: #8F897E;
   font-weight: 400;
 }
 
@@ -458,7 +458,7 @@ a {
   width: 100%;
   min-height: 46px;
   padding: 11px 13px;
-  border: 1px solid #E8E6E5;
+  border: 1px solid #E3DFD5;
   border-radius: 8px;
   background: #FFFFFF;
   color: #0D0D0D;
@@ -468,7 +468,7 @@ a {
 
 .onboarding-field select:focus,
 .onboarding-field input:focus {
-  border-color: #3BA6F1;
+  border-color: #F9A600;
 }
 
 .onboarding-income {
@@ -489,15 +489,15 @@ a {
   gap: 9px;
   min-height: 42px;
   padding: 10px;
-  border: 1px solid #E8E6E5;
+  border: 1px solid #E3DFD5;
   border-radius: 8px;
-  color: #57534E;
+  color: #61594A;
   font-size: 12px;
   cursor: pointer;
 }
 
 .onboarding-option input {
-  accent-color: #3398E1;
+  accent-color: #E89B01;
 }
 
 .onboarding-submit {
@@ -505,7 +505,7 @@ a {
   min-height: 48px;
   border: none;
   border-radius: 8px;
-  background: #3BA6F1;
+  background: #F9A600;
   color: #FFFFFF;
   font-size: 14px;
   font-weight: 700;
@@ -522,7 +522,7 @@ a {
   width: 100%;
   border: none;
   background: transparent;
-  color: #78716C;
+  color: #61594A;
   font-size: 13px;
   padding: 15px;
 }
@@ -534,7 +534,7 @@ a {
 }
 
 .onboarding-privacy {
-  color: #A8A29E;
+  color: #8F897E;
   font-size: 11px;
   line-height: 1.6;
   text-align: center;
@@ -555,18 +555,18 @@ a {
   }
 }
 
-/* REFINAMIENTO VISUAL BALANCE AI */
+/* REFINAMIENTO VISUAL FINANCE AI */
 
 .card {
   border-radius: 14px;
-  border-color: #ECEAE8;
-  box-shadow: 0 3px 14px rgba(15, 23, 42, 0.025);
+  border-color: #E3DFD5;
+  box-shadow: 0 3px 14px rgba(38, 27, 7, 0.025);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
-  border-color: #D9EAF5;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.045);
+  border-color: #E8D6A8;
+  box-shadow: 0 6px 20px rgba(38, 27, 7, 0.045);
 }
 
 .card-value {
@@ -593,7 +593,7 @@ a {
   width: 100%;
   min-height: 45px;
   padding: 11px 13px;
-  border: 1px solid #E8E6E5;
+  border: 1px solid #E3DFD5;
   border-radius: 9px;
   background: #FFFFFF;
   color: #0D0D0D;
@@ -604,8 +604,8 @@ a {
 
 .card form input:focus,
 .card form select:focus {
-  border-color: #3BA6F1;
-  box-shadow: 0 0 0 3px rgba(59, 166, 241, 0.10);
+  border-color: #F9A600;
+  box-shadow: 0 0 0 3px rgba(249, 166, 0, 0.12);
 }
 
 .mobile-menu-button {
