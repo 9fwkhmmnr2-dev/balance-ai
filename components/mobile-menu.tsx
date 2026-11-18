@@ -19,13 +19,15 @@ export default function MobileMenu() {
   return (
     <div className="mobile-menu">
       <div className="mobile-menu-bar">
+        <div className="mobile-brand">FINANCE<span>.</span>AI</div>
         <button
           className="mobile-menu-button"
           onClick={() => setOpen(!open)}
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
         >
-          {open ? "Cerrar" : "Menú"}
+          <span className="menu-button-icon" aria-hidden="true">{open ? "×" : "≡"}</span>
+          <span>{open ? "Cerrar" : "Menú"}</span>
         </button>
       </div>
 
