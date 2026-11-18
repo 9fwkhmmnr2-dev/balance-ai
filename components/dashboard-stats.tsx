@@ -88,6 +88,11 @@ export default function DashboardStats() {
 
   return (
     <div className="dashboard-overview">
+      <section className="dashboard-identity-card" aria-label="FINANCE.AI">
+        <div className="dashboard-identity-brand">FINANCE<span>.</span>AI</div>
+        <p>Entendé qué está pasando con tu dinero.</p>
+      </section>
+
       <section className="overview-heading">
         <div>
           <p className="eyebrow">RESUMEN PERSONAL</p>
@@ -107,9 +112,9 @@ export default function DashboardStats() {
       </section>
 
       <section className="stats-grid dashboard-stat-cards">
-        <article className="card stat-card"><span className="stat-icon income-icon">↗</span><p className="card-label">Ingresos del mes</p><h3 className="card-value">{money(income, currency)}</h3><p className="card-note">Total registrado este mes</p></article>
-        <article className="card stat-card"><span className="stat-icon expense-icon">↘</span><p className="card-label">Gastos del mes</p><h3 className="card-value">{money(expenses, currency)}</h3><p className="card-note">Total registrado este mes</p></article>
-        <article className="card stat-card"><span className="stat-icon net-icon">＝</span><p className="card-label">Movimientos del mes</p><h3 className="card-value">{monthly.length}</h3><p className="card-note">Registros en {now.toLocaleDateString("es-AR", { month: "long" })}</p></article>
+        <article className="card stat-card income-stat-card"><p className="card-label">Ingresos del mes</p><h3 className="card-value">{money(income, currency)}</h3><p className="card-note">Total registrado este mes</p></article>
+        <article className="card stat-card expense-stat-card"><p className="card-label">Gastos del mes</p><h3 className="card-value">{money(expenses, currency)}</h3><p className="card-note">Total registrado este mes</p></article>
+        <article className="card stat-card movements-stat-card"><p className="card-label">Movimientos del mes</p><h3 className="card-value">{monthly.length}</h3><p className="card-note">Registros en {now.toLocaleDateString("es-AR", { month: "long" })}</p></article>
       </section>
 
       <section className="vera-insight-card">
