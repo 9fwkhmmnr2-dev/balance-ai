@@ -51,9 +51,11 @@ function toggleItem(
 }
 
 export default function OnboardingGate({
-  children
+  children,
+  mode = "onboarding"
 }: {
   children: ReactNode;
+  mode?: "onboarding" | "edit";
 }) {
   const [loading, setLoading] = useState(true);
   const [completed, setCompleted] = useState(false);
@@ -90,9 +92,11 @@ export default function OnboardingGate({
         return;
       }
 
-      if (data?.onboarding_completed) {
+      if (data?.onboarding_completed && mode === "onboarding") {
         setCompleted(true);
-      } else if (data) {
+      }
+
+      if (data) {
         if (data.pay_frequency !== "not_set") {
           setFrequency(data.pay_frequency);
         }
@@ -107,7 +111,7 @@ export default function OnboardingGate({
     }
 
     loadProfile();
-  }, []);
+  }, [mode]);
 
   async function saveProfile(
     event?: FormEvent<HTMLFormElement>,
@@ -175,16 +179,19 @@ export default function OnboardingGate({
     <main className="onboarding-page">
       <section className="onboarding-card">
         <div className="onboarding-brand">
-          BALANCE<span>.</span> AI
+          FINANCE<span>.</span> AI
         </div>
 
-        <p className="onboarding-step">CONFIGURACIÓN INICIAL · 1 DE 1</p>
+        <p className="onboarding-step">
+          {mode === "edit" ? "TU PERFIL FINANCIERO" : "CONFIGURACIÓN INICIAL · 1 DE 1"}
+        </p>
 
-        <h1>Conozcamos tu economía.</h1>
+        <h1>{mode === "edit" ? "Actualizá tu perfil financiero." : "Conozcamos tu economía."}</h1>
 
         <p className="onboarding-description">
-          Contanos un poco sobre tus ingresos y gastos para adaptar BALANCE AI
-          a tu realidad. Podés dejar cualquier dato sin completar.
+          {mode === "edit"
+            ? "Actualizá tus ingresos, hábitos y preferencias para que FINANCE AI y VERA mantengan el contexto correcto."
+            : "Contanos un poco sobre tus ingresos y gastos para adaptar FINANCE AI a tu realidad. Podés dejar cualquier dato sin completar."}
         </p>
 
         <form onSubmit={(event) => saveProfile(event)}>
@@ -303,17 +310,29 @@ export default function OnboardingGate({
             type="submit"
             disabled={saving}
           >
-            {saving ? "Guardando..." : "Guardar y continuar"}
+            {saving
+              ? "Guardando..."
+              : mode === "edit"
+              ? "Guardar cambios"
+              : "Guardar y continuar"}
           </button>
 
-          <button
-            className="onboarding-skip"
-            type="button"
-            disabled={saving}
-            onClick={() => saveProfile(undefined, true)}
-          >
-            Completar más tarde
-          </button>
+          {mode === "onboarding" && (
+            <button
+              className="onboarding-skip"
+              type="button"
+              disabled={saving}
+              onClick={() => saveProfile(undefined, true)}
+            >
+              Completar más tarde
+            </button>
+          )}
+
+          {mode === "edit" && (
+            <a className="onboarding-skip" href="/perfil">
+              Volver al perfil sin guardar
+            </a>
+          )}
         </form>
 
         <p className="onboarding-privacy">
