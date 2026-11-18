@@ -24,9 +24,6 @@ export default function Home() {
             <div className="sidebar-footer">Personal Finance Intelligence<br />Version 0.1.0</div>
           </aside>
           <main className="main-content">
-            <header className="topbar dashboard-topbar">
-              <div><p className="eyebrow">FINANCE AI</p><h1 className="page-title">Tu panorama financiero</h1><p className="page-subtitle">Entendé qué está pasando con tu dinero.</p></div>
-            </header>
             <DashboardStats />
             <footer className="dashboard-footer">FINANCE AI · Entendé tu dinero</footer>
           </main>
