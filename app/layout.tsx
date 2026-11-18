@@ -5,8 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FINANCE AI — Finanzas personales inteligentes",
-  description:
-    "Organizá tus finanzas, entendé tus hábitos y planificá mejor con FINANCE AI."
+  description: "Entendé tu dinero."
 };
 
 export default function RootLayout({
