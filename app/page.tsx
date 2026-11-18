@@ -26,7 +26,7 @@ export default function Home() {
           <aside className="sidebar">
             <div className="brand">
               <LogoutButton />
-              BALANCE<span>.</span> AI
+              FINANCE<span>.</span> AI
             </div>
 
             <div className="nav-label">MENÚ PRINCIPAL</div>
@@ -108,7 +108,7 @@ export default function Home() {
                 marginTop: 28
               }}
             >
-              BALANCE AI · Personal Finance Intelligence
+              FINANCE AI · Entendé tu dinero
             </footer>
           </main>
         </div>
