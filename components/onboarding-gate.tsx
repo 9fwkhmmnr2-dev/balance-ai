@@ -10,6 +10,7 @@ import {
   type SetStateAction
 } from "react";
 import { supabase } from "../lib/supabase";
+import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
 type PayFrequency =
   | "monthly"
@@ -125,8 +126,10 @@ export default function OnboardingGate({
       return;
     }
 
-    if (!skip && income && Number(income) < 0) {
-      setError("El importe no puede ser negativo.");
+    const parsedIncome = income ? parseLocalizedAmount(income) : null;
+
+    if (!skip && income && (parsedIncome === null || parsedIncome < 0)) {
+      setError("Ingresá un importe válido. Podés usar puntos para miles y coma para decimales.");
       return;
     }
 
@@ -146,7 +149,7 @@ export default function OnboardingGate({
         {
           user_id: userData.user.id,
           pay_frequency: skip ? "not_set" : frequency,
-          typical_income: skip || !income ? null : Number(income),
+          typical_income: skip || !income ? null : parsedIncome,
           currency,
           next_pay_date: skip || !nextPayDate ? null : nextPayDate,
           income_sources: skip ? [] : incomeSources,
@@ -227,10 +230,9 @@ export default function OnboardingGate({
             <div className="onboarding-income">
               <input
                 id="typical-income"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Ej. 250000"
+                type="text"
+                inputMode="decimal"
+                placeholder="Ej. 250.000,50"
                 value={income}
                 onChange={(event) => setIncome(event.target.value)}
               />
