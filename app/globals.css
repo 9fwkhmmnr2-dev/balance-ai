@@ -764,3 +764,60 @@ a {
   }
   .dashboard-identity-brand { font-size: 22px; }
 }
+
+
+/* MENU INTEGRADO A LA TARJETA DE IDENTIDAD */
+@media (max-width: 600px) {
+  .mobile-menu {
+    display: block;
+    position: relative;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    z-index: 20;
+  }
+  .mobile-menu-bar {
+    min-height: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .mobile-brand {
+    font-family: 'Manrope', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #261B07;
+  }
+  .mobile-brand span { color: #E89B01; }
+  .dashboard-identity-brand { display: none; }
+  .mobile-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 8px 13px;
+    background: #FFF4D9;
+    border: 1px solid #E7DDC9;
+    border-radius: 999px;
+    color: #B87900;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .menu-button-icon {
+    display: inline-block;
+    font-size: 20px;
+    line-height: 1;
+    font-weight: 500;
+  }
+  .mobile-menu-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0 0;
+    gap: 5px;
+  }
+}
