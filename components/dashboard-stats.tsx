@@ -27,7 +27,7 @@ function money(amount: number, currency: string) {
 
 export default function DashboardStats() {
   const [movements, setMovements] = useState<Movement[]>([]);
-  const [currency, setCurrency] = useState("ARS");
+  const [currency, setCurrency] = useState("");
   const [currencies, setCurrencies] = useState(["ARS"]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
