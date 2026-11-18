@@ -20,7 +20,7 @@ export default function MobileMenu() {
     <div className="mobile-menu">
       <div className="mobile-menu-bar">
         <div className="mobile-brand">
-          BALANCE<span>.</span> AI
+          FINANCE<span>.</span> AI
         </div>
 
         <button
