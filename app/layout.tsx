@@ -4,9 +4,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BALANCE AI — Personal Finance Intelligence",
+  title: "FINANCE AI — Finanzas personales inteligentes",
   description:
-    "Entendé tu situación económica y planificá mejor con inteligencia artificial."
+    "Organizá tus finanzas, entendé tus hábitos y planificá mejor con FINANCE AI."
 };
 
 export default function RootLayout({
