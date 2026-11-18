@@ -12,7 +12,6 @@ export default function Home() {
     <AuthGuard>
       <OnboardingGate>
         <div className="dashboard">
-          <MobileMenu />
           <aside className="sidebar">
             <div className="brand"><LogoutButton />FINANCE<span>.</span> AI</div>
             <div className="nav-label">MENÚ PRINCIPAL</div>
