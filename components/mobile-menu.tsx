@@ -19,10 +19,6 @@ export default function MobileMenu() {
   return (
     <div className="mobile-menu">
       <div className="mobile-menu-bar">
-        <div className="mobile-brand">
-          FINANCE<span>.</span> AI
-        </div>
-
         <button
           className="mobile-menu-button"
           onClick={() => setOpen(!open)}
