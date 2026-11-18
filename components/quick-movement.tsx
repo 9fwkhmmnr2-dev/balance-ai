@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
+import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
 const categories = ["Alimentación", "Transporte", "Vivienda", "Servicios", "Salud", "Educación", "Entretenimiento", "Trabajo", "Ventas", "Otros"];
 
@@ -22,8 +23,8 @@ export default function QuickMovement() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
-    const numericAmount = Number(amount);
-    if (!description.trim() || !Number.isFinite(numericAmount) || numericAmount <= 0) {
+    const numericAmount = parseLocalizedAmount(amount);
+    if (!description.trim() || numericAmount === null || numericAmount <= 0) {
       setMessage("Ingresá una descripción y un importe válido.");
       return;
     }
@@ -77,7 +78,7 @@ export default function QuickMovement() {
             <form className="quick-modal-form" onSubmit={handleSubmit}>
               <label>Descripción<input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Ej. Supermercado" maxLength={100} required /></label>
               <div className="quick-form-row">
-                <label>Importe<input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0,00" required /></label>
+                <label>Importe<input type="text" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Ej. 160.000,50" required /></label>
                 <label>Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}><option value="ARS">ARS</option><option value="USD">USD</option><option value="EUR">EUR</option></select></label>
               </div>
               <div className="quick-form-row">
