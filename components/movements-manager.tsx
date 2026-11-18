@@ -3,6 +3,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
+import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
 type Movement = {
   id: string;
@@ -47,9 +48,9 @@ export default function MovementsManager() {
     event.preventDefault();
     setMessage("");
 
-    const numericAmount = Number(amount);
+    const numericAmount = parseLocalizedAmount(amount);
 
-    if (!description.trim() || !Number.isFinite(numericAmount) || numericAmount <= 0) {
+    if (!description.trim() || numericAmount === null || numericAmount <= 0) {
       setMessage("Completá la descripción y un importe válido.");
       return;
     }
@@ -119,12 +120,11 @@ export default function MovementsManager() {
         </select>
 
         <input
-          type="number"
-          min="0.01"
-          step="0.01"
+          type="text"
+          inputMode="decimal"
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
-          placeholder="Importe"
+          placeholder="Ej. 160.000,50"
           required
         />
 
