@@ -1,6 +1,5 @@
 import AuthGuard from "../components/auth-guard";
 import LogoutButton from "../components/logout-button";
-import MobileMenu from "../components/mobile-menu";
 import OnboardingGate from "../components/onboarding-gate";
 import DashboardStats from "../components/dashboard-stats";
 import QuickMovement from "../components/quick-movement";
