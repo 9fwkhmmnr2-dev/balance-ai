@@ -76,7 +76,7 @@ export default function CurrencyConverterView() {
           <section className="converter-card" aria-label="Conversión rápida">
             <div className="converter-card-heading">
               <div><p className="eyebrow">CONVERSIÓN DIRECTA</p><h2>¿Cuánto querés convertir?</h2></div>
-              <span className="converter-live-label"><i /> Cotizaciones verificadas</span>
+              <span className="converter-live-label"><i /> Fuentes verificables</span>
             </div>
 
             <label className="converter-amount-field">
