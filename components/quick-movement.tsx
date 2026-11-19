@@ -5,9 +5,12 @@ import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
 const categories = ["Alimentación", "Transporte", "Vivienda", "Servicios", "Salud", "Educación", "Entretenimiento", "Trabajo", "Ventas", "Otros"];
+const currencyOptions = [{ code: "ARS", label: "Pesos argentinos (ARS)" }, { code: "USD", label: "Dólares estadounidenses (USD)" }, { code: "EUR", label: "Euros (EUR)" }];
 
 export default function QuickMovement() {
   const [open, setOpen] = useState(false);
+  const today = new Date();
+  const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const [type, setType] = useState<"expense" | "income">("expense");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -24,7 +27,7 @@ export default function QuickMovement() {
     event.preventDefault();
     setMessage("");
     const numericAmount = parseLocalizedAmount(amount);
-    if (!description.trim() || numericAmount === null || numericAmount <= 0) {
+    if (!description.trim() || numericAmount === null || numericAmount <= 0 || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || date > maxDate) {
       setMessage("Ingresá una descripción y un importe válido.");
       return;
     }
@@ -79,11 +82,11 @@ export default function QuickMovement() {
               <label>Descripción<input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Ej. Supermercado" maxLength={100} required /></label>
               <div className="quick-form-row">
                 <label>Importe<input type="text" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Ej. 160.000,50" required /></label>
-                <label>Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}><option value="ARS">ARS</option><option value="USD">USD</option><option value="EUR">EUR</option></select></label>
+                <label>Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencyOptions.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}</select></label>
               </div>
               <div className="quick-form-row">
                 <label>Categoría<select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
-                <label className="quick-date-field">Fecha<input className="quick-date-input" type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></label>
+                <label className="quick-date-field">Fecha<input className="quick-date-input" type="date" max={maxDate} value={date} onChange={(event) => setDate(event.target.value)} required /></label>
               </div>
               {message && <p className="quick-modal-error" role="alert">{message}</p>}
               <button className="primary-button quick-modal-submit" type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar movimiento"}</button>
