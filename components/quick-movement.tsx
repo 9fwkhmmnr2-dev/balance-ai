@@ -27,8 +27,8 @@ export default function QuickMovement() {
     event.preventDefault();
     setMessage("");
     const numericAmount = parseLocalizedAmount(amount);
-    if (!description.trim() || numericAmount === null || numericAmount <= 0 || !/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || date > maxDate) {
-      setMessage("Ingresá una descripción y un importe válido.");
+    if (!description.trim() || numericAmount === null || numericAmount <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date > maxDate) {
+      setMessage("Completá la descripción, ingresá un importe válido y elegí una fecha que no sea futura.");
       return;
     }
     setSaving(true);
