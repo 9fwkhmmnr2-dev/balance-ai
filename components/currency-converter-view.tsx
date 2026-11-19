@@ -23,7 +23,7 @@ export default function CurrencyConverterView() {
   const [selectedSources, setSelectedSources] = useState<string[]>(["oficial", "mep", "blue"]);
 
   const parsedAmount = useMemo(() => {
-    const normalized = amount.trim().replace(/\\./g, "").replace(",", ".");
+    const normalized = amount.trim().replace(/[.]/g, "").replace(",", ".");
     const value = Number(normalized);
     return Number.isFinite(value) && value > 0 ? value : null;
   }, [amount]);
