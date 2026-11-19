@@ -25,6 +25,7 @@ type Quote = {
   updatedAt: string | null;
   lastScrapedAt: string;
   stale: boolean;
+  marketClosed: boolean;
 };
 type QuoteResponse = {
   provider: string;
@@ -101,7 +102,7 @@ export default function CurrencyConverterView() {
   const conversion = useMemo(() => {
     if (parsedAmount === null || from === to) {
       return parsedAmount !== null && from === to
-        ? { value: parsedAmount, stale: false, missing: false }
+        ? { value: parsedAmount, stale: false, missing: false, marketClosed: false }
         : null;
     }
 
@@ -139,6 +140,7 @@ export default function CurrencyConverterView() {
       value: result,
       stale: required.some((quote) => quote.stale),
       missing: false,
+      marketClosed: required.some((quote) => quote.marketClosed),
     };
   }, [parsedAmount, from, to, quoteData, usdSource]);
 
@@ -238,15 +240,17 @@ export default function CurrencyConverterView() {
                 <strong>Esperando datos</strong>}
               <p>
                 {error || (conversion?.stale
-                  ? "La fuente no confirmó este valor recientemente. Actualizá para volver a consultar."
-                  : "El cálculo utiliza el valor de compra o venta correspondiente al sentido de la conversión.")}
+                  ? "La fuente no confirmó este valor recientemente. No usamos esta cotización para calcular."
+                  : conversion?.marketClosed
+                    ? "Mercado cerrado. Se muestra la última cotización confirmada; el valor puede cambiar cuando vuelva a operar."
+                    : "El cálculo utiliza el valor de compra o venta correspondiente al sentido de la conversión.")}
               </p>
             </div>
             {error && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar conexión</button>}
             {!loading && !error && usdQuote && euroQuote && (
               <div className="converter-source-note">
                 <span aria-hidden="true">ⓘ</span>
-                <span>Fuente: MonedAPI · USD {usdQuote.name}: compra {formatMoney(usdQuote.buy, "ARS")} / venta {formatMoney(usdQuote.sell, "ARS")} · Euro: compra {formatMoney(euroQuote.buy, "ARS")} / venta {formatMoney(euroQuote.sell, "ARS")}. Última confirmación: {formatDate(usdQuote.lastScrapedAt)}.</span>
+                <span>Fuente: MonedAPI · USD {usdQuote.name}: compra {formatMoney(usdQuote.buy, "ARS")} / venta {formatMoney(usdQuote.sell, "ARS")}. Valor desde {usdQuote.updatedAt ? formatDate(usdQuote.updatedAt) : "fecha no informada"}; confirmado {formatDate(usdQuote.lastScrapedAt)}. Euro oficial: compra {formatMoney(euroQuote.buy, "ARS")} / venta {formatMoney(euroQuote.sell, "ARS")}. Valor desde {euroQuote.updatedAt ? formatDate(euroQuote.updatedAt) : "fecha no informada"}; confirmado {formatDate(euroQuote.lastScrapedAt)}{euroQuote.marketClosed ? " · mercado cerrado" : ""}.</span>
               </div>
             )}
           </section>
@@ -280,7 +284,7 @@ export default function CurrencyConverterView() {
                   {advancedRows.map((row) => (
                     <article className="converter-quote-result" key={row.id}>
                       <div><strong>{row.quote?.name ?? comparisonSources.find((source) => source.id === row.id)?.name}</strong>
-                        {row.quote && <small>Compra {formatMoney(row.quote.buy, "ARS")} · Venta {formatMoney(row.quote.sell, "ARS")}</small>}
+                        {row.quote && <><small>Compra {formatMoney(row.quote.buy, "ARS")} · Venta {formatMoney(row.quote.sell, "ARS")}</small><small className={row.quote.stale ? "converter-stale-meta" : row.quote.marketClosed ? "converter-market-meta" : ""}>{row.quote.stale ? "Dato desactualizado" : row.quote.marketClosed ? "Mercado cerrado · último valor confirmado" : "Fuente confirmada"} · valor desde {row.quote.updatedAt ? formatDate(row.quote.updatedAt) : "fecha no informada"} · confirmado {formatDate(row.quote.lastScrapedAt)}</small></>}
                       </div>
                       {row.quote?.stale ? <strong className="converter-stale-value">Dato desactualizado</strong> :
                         row.value !== null && row.value !== undefined ? <strong>{formatMoney(row.value, row.quote?.currency ?? "USD")}</strong> :
