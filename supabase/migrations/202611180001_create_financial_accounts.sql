@@ -16,6 +16,11 @@ create table if not exists public.financial_accounts (
 create index if not exists financial_accounts_user_id_idx
   on public.financial_accounts(user_id);
 
+-- RLS define qué filas puede ver o modificar cada usuario; estos permisos
+-- habilitan las operaciones necesarias para el rol autenticado.
+revoke all on public.financial_accounts from anon;
+grant select, insert, update, delete on public.financial_accounts to authenticated;
+
 alter table public.financial_accounts enable row level security;
 
 drop policy if exists "Users can view their own financial accounts" on public.financial_accounts;
@@ -87,3 +92,6 @@ create trigger movements_validate_account_owner
   before insert or update of account_id, user_id, currency
   on public.movements
   for each row execute function public.validate_movement_account_owner();
+
+-- La función solo debe ejecutarse indirectamente mediante el trigger.
+revoke all on function public.validate_movement_account_owner() from public, anon, authenticated;
