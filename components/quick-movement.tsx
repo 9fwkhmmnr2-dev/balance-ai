@@ -83,7 +83,7 @@ export default function QuickMovement() {
               </div>
               <div className="quick-form-row">
                 <label>Categoría<select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
-                <label>Fecha<input type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></label>
+                <label className="quick-date-field">Fecha<input className="quick-date-input" type="date" value={date} onChange={(event) => setDate(event.target.value)} required /></label>
               </div>
               {message && <p className="quick-modal-error" role="alert">{message}</p>}
               <button className="primary-button quick-modal-submit" type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar movimiento"}</button>
