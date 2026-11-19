@@ -58,3 +58,32 @@ end $$;
 
 create index if not exists movements_account_id_idx
   on public.movements(account_id);
+
+
+-- Evita asociar un movimiento a una cuenta de otro usuario o de otra moneda.
+create or replace function public.validate_movement_account_owner()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if new.account_id is not null and not exists (
+    select 1
+    from public.financial_accounts a
+    where a.id = new.account_id
+      and a.user_id = new.user_id
+      and a.currency = new.currency
+  ) then
+    raise exception 'La cuenta seleccionada no pertenece al usuario o usa otra moneda.'
+      using errcode = '23514';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists movements_validate_account_owner on public.movements;
+create trigger movements_validate_account_owner
+  before insert or update of account_id, user_id, currency
+  on public.movements
+  for each row execute function public.validate_movement_account_owner();
