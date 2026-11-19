@@ -30,7 +30,18 @@ type Draft = {
 
 const categories = ["Alimentación", "Transporte", "Vivienda", "Servicios", "Salud", "Educación", "Entretenimiento", "Trabajo", "Ventas", "Otros"];
 const supportedCurrencies = [{ code: "ARS", label: "Pesos argentinos (ARS)" }, { code: "USD", label: "Dólares estadounidenses (USD)" }, { code: "EUR", label: "Euros (EUR)" }];
-const emptyDraft: Draft = { description: "", type: "expense", amount: "", currency: "ARS", category: "Otros", movement_date: new Date().toISOString().slice(0, 10) };
+function localDateKey(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+const todayKey = localDateKey(new Date());
+const emptyDraft: Draft = { description: "", type: "expense", amount: "", currency: "ARS", category: "Otros", movement_date: todayKey };
+
+function isValidDateKey(value: string) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+}
 
 function formatMoney(amount: number, currency: string) {
   try {
@@ -46,7 +57,10 @@ function MovementsContent() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [monthFilter, setMonthFilter] = useState("");
+  const [periodFilter, setPeriodFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [currencyFilter, setCurrencyFilter] = useState("all");
   const [editing, setEditing] = useState<Movement | null>(null);
@@ -85,12 +99,23 @@ function MovementsContent() {
     return items.filter((item) => {
       if (term && !item.description.toLocaleLowerCase("es").includes(term)) return false;
       if (typeFilter !== "all" && item.type !== typeFilter) return false;
-      if (monthFilter && item.movement_date?.slice(0, 7) !== monthFilter) return false;
+      const itemDate = item.movement_date?.slice(0, 10) || "";
       if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
       if (currencyFilter !== "all" && item.currency !== currencyFilter) return false;
+      if (periodFilter === "today" && itemDate !== todayKey) return false;
+      if (periodFilter === "7days") { const start = new Date(); start.setDate(start.getDate() - 6); if (itemDate < localDateKey(start) || itemDate > todayKey) return false; }
+      if (periodFilter === "30days") { const start = new Date(); start.setDate(start.getDate() - 29); if (itemDate < localDateKey(start) || itemDate > todayKey) return false; }
+      if (periodFilter === "thisMonth" && itemDate.slice(0, 7) !== todayKey.slice(0, 7)) return false;
+      if (periodFilter === "lastMonth") { const previous = new Date(); previous.setDate(1); previous.setMonth(previous.getMonth() - 1); if (itemDate.slice(0, 7) !== localDateKey(previous).slice(0, 7)) return false; }
+      if (periodFilter === "custom" && ((dateFrom && itemDate < dateFrom) || (dateTo && itemDate > dateTo))) return false;
       return true;
+    }).sort((a, b) => {
+      if (sortOrder === "oldest") return a.movement_date.localeCompare(b.movement_date) || (a.created_at || "").localeCompare(b.created_at || "");
+      if (sortOrder === "amountHigh") return Number(b.amount) - Number(a.amount);
+      if (sortOrder === "amountLow") return Number(a.amount) - Number(b.amount);
+      return b.movement_date.localeCompare(a.movement_date) || (b.created_at || "").localeCompare(a.created_at || "");
     });
-  }, [items, search, typeFilter, monthFilter, categoryFilter, currencyFilter]);
+  }, [items, search, typeFilter, periodFilter, dateFrom, dateTo, categoryFilter, currencyFilter, sortOrder]);
 
   const totals = useMemo(() => {
     const result = new Map<string, { income: number; expense: number }>();
@@ -119,7 +144,7 @@ function MovementsContent() {
     event.preventDefault();
     if (!editing) return;
     const amount = parseLocalizedAmount(draft.amount);
-    if (!draft.description.trim() || amount === null || amount <= 0 || !draft.movement_date) {
+    if (!draft.description.trim() || amount === null || amount <= 0 || !isValidDateKey(draft.movement_date) || draft.movement_date > todayKey || !supportedCurrencies.some((currency) => currency.code === draft.currency)) {
       setNotice("Revisá la descripción, el importe y la fecha.");
       return;
     }
@@ -144,6 +169,7 @@ function MovementsContent() {
     } else {
       setEditing(null);
       await loadMovements();
+      window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice("Movimiento actualizado.");
     }
     setSaving(false);
@@ -163,6 +189,7 @@ function MovementsContent() {
       setNotice("No pudimos eliminar el movimiento. Intentá nuevamente.");
     } else {
       setItems((current) => current.filter((row) => row.id !== item.id));
+      window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice("Movimiento eliminado.");
     }
   }
@@ -188,17 +215,19 @@ function MovementsContent() {
         <section className="movements-filters" aria-label="Filtros">
           <label className="movements-search">Buscar<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Descripción del movimiento" /></label>
           <label>Tipo<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option></select></label>
-          <label>Mes<input type="month" value={monthFilter} onChange={(event) => setMonthFilter(event.target.value)} /></label>
+          <label>Período<select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value)}><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="7days">Últimos 7 días</option><option value="30days">Últimos 30 días</option><option value="thisMonth">Este mes</option><option value="lastMonth">Mes anterior</option><option value="custom">Fechas personalizadas</option></select></label>
+          {periodFilter === "custom" && <><label>Desde<input type="date" max={todayKey} value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label><label>Hasta<input type="date" min={dateFrom || undefined} max={todayKey} value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label></>}
           <label>Categoría<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">Todas</option>{categoriesInData.map((category) => <option key={category}>{category}</option>)}</select></label>
           <label>Moneda<select value={currencyFilter} onChange={(event) => setCurrencyFilter(event.target.value)}><option value="all">Todas las monedas</option>{supportedCurrencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}</select></label>
-          <button type="button" className="movements-clear-filters" onClick={() => { setSearch(""); setTypeFilter("all"); setMonthFilter(""); setCategoryFilter("all"); setCurrencyFilter("all"); }}>Limpiar filtros</button>
+          <label>Ordenar<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="newest">Más recientes</option><option value="oldest">Más antiguos</option><option value="amountHigh">Importe mayor</option><option value="amountLow">Importe menor</option></select></label>
+          <button type="button" className="movements-clear-filters" onClick={() => { setSearch(""); setTypeFilter("all"); setPeriodFilter("all"); setDateFrom(""); setDateTo(""); setCategoryFilter("all"); setCurrencyFilter("all"); setSortOrder("newest"); }}>Limpiar filtros</button>
         </section>
 
         {notice && <p className="movements-notice" role="status">{notice}</p>}
         {error ? <section className="movements-list-card"><p className="movements-error">{error}</p><button className="movements-clear-filters" onClick={() => { setLoading(true); void loadMovements(); }}>Reintentar</button></section> : loading ? <section className="movements-list-card"><p className="movements-empty">Cargando tus movimientos...</p></section> : filtered.length === 0 ? <section className="movements-list-card"><h2>No encontramos movimientos</h2><p className="movements-empty">{items.length === 0 ? "Cuando registres un ingreso o gasto, aparecerá acá." : "Probá cambiar los filtros para ver otros registros."}</p></section> : <section className="movements-list-card"><div className="movements-list-heading"><h2>Historial</h2><span>{filtered.length} registros</span></div>{filtered.map((item) => <article className="movements-row" key={item.id}><span className={`movements-type-mark ${item.type === "income" ? "income" : "expense"}`} aria-hidden="true" /><div className="movements-row-info"><strong>{item.description}</strong><span>{item.category} · {new Date(item.movement_date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</span></div><strong className={item.type === "income" ? "amount-income" : "amount-expense"}>{item.type === "income" ? "+" : "−"}{formatMoney(Number(item.amount), item.currency)}</strong><div className="movements-row-actions"><button type="button" onClick={() => startEditing(item)}>Editar</button><button type="button" onClick={() => void deleteMovement(item)}>Eliminar</button></div></article>)}</section>}
       </main>
 
-      {editing && <div className="movement-edit-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setEditing(null); }}><section className="movement-edit-modal" role="dialog" aria-modal="true" aria-labelledby="movement-edit-title"><div className="movement-edit-heading"><div><p className="eyebrow">ACTUALIZAR REGISTRO</p><h2 id="movement-edit-title">Editar movimiento</h2></div><button type="button" onClick={() => setEditing(null)} disabled={saving} aria-label="Cerrar">×</button></div><form onSubmit={saveEdit}><label>Descripción<input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} maxLength={100} required /></label><div className="movement-edit-grid"><label>Tipo<select value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as Draft["type"] })}><option value="expense">Gasto</option><option value="income">Ingreso</option></select></label><label>Importe<input inputMode="decimal" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} required /></label><label>Moneda<select value={draft.currency} onChange={(event) => setDraft({ ...draft, currency: event.target.value })}>{supportedCurrencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}{!supportedCurrencies.some((currency) => currency.code === draft.currency) && <option value={draft.currency}>{draft.currency}</option>}</select></label><label>Categoría<select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>{Array.from(new Set([...categories, draft.category])).map((category) => <option key={category}>{category}</option>)}</select></label><label className="movement-edit-date">Fecha<input type="date" value={draft.movement_date} onChange={(event) => setDraft({ ...draft, movement_date: event.target.value })} required /></label></div>{notice && <p className="movements-error" role="alert">{notice}</p>}<button className="movements-save-button" type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button></form></section></div>}
+      {editing && <div className="movement-edit-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setEditing(null); }}><section className="movement-edit-modal" role="dialog" aria-modal="true" aria-labelledby="movement-edit-title"><div className="movement-edit-heading"><div><p className="eyebrow">ACTUALIZAR REGISTRO</p><h2 id="movement-edit-title">Editar movimiento</h2></div><button type="button" onClick={() => setEditing(null)} disabled={saving} aria-label="Cerrar">×</button></div><form onSubmit={saveEdit}><label>Descripción<input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} maxLength={100} required /></label><div className="movement-edit-grid"><label>Tipo<select value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as Draft["type"] })}><option value="expense">Gasto</option><option value="income">Ingreso</option></select></label><label>Importe<input inputMode="decimal" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} required /></label><label>Moneda<select value={draft.currency} onChange={(event) => setDraft({ ...draft, currency: event.target.value })}>{supportedCurrencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}{!supportedCurrencies.some((currency) => currency.code === draft.currency) && <option value={draft.currency}>{draft.currency}</option>}</select></label><label>Categoría<select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>{Array.from(new Set([...categories, draft.category])).map((category) => <option key={category}>{category}</option>)}</select></label><label className="movement-edit-date">Fecha<input type="date" max={todayKey} value={draft.movement_date} onChange={(event) => setDraft({ ...draft, movement_date: event.target.value })} required /></label></div>{notice && <p className="movements-error" role="alert">{notice}</p>}<button className="movements-save-button" type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button></form></section></div>}
     </div>
   );
 }
