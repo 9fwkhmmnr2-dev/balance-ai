@@ -37,7 +37,7 @@ const todayKey = localDateKey(new Date());
 const emptyDraft: Draft = { description: "", type: "expense", amount: "", currency: "ARS", category: "Otros", movement_date: todayKey };
 
 function isValidDateKey(value: string) {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(year, month - 1, day);
   return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
@@ -216,10 +216,10 @@ function MovementsContent() {
           <label className="movements-search">Buscar<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Descripción del movimiento" /></label>
           <label>Tipo<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option></select></label>
           <label>Período<select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value)}><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="7days">Últimos 7 días</option><option value="30days">Últimos 30 días</option><option value="thisMonth">Este mes</option><option value="lastMonth">Mes anterior</option><option value="custom">Fechas personalizadas</option></select></label>
-          {periodFilter === "custom" && <><label>Desde<input type="date" max={todayKey} value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} /></label><label>Hasta<input type="date" min={dateFrom || undefined} max={todayKey} value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label></>}
+          {periodFilter === "custom" && <><label>Desde<input type="date" max={todayKey} value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); if (dateTo && event.target.value > dateTo) setDateTo(""); }} /></label><label>Hasta<input type="date" min={dateFrom || undefined} max={todayKey} value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label></>}
           <label>Categoría<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">Todas</option>{categoriesInData.map((category) => <option key={category}>{category}</option>)}</select></label>
           <label>Moneda<select value={currencyFilter} onChange={(event) => setCurrencyFilter(event.target.value)}><option value="all">Todas las monedas</option>{supportedCurrencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}</select></label>
-          <label>Ordenar<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="newest">Más recientes</option><option value="oldest">Más antiguos</option><option value="amountHigh">Importe mayor</option><option value="amountLow">Importe menor</option></select></label>
+          <label>Ordenar<select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="newest">Más recientes</option><option value="oldest">Más antiguos</option><option value="amountHigh" disabled={currencyFilter === "all"}>Importe mayor (elegí una moneda)</option><option value="amountLow" disabled={currencyFilter === "all"}>Importe menor (elegí una moneda)</option></select></label>
           <button type="button" className="movements-clear-filters" onClick={() => { setSearch(""); setTypeFilter("all"); setPeriodFilter("all"); setDateFrom(""); setDateTo(""); setCategoryFilter("all"); setCurrencyFilter("all"); setSortOrder("newest"); }}>Limpiar filtros</button>
         </section>
 
