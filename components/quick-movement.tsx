@@ -56,7 +56,7 @@ export default function QuickMovement() {
 
   return (
     <>
-      <button className="quick-add-button" onClick={() => { setMessage(""); setOpen(true); }}>
+      <button id="registrar-movimiento" className="quick-add-button" onClick={() => { setMessage(""); setOpen(true); }}>
         <span aria-hidden="true">＋</span> Registrar movimiento
       </button>
       {open && (
