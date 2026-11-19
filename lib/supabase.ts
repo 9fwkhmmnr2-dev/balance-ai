@@ -1,6 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-type SupabaseClientInstance = ReturnType<typeof createClient>;
+type SupabaseClientInstance = SupabaseClient<any, "public">;
 
 let client: SupabaseClientInstance | null = null;
 
@@ -16,7 +16,7 @@ function getSupabaseClient(): SupabaseClientInstance {
     );
   }
 
-  client = createClient(supabaseUrl, supabaseKey);
+  client = createClient<any>(supabaseUrl, supabaseKey);
   return client;
 }
 
