@@ -195,7 +195,7 @@ export default function AccountsView() {
   return (
     <div className="accounts-page">
       <MobileMenu />
-      <nav className="accounts-desktop-nav"><a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a><div><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas" aria-current="page">Mis cuentas</a><a href="/perfil">Perfil</a></div></nav>
+      <nav className="accounts-desktop-nav"><a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a><div><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas" aria-current="page">Mis cuentas</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></div></nav>
       <header className="accounts-heading">
         <div><p className="eyebrow">ORGANIZÁ TU DINERO</p><h1>Mis cuentas</h1><p>Reuní tus saldos y conocé dónde está tu dinero.</p></div>
         <button className="accounts-add-button" onClick={() => { resetForm(); setModalOpen(true); }}>＋ Agregar cuenta</button>
