@@ -177,7 +177,7 @@ function MovementsContent() {
       <main className="movements-main">
         <div className="movements-heading">
           <div><p className="eyebrow">TU ACTIVIDAD FINANCIERA</p><h1>Movimientos</h1><p>Todo lo que registraste, en un solo lugar.</p></div>
-          <a className="movements-add-link" href="/#registrar-movimiento">Registrar movimiento</a>
+          <a className="movements-add-link" href="/">Registrar movimiento</a>
         </div>
 
         <section className="movements-summary" aria-label="Resumen de movimientos filtrados">
