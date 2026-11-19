@@ -33,6 +33,19 @@ function isValidQuote(value: ProviderQuote): boolean {
   );
 }
 
+function isEuroMarketClosed(now: Date): boolean {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const minutes = Number(values.hour) * 60 + Number(values.minute);
+  return values.weekday === "Sat" || values.weekday === "Sun" || minutes < 540 || minutes >= 1020;
+}
+
 export async function GET() {
   try {
     const response = await fetch("https://monedapi.ar/api/v2/quotes", {
@@ -80,6 +93,7 @@ export async function GET() {
         updatedAt: match.updatedAt ?? null,
         lastScrapedAt: match.lastScrapedAt,
         stale: ageMinutes > 15,
+        marketClosed: pair.id === "euro" && isEuroMarketClosed(new Date(now)),
       };
     }).filter((quote) => quote !== null);
 
