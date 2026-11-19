@@ -1084,3 +1084,6 @@ a {
 .converter-quote-result .converter-stale-value{font-family:inherit;font-size:11px;color:#A44232}
 .converter-quote-result .converter-difference{grid-column:2;text-align:right;color:#8A650E}
 @media(max-width:420px){.converter-quote-result{grid-template-columns:1fr}.converter-quote-result>strong{text-align:left}.converter-quote-result .converter-difference{grid-column:1;text-align:left}}
+
+.converter-quote-result>div small.converter-stale-meta{color:#A44232;font-weight:700}
+.converter-quote-result>div small.converter-market-meta{color:#8A650E;font-weight:700}
