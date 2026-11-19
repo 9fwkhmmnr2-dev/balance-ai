@@ -1,4 +1,4 @@
-"import AuthGuard from "../../components/auth-guard";
+import AuthGuard from "../../components/auth-guard";
 import OnboardingGate from "../../components/onboarding-gate";
 import MobileMenu from "../../components/mobile-menu";
 import CurrencyConverterView from "../../components/currency-converter-view";
