@@ -154,7 +154,7 @@ export default function ProfileView() {
           <p className="page-subtitle">
             Tu información personal y financiera.
           </p>
-          <a className="onboarding-submit" href="/perfil/editar" style={{ display: "inline-block", marginTop: 14 }}>
+          <a className="profile-edit-action" href="/perfil/editar">
             Editar perfil financiero
           </a>
         </div>
