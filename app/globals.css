@@ -821,3 +821,62 @@ a {
     gap: 5px;
   }
 }
+
+
+/* AJUSTES DE PERFIL Y FORMULARIO DE MOVIMIENTOS */
+.profile-edit-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-height: 46px;
+  margin-top: 16px;
+  padding: 0 22px;
+  border-radius: 10px;
+  background: #F9A600;
+  color: #261B07;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  transition: background .2s ease, transform .2s ease;
+}
+.profile-edit-action:hover {
+  background: #E89B01;
+  transform: translateY(-1px);
+}
+.quick-form-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.quick-form-row > label {
+  min-width: 0;
+}
+.quick-modal-form .quick-date-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  height: 43px;
+  padding: 9px 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  overflow: hidden;
+}
+@media (max-width: 600px) {
+  .profile-edit-action {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
+  .quick-modal {
+    max-width: 100%;
+  }
+  .quick-form-row {
+    gap: 9px;
+  }
+  .quick-modal-form .quick-date-input {
+    font-size: 12px;
+    padding-left: 7px;
+    padding-right: 5px;
+  }
+}
