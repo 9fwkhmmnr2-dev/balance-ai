@@ -979,6 +979,8 @@ a {
 .accounts-footnote,.accounts-muted{font-size:11px;color:var(--muted);line-height:1.6;margin-top:14px}
 .accounts-list-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:15px}
 .accounts-text-button,.account-card-bottom button,.accounts-secondary-button{border:1px solid var(--border);background:#fff;border-radius:8px;padding:9px 12px;color:#8A650E;font-size:11px;font-weight:700}
+.account-card-bottom button.account-delete-button{color:#A44F3F;border-color:#F0D9D4;background:#FFFBFA}
+.account-card-bottom button:disabled{opacity:.55;cursor:not-allowed}
 .accounts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .account-card{padding:19px;min-width:0}
 .account-card.archived{opacity:.7}
