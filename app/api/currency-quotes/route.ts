@@ -83,6 +83,7 @@ export async function GET() {
 
       const lastConfirmedAt = Date.parse(match.lastScrapedAt!);
       const ageMinutes = Math.max(0, (now - lastConfirmedAt) / 60000);
+      const marketClosed = pair.id === "euro" && isEuroMarketClosed(new Date(now));
 
       return {
         id: pair.id,
@@ -92,8 +93,10 @@ export async function GET() {
         sell: match.sell,
         updatedAt: match.updatedAt ?? null,
         lastScrapedAt: match.lastScrapedAt,
-        stale: ageMinutes > 15,
-        marketClosed: pair.id === "euro" && isEuroMarketClosed(new Date(now)),
+        // Outside Banco Nación's trading hours, an unchanged quote can remain valid.
+        // Reapply the 15-minute freshness check as soon as the market reopens.
+        stale: ageMinutes > 15 && !marketClosed,
+        marketClosed,
       };
     }).filter((quote) => quote !== null);
 
