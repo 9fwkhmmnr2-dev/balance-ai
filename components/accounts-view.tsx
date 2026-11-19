@@ -49,6 +49,7 @@ export default function AccountsView() {
   const [showArchived, setShowArchived] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<AccountType>("wallet");
   const [currency, setCurrency] = useState<Currency>("ARS");
@@ -156,6 +157,41 @@ export default function AccountsView() {
     else await loadAccounts();
   }
 
+  async function deleteAccount(account: Account) {
+    setNotice("");
+    setDeletingId(account.id);
+    try {
+      const { data: auth, error: authError } = await supabase.auth.getUser();
+      if (authError || !auth.user) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+
+      const { count, error: countError } = await supabase
+        .from("movements")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", auth.user.id)
+        .eq("account_id", account.id);
+      if (countError) throw countError;
+
+      const historyMessage = count
+        ? ` Los ${count} movimientos asociados se conservarán, pero dejarán de estar vinculados a esta cuenta.`
+        : " Esta cuenta no tiene movimientos asociados.";
+      if (!window.confirm(`¿Eliminar definitivamente la cuenta “${account.name}”? Esta acción no se puede deshacer.${historyMessage}`)) return;
+
+      const { error: deleteError } = await supabase
+        .from("financial_accounts")
+        .delete()
+        .eq("id", account.id)
+        .eq("user_id", auth.user.id);
+      if (deleteError) throw deleteError;
+
+      await loadAccounts();
+      setNotice("Cuenta eliminada. El historial de movimientos se conservó.");
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "No pudimos eliminar la cuenta. Intentá nuevamente.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="accounts-page">
       <MobileMenu />
@@ -174,7 +210,7 @@ export default function AccountsView() {
 
         <div className="accounts-list-heading"><div><p className="eyebrow">TU ORGANIZACIÓN</p><h2>{showArchived ? "Todas las cuentas" : "Cuentas activas"}</h2></div><button className="accounts-text-button" onClick={() => setShowArchived((value) => !value)}>{showArchived ? "Ocultar archivadas" : "Ver archivadas"}</button></div>
 
-        {visibleAccounts.length === 0 ? <section className="accounts-empty"><h3>{showArchived ? "No hay cuentas para mostrar" : "Todavía no tenés cuentas"}</h3><p>Agregá efectivo, una billetera virtual, una cuenta bancaria o tus ahorros para empezar a organizar tus saldos.</p><button className="accounts-add-button" onClick={() => { resetForm(); setModalOpen(true); }}>Agregar primera cuenta</button></section> : <div className="accounts-grid">{visibleAccounts.map((account) => <article className={`account-card ${account.is_archived ? "archived" : ""}`} key={account.id}><div className="account-card-top"><span className="account-type-icon" aria-hidden="true">{account.type === "cash" ? "＄" : account.type === "wallet" ? "▣" : account.type === "bank" ? "⌂" : account.type === "savings" ? "◈" : "＋"}</span><span className="account-type-label">{typeLabel(account.type)}</span></div><h3>{account.name}</h3><p className="account-balance-label">Saldo actual</p><strong className="account-balance">{money(balances[account.id] ?? Number(account.initial_balance), account.currency)}</strong><div className="account-card-bottom">{account.is_archived ? <><span>Archivada</span><button onClick={() => void restoreAccount(account)}>Restaurar</button></> : <><span>{account.currency}</span><button onClick={() => void archiveAccount(account)}>Archivar</button></>}</div></article>)}</div>}
+        {visibleAccounts.length === 0 ? <section className="accounts-empty"><h3>{showArchived ? "No hay cuentas para mostrar" : "Todavía no tenés cuentas"}</h3><p>Agregá efectivo, una billetera virtual, una cuenta bancaria o tus ahorros para empezar a organizar tus saldos.</p><button className="accounts-add-button" onClick={() => { resetForm(); setModalOpen(true); }}>Agregar primera cuenta</button></section> : <div className="accounts-grid">{visibleAccounts.map((account) => <article className={`account-card ${account.is_archived ? "archived" : ""}`} key={account.id}><div className="account-card-top"><span className="account-type-icon" aria-hidden="true">{account.type === "cash" ? "＄" : account.type === "wallet" ? "▣" : account.type === "bank" ? "⌂" : account.type === "savings" ? "◈" : "＋"}</span><span className="account-type-label">{typeLabel(account.type)}</span></div><h3>{account.name}</h3><p className="account-balance-label">Saldo actual</p><strong className="account-balance">{money(balances[account.id] ?? Number(account.initial_balance), account.currency)}</strong><div className="account-card-bottom">{account.is_archived ? <><span>Archivada</span><button onClick={() => void restoreAccount(account)}>Restaurar</button><button className="account-delete-button" disabled={deletingId === account.id} onClick={() => void deleteAccount(account)}>{deletingId === account.id ? "Eliminando..." : "Eliminar"}</button></> : <><span>{account.currency}</span><button onClick={() => void archiveAccount(account)}>Archivar</button><button className="account-delete-button" disabled={deletingId === account.id} onClick={() => void deleteAccount(account)}>{deletingId === account.id ? "Eliminando..." : "Eliminar"}</button></>}</div></article>)}</div>}
       </>}
 
       {notice && <p className="accounts-notice" role="status">{notice}</p>}
