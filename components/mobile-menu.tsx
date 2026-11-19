@@ -1,30 +1,27 @@
-
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 const navigation = [
-  "Inicio",
-  "Movimientos",
-  "Estadísticas",
-  "Objetivos",
-  "Comparador",
-  "VERA",
-  "Configuración"
+  { label: "Inicio", href: "/" },
+  { label: "Perfil", href: "/perfil" }
 ];
 
 export default function MobileMenu() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div className="mobile-menu">
       <div className="mobile-menu-bar">
-        <div className="mobile-brand">FINANCE<span>.</span>AI</div>
+        <a className="mobile-brand" href="/" aria-label="FINANCE.AI, ir al inicio">FINANCE<span>.</span>AI</a>
         <button
           className="mobile-menu-button"
           onClick={() => setOpen(!open)}
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
+          aria-controls="mobile-navigation"
         >
           <span className="menu-button-icon" aria-hidden="true">{open ? "×" : "≡"}</span>
           <span>{open ? "Cerrar" : "Menú"}</span>
@@ -32,24 +29,18 @@ export default function MobileMenu() {
       </div>
 
       {open && (
-        <nav className="mobile-menu-panel">
-          {navigation.map((item, index) => (
-            <button
-              key={item}
-              className={`mobile-nav-item ${index === 0 ? "active" : ""}`}
+        <nav className="mobile-menu-panel" id="mobile-navigation" aria-label="Navegación principal">
+          {navigation.map((item) => (
+            <a
+              key={item.href}
+              className={`mobile-nav-item ${pathname === item.href ? "active" : ""}`}
+              href={item.href}
+              aria-current={pathname === item.href ? "page" : undefined}
               onClick={() => setOpen(false)}
             >
-              {item}
-            </button>
+              {item.label}
+            </a>
           ))}
-
-          <a
-            className="mobile-nav-item"
-            href="/perfil"
-            onClick={() => setOpen(false)}
-          >
-            Perfil
-          </a>
         </nav>
       )}
     </div>
