@@ -1,6 +1,6 @@
 # FINANCE:MONEDAS — Especificación técnica y auditoría inicial
 
-Estado: especificación aprobada conceptualmente; auditoría de código inicial.
+Estado: especificación aprobada conceptualmente; esquema real de tablas base confirmado.
 Rama de trabajo: `feature/mis-cuentas`.
 Producción: fuera de alcance. No ejecutar migraciones ni modificar datos durante esta fase.
 
@@ -98,23 +98,81 @@ Usar numeric/decimal exacto en persistencia y cálculos. Aplicar el redondeo seg
 - El perfil también filtra movimientos por moneda; no calcula patrimonio multidivisa.
 - Los totales de Mis cuentas se muestran separados por moneda y explícitamente no se convierten.
 - El conversor es una herramienta aislada: no hay evidencia en el código revisado de un motor compartido de cotizaciones/valoraciones para el balance.
-- No se encontraron en el repositorio migraciones versionadas para el esquema base de `financial_profiles` y `movements`; su estructura real debe verificarse en Supabase antes de diseñar cambios SQL.
 
-## 7. Riesgos y puntos a resolver antes de migrar
+## 7. Esquema real de Supabase confirmado
+
+El usuario ejecutó una consulta de solo lectura a `information_schema.columns` en el esquema `public`. Se confirmó la existencia y las columnas de estas tablas:
+
+### `financial_accounts` — 9 columnas
+- `id uuid NOT NULL`
+- `user_id uuid NOT NULL`
+- `name text NOT NULL`
+- `type text NOT NULL`
+- `currency text NOT NULL`
+- `initial_balance numeric(14,2) NOT NULL`
+- `is_archived boolean NOT NULL`
+- `created_at timestamptz NOT NULL`
+- `updated_at timestamptz NOT NULL`
+
+### `financial_profiles` — 10 columnas
+- `user_id uuid NOT NULL`
+- `pay_frequency text NOT NULL`
+- `typical_income numeric(14,2) NULL`
+- `currency text NOT NULL`
+- `next_pay_date date NULL`
+- `income_sources ARRAY NOT NULL`
+- `expense_categories ARRAY NOT NULL`
+- `onboarding_completed boolean NOT NULL`
+- `created_at timestamptz NOT NULL`
+- `updated_at timestamptz NOT NULL`
+
+### `movements` — 10 columnas
+- `id uuid NOT NULL`
+- `user_id uuid NOT NULL`
+- `description text NOT NULL`
+- `amount numeric(14,2) NOT NULL`
+- `currency text NOT NULL`
+- `category text NOT NULL`
+- `movement_date date NOT NULL`
+- `created_at timestamptz NOT NULL`
+- `account_id uuid NULL`
+- `type text NOT NULL`
+
+Total confirmado: 29 columnas.
+
+### Consecuencias técnicas
+- Las tres tablas base ya existen: no hay que recrearlas.
+- `financial_profiles.currency` debe conservar su significado actual para el ingreso habitual; la moneda principal necesita un campo separado o una tabla de preferencias.
+- `financial_accounts.currency` y `movements.currency` son campos de texto no restringidos por el tipo de columna; no obstante, la migración versionada agrega un CHECK en cuentas que actualmente limita los valores a ARS/USD/EUR. Hay que ampliar esa restricción de forma segura.
+- `initial_balance`, `typical_income` y `movements.amount` tienen escala 2. No se debe cambiar su precisión todavía: primero hay que definir si se admitirá registrar monedas ISO con 0 o 3 decimales y diseñar una migración compatible con los datos existentes.
+- La consulta recibida solo confirma columnas y tipos. No confirma constraints, índices, triggers, políticas RLS, claves foráneas, defaults ni datos existentes; esos puntos siguen pendientes de inspección.
+
+## 8. Riesgos y puntos a resolver antes de migrar
 
 1. **Compatibilidad de datos existentes:** ampliar catálogo sin invalidar cuentas ni movimientos actuales.
 2. **Semántica de `financial_profiles.currency`:** separar moneda del ingreso habitual y moneda principal; no reutilizar el campo ambiguo.
-3. **Saldo inicial:** definir fecha y valoración de apertura para cuentas ya existentes, sin inventar historial.
-4. **Movimientos existentes:** preservar sus importes/monedas; las equivalencias históricas antiguas no pueden reconstruirse si no se guardó la cotización.
-5. **Transferencias:** definir cómo representar operaciones con dos patas y comisiones sin duplicar ingresos/gastos.
-6. **Cotizaciones:** validar proveedores, pares, mercados, lados compra/venta, frescura y fallback antes de aprobarlos.
-7. **Catálogo:** definir proceso de actualización y monedas retiradas, sin eliminar registros históricos.
-8. **RLS y propiedad:** todas las tablas nuevas deben aislar datos por usuario y validar relaciones en servidor/base de datos.
-9. **Pruebas:** cubrir decimales, redondeo, cotizaciones faltantes, cambio de moneda principal, mercado cerrado, transferencias, comisiones y aislamiento entre usuarios.
+3. **Precisión monetaria:** definir estrategia compatible para monedas con 0, 2 o 3 decimales antes de alterar numeric(14,2).
+4. **Saldo inicial:** definir fecha y valoración de apertura para cuentas ya existentes, sin inventar historial.
+5. **Movimientos existentes:** preservar sus importes/monedas; las equivalencias históricas antiguas no pueden reconstruirse si no se guardó la cotización.
+6. **Transferencias:** definir cómo representar operaciones con dos patas y comisiones sin duplicar ingresos/gastos.
+7. **Cotizaciones:** validar proveedores, pares, mercados, lados compra/venta, frescura y fallback antes de aprobarlos.
+8. **Catálogo:** definir proceso de actualización y monedas retiradas, sin eliminar registros históricos.
+9. **RLS y propiedad:** todas las tablas nuevas deben aislar datos por usuario y validar relaciones en servidor/base de datos.
+10. **Pruebas:** cubrir decimales, redondeo, cotizaciones faltantes, cambio de moneda principal, mercado cerrado, transferencias, comisiones y aislamiento entre usuarios.
 
-## 8. Plan de implementación por etapas
+## 9. Próximo paso de auditoría
 
-- Fase 0 — Confirmar esquema real de Supabase y respaldar/inspeccionar datos existentes.
+Antes de proponer la migración SQL:
+1. Inspeccionar constraints, índices, foreign keys, triggers, defaults y RLS de las tres tablas existentes.
+2. Verificar el CHECK actual de moneda en `financial_accounts`.
+3. Revisar la precisión y validaciones que aplica la capa TypeScript al ingresar importes.
+4. Confirmar si existen datos de cuentas/movimientos en monedas distintas de ARS, USD y EUR.
+
+La auditoría de columnas está completada, pero la auditoría estructural y de seguridad todavía no.
+
+## 10. Plan de implementación por etapas
+
+- Fase 0 — Confirmar esquema real de Supabase, constraints, seguridad y datos existentes.
 - Fase 1 — Catálogo ISO y preferencias monetarias separadas.
 - Fase 2 — Capa de proveedores, fuentes recomendadas y almacenamiento de cotizaciones.
 - Fase 3 — Motor decimal de conversión y valoración.
@@ -124,14 +182,10 @@ Usar numeric/decimal exacto en persistencia y cálculos. Aplicar el redondeo seg
 - Fase 7 — Integración de estadísticas, perfil y VERA.
 - Fase 8 — Auditoría de seguridad, pruebas y despliegue gradual en Preview.
 
-## 9. Alcance de esta auditoría
-
-Esta revisión es estática sobre el código y las migraciones versionadas de la rama `feature/mis-cuentas`. No se consultó directamente el esquema vivo de Supabase ni se ejecutaron consultas sobre datos de usuarios. Por tanto, no se afirma que el único esquema existente en la base sea el que aparece en el repositorio. Antes de cualquier migración se debe verificar el esquema real desde Supabase.
-
-## 10. Restricciones de despliegue
+## 11. Restricciones de despliegue
 
 - Trabajar solo en `feature/mis-cuentas`.
 - No modificar Producción.
-- No ejecutar migraciones hasta aprobar el diseño y verificar el esquema real.
+- No ejecutar migraciones hasta aprobar el diseño y verificar constraints, RLS y datos existentes.
 - No sobrescribir archivos sin volver a leer su contenido y SHA actuales.
 - No fusionar la rama ni desplegar a Producción sin autorización explícita.
