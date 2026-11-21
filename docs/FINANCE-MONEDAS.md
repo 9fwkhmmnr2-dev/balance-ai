@@ -651,3 +651,105 @@ No se ejecutaron migraciones ni se modificaron datos.
 - No ejecutar migraciones hasta aprobar el diseño y verificar constraints, RLS y datos existentes.
 - No sobrescribir archivos sin volver a leer su contenido y SHA actuales.
 - No fusionar la rama ni desplegar a Producción sin autorización explícita.
+
+## 12. Contrato del motor decimal — diseño aprobado
+
+Esta sección documenta las decisiones aprobadas durante el diseño. Su aprobación es conceptual: **no autoriza cambios de código, migraciones ni modificaciones de datos**.
+
+### 12.1 Representación de importes
+
+- En los límites de la aplicación, los importes monetarios se transportan como cadenas decimales, nunca como JavaScript `number`.
+- La entrada localizada del usuario se interpreta y normaliza antes de validarse; por ejemplo, `"1.500,75"` puede normalizarse a `"1500.75"`.
+- Los cálculos internos utilizan objetos `Decimal` de `decimal.js`.
+- Los valores enviados a Supabase se serializan como cadenas decimales canónicas, con punto como separador decimal y sin separadores de miles.
+- Las respuestas estructuradas de VERA que contengan importes deben conservar la representación decimal como texto.
+- No se utiliza `Number()` para operaciones monetarias ni se convierte anticipadamente un importe decimal a punto flotante binario.
+- No se redondean resultados intermedios sin una necesidad explícita definida por la operación.
+
+### 12.2 Política de redondeo
+
+Regla general aprobada: `ROUND_HALF_UP`.
+
+- Sumas y restas conservan la precisión disponible y no redondean cada paso.
+- Multiplicaciones y divisiones mantienen precisión interna durante el cálculo.
+- Los importes ingresados se validan contra la cantidad de dígitos fraccionarios permitida por la moneda; el exceso se rechaza, no se corrige silenciosamente.
+- Las conversiones se redondean al final según la precisión de la moneda destino.
+- Las comisiones se validan y redondean según la precisión de su propia moneda.
+- La presentación respeta los dígitos fraccionarios definidos para la moneda y la configuración regional.
+- Redondear y truncar son operaciones distintas; el motor no debe truncar importes como sustituto del redondeo.
+
+### 12.3 Validación y errores
+
+El comportamiento aprobado es estricto y explícito:
+
+- Texto vacío o inválido: rechazar la entrada.
+- División por cero: devolver un error controlado y no producir un resultado financiero.
+- Exceso de dígitos fraccionarios para la moneda: rechazar el importe.
+- Desbordamiento o incumplimiento de límites numéricos: rechazar la operación antes de persistir.
+- Los resultados negativos pueden existir en cálculos internos cuando el contexto lo permita.
+- Los movimientos registrados mantienen importe positivo; el sentido se expresa mediante el tipo de movimiento existente.
+- Un valor faltante o nulo nunca se convierte automáticamente en cero.
+- Si falla un cálculo, no se persiste parcialmente la operación financiera.
+- Los errores deben ser identificables mediante tipos/códigos estables para que cada interfaz pueda presentar mensajes comprensibles.
+
+### 12.4 Catálogo y fuente de precisión monetaria
+
+- La fuente de referencia aprobada para el catálogo es SIX Group, que publica información del estándar ISO 4217.
+- El catálogo del producto será versionado y mantenible.
+- El alcance funcional incluye monedas fiat activas; fondos, metales y códigos especiales deben permanecer clasificados por separado y no incorporarse automáticamente como monedas fiat.
+- Cada entrada del catálogo debe identificar, como mínimo, código ISO, nombre, dígitos fraccionarios y estado/vigencia.
+- Los códigos retirados deben conservarse para interpretar registros históricos, pero no ofrecerse como opciones nuevas.
+- La cantidad de dígitos fraccionarios se determina por moneda; no se presupone que todas tengan dos.
+- La disponibilidad de una moneda para mantener saldos es independiente de que exista una cotización confiable para convertirla.
+
+### 12.5 Precisión propuesta para evaluación técnica
+
+Los siguientes parámetros fueron aceptados como base de diseño para verificar, no como límites definitivos ya implementados:
+
+- `decimal.js`: precisión de 40 dígitos significativos.
+- Importes persistidos: evaluar `NUMERIC(24,8)`.
+- Cotizaciones: evaluar hasta 12 dígitos decimales.
+- La precisión de importes, cotizaciones y cálculos intermedios debe mantenerse separada.
+- Antes de fijar los tipos SQL definitivos, verificar el catálogo completo, magnitudes máximas, compatibilidad con los datos existentes y reglas de redondeo.
+- Los 40 dígitos de `decimal.js` representan precisión significativa, no 40 decimales fijos.
+- `NUMERIC(24,8)`, si se adopta, permitiría hasta 16 dígitos enteros y 8 fraccionarios; debe comprobarse que sea suficiente para los casos admitidos.
+
+### 12.6 Contrato de funciones propuesto
+
+El motor será la única autoridad para operaciones monetarias. La API conceptual aprobada incluye:
+
+- `parseMoney`: interpretar y normalizar una entrada decimal.
+- `validateMoney`: validar formato, moneda, precisión permitida y límites.
+- `addMoney` / `subtractMoney`: sumar y restar importes compatibles.
+- `multiplyMoney` / `divideMoney`: operaciones matemáticas decimales con validación de dominio.
+- `roundMoney`: aplicar la regla y escala de redondeo correspondiente.
+- `formatMoney`: presentar un importe con la moneda y configuración regional correspondientes.
+- `convertMoney`: convertir únicamente con cotizaciones confiables, compatibles y verificadas.
+
+Contrato general:
+- Entradas y salidas en los límites públicos: cadenas decimales canónicas y metadatos explícitos de moneda.
+- Representación interna: `Decimal`.
+- Errores: tipados y controlados; no devolver importes ficticios o valores por defecto ante errores.
+- Ningún módulo, estadística ni respuesta de VERA puede realizar cálculos monetarios por fuera de este motor.
+- Las operaciones deben declarar moneda de origen/destino cuando corresponda; nunca sumar directamente cantidades de monedas diferentes.
+
+### 12.7 Pruebas obligatorias antes de considerar terminada la implementación
+
+La implementación deberá superar pruebas automatizadas que cubran:
+
+1. Monedas con 0, 2, 3 y 4 dígitos fraccionarios, incluyendo validación de precisión.
+2. Sumas y restas con muchos dígitos decimales.
+3. Multiplicaciones y divisiones, incluida división por cero.
+4. Conversiones ARS → USD, USD → EUR y EUR → ARS con cotizaciones de prueba explícitas.
+5. Importes grandes, límites de precisión y desbordamiento.
+6. Casos de redondeo `ROUND_HALF_UP`, incluidos valores justo por debajo, en y por encima del punto medio.
+7. Entradas vacías, inválidas, nulas y con separadores regionales.
+8. Comisiones denominadas en monedas distintas y prevención de doble descuento.
+9. Cotizaciones ausentes, vencidas o incompatibles, que deben impedir la conversión automática.
+10. Fallos transaccionales: verificar que una operación fallida no deje persistencia parcial ni modifique saldos.
+
+Las pruebas deben verificar tanto los resultados numéricos como la integridad de los datos y la ausencia de efectos secundarios indebidos.
+
+### 12.8 Estado de implementación
+
+Todo lo descrito en esta sección es un contrato de diseño aprobado. No implica que `decimal.js` esté instalado, que las funciones existan, que las columnas SQL hayan sido alteradas ni que las pruebas ya estén implementadas o ejecutadas. Esos trabajos requieren una autorización y planificación posteriores, dentro de `feature/mis-cuentas`, sin tocar Producción.
