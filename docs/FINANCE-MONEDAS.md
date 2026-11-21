@@ -546,6 +546,69 @@ Total observado: 12 registros distribuidos en esas cuatro combinaciones. No se o
 - `initial_balance`, `typical_income` y `movements.amount` tienen escala 2. No se debe cambiar su precisión todavía: primero hay que definir si se admitirá registrar monedas ISO con 0 o 3 decimales y diseñar una migración compatible con los datos existentes.
 - Las columnas, índices (por nombre), restricciones, claves foráneas, estado RLS, políticas, trigger y distribución de monedas descritos en la sección de auditoría estructural ya fueron inspeccionados mediante consultas de solo lectura. Las definiciones completas de algunos CHECK, las definiciones completas de índices y el DDL completo del trigger no quedaron visibles en los resultados recibidos.
 
+## 7.1 Auditoría de importes y monedas en TypeScript
+
+Revisión de solo lectura de los archivos de la rama `feature/mis-cuentas`:
+
+### Parser compartido
+
+Archivo: `lib/parse-localized-amount.ts`
+
+- `parseLocalizedAmount(raw)` devuelve `number | null`, no una cadena decimal.
+- Interpreta formatos habituales de Argentina, como `160.000`, `160.000,50` y `160,50`.
+- No recibe un código de moneda y no valida cuántos dígitos fraccionarios permite la moneda.
+- Por lo tanto, no distingue entre monedas de 0, 2 o 3 dígitos fraccionarios ni garantiza aritmética decimal exacta después de convertir a `number`.
+
+### Cuentas
+
+Archivo: `components/accounts-view.tsx`
+
+- El tipo TypeScript `Currency` está limitado a `"ARS" | "USD" | "EUR"`.
+- El selector de moneda ofrece únicamente ARS, USD y EUR.
+- El saldo inicial se procesa mediante `parseLocalizedAmount` y se envía como número.
+- Los saldos se reconstruyen y suman mediante operaciones de JavaScript `number`.
+- El formateador de cuentas configura `maximumFractionDigits: 2`.
+
+### Movimientos
+
+Archivos: `components/quick-movement.tsx` y `components/movements-manager.tsx`
+
+- Ambos formularios usan `parseLocalizedAmount` y envían el importe como número.
+- Los selectores de moneda están limitados a ARS, USD y EUR.
+- El movimiento rápido filtra las cuentas disponibles para exigir coincidencia entre la moneda elegida y la cuenta.
+- La función SQL del trigger vuelve a verificar esa coincidencia y la pertenencia de la cuenta al usuario.
+- El formateo de movimientos usa `Intl.NumberFormat` con el código de moneda.
+
+### Perfil / onboarding
+
+Archivo: `components/onboarding-gate.tsx`
+
+- El importe de ingreso habitual se procesa con el mismo parser y se guarda como número en `typical_income`.
+- El selector de moneda del ingreso ofrece ARS, USD y EUR.
+- El campo `financial_profiles.currency` sigue representando la moneda del ingreso habitual en este flujo; no es una preferencia global de moneda principal.
+
+### Dashboard
+
+Archivo: `components/dashboard-stats.tsx`
+
+- La moneda preferida inicial se lee de `financial_profiles.currency`.
+- El selector local se construye con esa moneda y las monedas presentes en los movimientos.
+- Las estadísticas filtran movimientos por moneda; no convierten importes entre monedas.
+- Los importes se suman usando JavaScript `number`.
+- El formateador principal del dashboard fija `maximumFractionDigits: 0`, por lo que la vista de resumen no muestra fracciones aunque el movimiento original las tenga.
+
+### Conclusión técnica
+
+La expansión multidivisa no debe limitarse a agregar códigos a los selectores ni a quitar el CHECK de cuentas. Antes hay que definir y probar:
+
+1. Una representación decimal exacta de importes en el límite de entrada, cálculos y persistencia; evitar conversiones prematuras a JavaScript `number`.
+2. Una regla de precisión por moneda basada en el catálogo ISO 4217.
+3. Validación de fracciones permitidas para cada moneda en los formularios y en el servidor/base de datos.
+4. Formateo por moneda en cuentas, movimientos, perfil y dashboard, sin truncar fracciones válidas.
+5. Una estrategia de migración compatible con los campos actuales `numeric(14,2)`.
+
+No se modificó ninguno de estos archivos durante la auditoría.
+
 ## 8. Riesgos y puntos a resolver antes de migrar
 
 1. **Compatibilidad de datos existentes:** ampliar catálogo sin invalidar cuentas ni movimientos actuales.
