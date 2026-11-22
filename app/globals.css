@@ -1714,3 +1714,28 @@ body{background:#090A0D;color:#F2F0EB}
   font-size: 16px !important;
   overflow: hidden !important;
 }
+
+
+/* Dashboard · filtros globales de período */
+.dashboard-period-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 18px}
+.dashboard-period-toolbar>span{color:#B7B5BC;font-size:12px;font-weight:600}
+.dashboard-period-switch{display:flex;align-items:center;gap:4px;padding:4px;border:1px solid #343640;border-radius:11px;background:#17191F}
+.dashboard-period-switch button{min-height:34px;padding:0 13px;border:1px solid transparent;border-radius:8px;background:transparent;color:#B7B5BC;font-size:12px;font-weight:600;transition:background .18s ease,color .18s ease,border-color .18s ease}
+.dashboard-period-switch button.active{background:#30253F;border-color:#59466E;color:#E9DDF7}
+.dashboard-period-switch button:focus-visible{outline:2px solid #C8A96B;outline-offset:2px}
+.period-chart{height:145px;display:flex;align-items:stretch;justify-content:space-around;gap:8px;padding-top:8px}
+.period-column{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:9px;color:#92909A;font-size:10px}
+.period-bars{height:115px;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:4px;border-bottom:1px solid #30323A}
+.period-bars .weekly-bar{width:min(25px,42%);max-width:25px}
+.period-chart-monthly .period-column,.period-chart-yearly .period-column{font-size:9px}
+.period-chart-yearly{gap:3px}
+.period-chart-yearly .period-bars{gap:2px}
+.period-chart-yearly .period-bars .weekly-bar{width:42%;max-width:18px}
+@media(max-width:600px){
+  .dashboard-period-toolbar{align-items:flex-start;flex-direction:column;gap:8px}
+  .dashboard-period-switch{width:100%;justify-content:space-between}
+  .dashboard-period-switch button{flex:1;padding:0 5px;font-size:11px}
+  .period-chart{gap:4px}
+  .period-chart-yearly{gap:2px}
+  .period-chart-yearly .period-column{font-size:8px}
+}
