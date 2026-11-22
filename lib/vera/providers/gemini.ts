@@ -31,7 +31,7 @@ export class GeminiVeraProvider implements VeraProvider {
     if (!apiKey) throw new Error("VERA_AI_NOT_CONFIGURED");
 
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     const systemInstruction = [
       VERA_SYSTEM_INSTRUCTIONS,
       buildContext(input),
@@ -39,7 +39,7 @@ export class GeminiVeraProvider implements VeraProvider {
 
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemInstruction }] },
         contents: input.messages.map((message) => ({
