@@ -28,6 +28,7 @@ type Transfer = {
   to_account_id: string;
   amount: number;
 };
+type Period = "daily" | "weekly" | "monthly" | "yearly";
 
 function dateKey(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
@@ -47,6 +48,7 @@ export default function DashboardStats() {
   const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [currency, setCurrency] = useState("");
   const [currencies, setCurrencies] = useState(["ARS"]);
+  const [period, setPeriod] = useState<Period>("monthly");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -119,26 +121,43 @@ export default function DashboardStats() {
     0
   );
   const now = new Date();
-  const monthKey = dateKey(new Date(now.getFullYear(), now.getMonth(), 1)).slice(0, 7);
-  const monthly = selected.filter((item) => item.movement_date?.slice(0, 7) === monthKey);
-  const income = monthly.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount), 0);
-  const expenses = monthly.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount), 0);
-  const monthlyNet = income - expenses;
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayKey = dateKey(today);
+  const rangeStart = new Date(today);
+  if (period === "weekly") rangeStart.setDate(rangeStart.getDate() - 6);
+  if (period === "monthly") rangeStart.setDate(1);
+  if (period === "yearly") rangeStart.setMonth(0, 1);
+  const startKey = dateKey(rangeStart);
+  const periodMovements = selected.filter((item) => item.movement_date?.slice(0, 10) >= startKey && item.movement_date?.slice(0, 10) <= todayKey);
+  const income = periodMovements.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount), 0);
+  const expenses = periodMovements.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount), 0);
+  const periodNet = income - expenses;
   const allTimeNet = selected.reduce((sum, item) => sum + (item.type === "income" ? 1 : -1) * Number(item.amount), 0);
-  const days = Array.from({ length: 7 }, (_, index) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - index));
-    const key = dateKey(date);
-    const dayItems = selected.filter((item) => item.movement_date?.slice(0, 10) === key);
-    return {
-      key,
-      label: date.toLocaleDateString("es-AR", { weekday: "short" }).replace(".", ""),
-      income: dayItems.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount), 0),
-      expenses: dayItems.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount), 0)
-    };
+  const totals = (items: Movement[]) => ({
+    income: items.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount), 0),
+    expenses: items.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount), 0)
   });
-  const maxDay = Math.max(1, ...days.flatMap((day) => [day.income, day.expenses]));
-  const recent = selected.slice(0, 5);
+  const chartData = period === "daily"
+    ? [{ key: todayKey, label: "Hoy", ...totals(periodMovements) }]
+    : period === "weekly"
+      ? Array.from({ length: 7 }, (_, index) => {
+          const date = new Date(rangeStart); date.setDate(date.getDate() + index);
+          const key = dateKey(date);
+          return { key, label: date.toLocaleDateString("es-AR", { weekday: "short" }).replace(".", ""), ...totals(periodMovements.filter((item) => item.movement_date?.slice(0, 10) === key)) };
+        })
+      : period === "monthly"
+        ? Array.from({ length: Math.ceil(now.getDate() / 7) }, (_, index) => ({
+            key: "week-" + (index + 1), label: "Sem " + (index + 1),
+            ...totals(periodMovements.filter((item) => Math.floor((Number(item.movement_date.slice(8, 10)) - 1) / 7) === index))
+          }))
+        : Array.from({ length: now.getMonth() + 1 }, (_, index) => ({
+            key: "month-" + (index + 1),
+            label: new Date(now.getFullYear(), index, 1).toLocaleDateString("es-AR", { month: "short" }).replace(".", ""),
+            ...totals(periodMovements.filter((item) => Number(item.movement_date.slice(5, 7)) === index + 1))
+          }));
+  const maxBucket = Math.max(1, ...chartData.flatMap((bucket) => [bucket.income, bucket.expenses]));
+  const recent = periodMovements.slice(0, 5);
+  const periodLabel = ({ daily: "hoy", weekly: "esta semana", monthly: "este mes", yearly: "este año" } as const)[period];
 
   if (loading) return <section className="card">Preparando tu panorama financiero...</section>;
   if (error) return <section className="card"><p>{error}</p><button className="text-button" onClick={() => { setLoading(true); void loadData(); }}>Reintentar</button></section>;
@@ -155,16 +174,24 @@ export default function DashboardStats() {
         <div>
           <p className="eyebrow">RESUMEN PERSONAL</p>
           <h2>Tu dinero, en perspectiva.</h2>
-          <p>Un vistazo claro a lo que ingresó y salió este mes.</p>
+          <p>Un vistazo claro a lo que ingresó y salió {periodLabel}.</p>
         </div>
         <label className="currency-picker">Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
       </section>
 
+      <section className="dashboard-period-toolbar" aria-label="Período de análisis">
+        <span>Período</span>
+        <div className="dashboard-period-switch" role="group" aria-label="Filtrar dashboard por período">
+          {([["daily", "Diario"], ["weekly", "Semanal"], ["monthly", "Mensual"], ["yearly", "Anual"]] as const).map(([value, label]) => (
+            <button key={value} type="button" className={period === value ? "active" : ""} aria-pressed={period === value} onClick={() => setPeriod(value)}>{label}</button>
+          ))}
+        </div>
+      </section>
       <section className="dashboard-balance-card">
         <div>
-          <p className="balance-kicker">BALANCE NETO REGISTRADO · ESTE MES</p>
-          <h2>{money(monthlyNet, currency)}</h2>
-          <p className="balance-caption">{monthlyNet > 0 ? "Registraste más ingresos que gastos." : monthlyNet < 0 ? "Tus gastos registrados superan tus ingresos." : "Tus ingresos y gastos registrados están equilibrados."}</p>
+          <p className="balance-kicker">BALANCE NETO REGISTRADO · {period === "daily" ? "HOY" : period === "weekly" ? "ESTA SEMANA" : period === "monthly" ? "ESTE MES" : "ESTE AÑO"}</p>
+          <h2>{money(periodNet, currency)}</h2>
+          <p className="balance-caption">{periodNet > 0 ? "Registraste más ingresos que gastos en este período." : periodNet < 0 ? "Tus gastos registrados superan tus ingresos en este período." : "Tus ingresos y gastos registrados están equilibrados en este período."}</p>
         </div>
         <div className="balance-period"><span>Balance acumulado</span><strong>{money(allTimeNet, currency)}</strong><small>Desde tus primeros movimientos</small></div>
       </section>
@@ -190,25 +217,25 @@ export default function DashboardStats() {
       </section>
 
       <section className="stats-grid dashboard-stat-cards">
-        <article className="card stat-card income-stat-card"><p className="card-label">Ingresos del mes</p><h3 className="card-value">{money(income, currency)}</h3><p className="card-note">Total registrado este mes</p></article>
-        <article className="card stat-card expense-stat-card"><p className="card-label">Gastos del mes</p><h3 className="card-value">{money(expenses, currency)}</h3><p className="card-note">Total registrado este mes</p></article>
-        <article className="card stat-card movements-stat-card"><p className="card-label">Movimientos del mes</p><h3 className="card-value">{monthly.length}</h3><p className="card-note">Registros en {now.toLocaleDateString("es-AR", { month: "long" })}</p></article>
+        <article className="card stat-card income-stat-card"><p className="card-label">Ingresos {periodLabel}</p><h3 className="card-value">{money(income, currency)}</h3><p className="card-note">Total registrado en el período</p></article>
+        <article className="card stat-card expense-stat-card"><p className="card-label">Gastos {periodLabel}</p><h3 className="card-value">{money(expenses, currency)}</h3><p className="card-note">Total registrado en el período</p></article>
+        <article className="card stat-card movements-stat-card"><p className="card-label">Movimientos {periodLabel}</p><h3 className="card-value">{periodMovements.length}</h3><p className="card-note">Registros dentro del período</p></article>
       </section>
 
       <section className="vera-insight-card">
-        <div className="vera-insight-top"><span className="vera-mark">V</span><div><p className="eyebrow">VERA · LECTURA FINANCIERA</p><h3>{monthly.length === 0 ? "Empecemos a entender tus finanzas." : monthlyNet > 0 ? "Tu balance mensual está en positivo." : monthlyNet < 0 ? "Este mes tus gastos superan tus ingresos." : "Tu balance mensual está equilibrado."}</h3></div><span className="insight-status">Análisis básico</span></div>
-        <p>{monthly.length === 0 ? "Cuando registres ingresos y gastos, vamos a poder mostrarte tendencias y observaciones basadas en tus propios movimientos." : monthlyNet > 0 ? `Hasta ahora registraste ${money(monthlyNet, currency)} más en ingresos que en gastos durante este mes. Seguí registrando tus movimientos para observar cómo evoluciona.` : monthlyNet < 0 ? `La diferencia entre tus ingresos y gastos registrados es de ${money(Math.abs(monthlyNet), currency)}. Revisá las categorías de gasto para entender qué está impulsando el resultado.` : "Por ahora, los ingresos y gastos que registraste durante este mes tienen el mismo total."}</p>
+        <div className="vera-insight-top"><span className="vera-mark">V</span><div><p className="eyebrow">VERA · LECTURA FINANCIERA</p><h3>{periodMovements.length === 0 ? "Todavía no hay datos para este período." : periodNet > 0 ? "Tu balance está en positivo." : periodNet < 0 ? "Tus gastos superan tus ingresos." : "Tu balance está equilibrado."}</h3></div><span className="insight-status">Análisis básico</span></div>
+        <p>{periodMovements.length === 0 ? "Cuando registres ingresos y gastos en este período, vamos a poder mostrarte tendencias basadas en tus movimientos." : periodNet > 0 ? "En " + periodLabel + " registraste " + money(periodNet, currency) + " más en ingresos que en gastos." : periodNet < 0 ? "La diferencia entre tus ingresos y gastos registrados " + periodLabel + " es de " + money(Math.abs(periodNet), currency) + ". Revisá tus categorías de gasto." : "Tus ingresos y gastos registrados " + periodLabel + " tienen el mismo total."}</p>
         <small>Esta lectura se calcula con tus movimientos registrados; todavía no es una respuesta de IA.</small>
       </section>
 
       <div className="dashboard-lower-grid">
         <section className="card activity-card">
-          <div className="section-heading"><div><p className="eyebrow">ÚLTIMA SEMANA</p><h3>Actividad de tus movimientos</h3></div><span className="chart-legend"><i className="legend-income" /> Ingresos <i className="legend-expense" /> Gastos</span></div>
-          {days.every((day) => day.income === 0 && day.expenses === 0) ? <p className="empty-state">Todavía no hay movimientos registrados en los últimos siete días.</p> : <div className="weekly-chart">{days.map((day) => <div className="weekly-day" key={day.key}><div className="weekly-bars"><span className="weekly-bar income-bar" style={{ height: `${Math.max(day.income / maxDay * 100, day.income > 0 ? 5 : 0)}%` }} title={`Ingresos: ${money(day.income, currency)}`} /><span className="weekly-bar expense-bar" style={{ height: `${Math.max(day.expenses / maxDay * 100, day.expenses > 0 ? 5 : 0)}%` }} title={`Gastos: ${money(day.expenses, currency)}`} /></div><span>{day.label}</span></div>)}</div>}
+          <div className="section-heading"><div><p className="eyebrow">ANÁLISIS DEL PERÍODO</p><h3>Ingresos y gastos</h3></div><span className="chart-legend"><i className="legend-income" /> Ingresos <i className="legend-expense" /> Gastos</span></div>
+          {periodMovements.length === 0 ? <p className="empty-state">No hay movimientos registrados {periodLabel}.</p> : <div className={"period-chart period-chart-" + period}>{chartData.map((bucket) => <div className="period-column" key={bucket.key}><div className="period-bars"><span className="weekly-bar income-bar" style={{ height: Math.max(bucket.income / maxBucket * 100, bucket.income > 0 ? 5 : 0) + "%" }} title={"Ingresos: " + money(bucket.income, currency)} /><span className="weekly-bar expense-bar" style={{ height: Math.max(bucket.expenses / maxBucket * 100, bucket.expenses > 0 ? 5 : 0) + "%" }} title={"Gastos: " + money(bucket.expenses, currency)} /></div><span>{bucket.label}</span></div>)}</div>}
         </section>
-        <section className="card recent-card"><div className="section-heading"><div><p className="eyebrow">REGISTRO</p><h3>Movimientos recientes</h3></div></div>{recent.length === 0 ? <p className="empty-state">Tus movimientos aparecerán acá cuando registres el primero.</p> : recent.map((item) => <div className="recent-movement" key={item.id}><span className={`movement-dot ${item.type === "income" ? "dot-income" : "dot-expense"}`} /><div className="recent-description"><strong>{item.description}</strong><small>{item.category} · {item.movement_date}</small></div><b className={item.type === "income" ? "amount-income" : "amount-expense"}>{item.type === "income" ? "+" : "−"}{money(Number(item.amount), currency)}</b></div>)}</section>
+        <section className="card recent-card"><div className="section-heading"><div><p className="eyebrow">REGISTRO</p><h3>Movimientos del período</h3></div></div>{recent.length === 0 ? <p className="empty-state">No hay movimientos para mostrar en este período.</p> : recent.map((item) => <div className="recent-movement" key={item.id}><span className={`movement-dot ${item.type === "income" ? "dot-income" : "dot-expense"}`} /><div className="recent-description"><strong>{item.description}</strong><small>{item.category} · {item.movement_date}</small></div><b className={item.type === "income" ? "amount-income" : "amount-expense"}>{item.type === "income" ? "+" : "−"}{money(Number(item.amount), currency)}</b></div>)}</section>
       </div>
-      <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en los movimientos que registraste en FINANCETRACK. No representan saldos bancarios.</p>
+      <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en tus movimientos registrados. Las transferencias entre tus cuentas no se cuentan como ingresos ni gastos.</p>
     </div>
   );
 }
