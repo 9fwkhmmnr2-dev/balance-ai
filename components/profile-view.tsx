@@ -245,9 +245,11 @@ export default function ProfileView() {
           Análisis de tu actividad financiera de este mes.
         </p>
 
-        <div
+        <div className="profile-vera-summary"
           style={{
-            background: "#EFF8FE",
+            background: "linear-gradient(120deg, #191A22, #211E2B)",
+            border: "1px solid #40364F",
+            color: "#E7E2EC",
             borderRadius: 12,
             padding: 18,
             lineHeight: 1.8,
