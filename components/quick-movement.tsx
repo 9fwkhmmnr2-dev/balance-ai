@@ -90,8 +90,8 @@ export default function QuickMovement() {
 
   return (
     <>
-      <button id="registrar-movimiento" className="quick-add-button" onClick={() => void openModal()}>
-        <span aria-hidden="true">＋</span> Registrar movimiento
+      <button id="registrar-movimiento" className="quick-add-button" aria-label="Registrar movimiento" title="Registrar movimiento" onClick={() => void openModal()}>
+        <span className="quick-add-icon" aria-hidden="true">＋</span><span className="quick-add-label">Registrar movimiento</span>
       </button>
       {open && (
         <div className="quick-modal-backdrop" onMouseDown={(event) => {
