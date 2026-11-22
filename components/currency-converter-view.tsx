@@ -171,7 +171,7 @@ export default function CurrencyConverterView() {
   return (
     <div className="converter-page">
       <header className="converter-desktop-nav">
-        <a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a>
+        <a href="/" className="mobile-brand">FINANCE<span>.</span>TRACK</a>
         <nav aria-label="Navegación principal">
           <a href="/">Inicio</a>
           <a href="/movimientos">Movimientos</a>
