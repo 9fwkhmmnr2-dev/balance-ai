@@ -75,10 +75,13 @@ export default function VeraView() {
     <div className="vera-page">
       <style>{`
         .vera-page{--v:#a78bfa;--v2:#7c3aed;--ink:#09090d;--panel:#14121c;--line:rgba(196,181,253,.15);color:#f5f3fa;max-width:1000px;margin:0 auto;padding:12px 0 48px}
-        .vera-shell{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}\n        .vera-hero{position:relative;overflow:hidden;border:0;border-radius:0;background:transparent;padding:25px 24px 19px;text-align:center}
-        .vera-orbit{width:76px;height:76px;margin:0 auto 15px;border-radius:50%;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle at 30% 22%,#e1d5ff 0%,#b99aff 18%,#9561f5 43%,#672ac5 70%,#32105f 100%);border:1px solid rgba(235,225,255,.62);box-shadow:0 0 0 6px rgba(167,139,250,.08),0 0 35px rgba(139,92,246,.34),inset 0 2px 8px rgba(255,255,255,.35),inset 0 -7px 12px rgba(28,5,61,.35);animation:vera-breathe 3.8s ease-in-out infinite;transition:transform .35s,filter .35s}\n        .vera-orbit:after{content:"";position:absolute;top:-45%;left:-65%;width:42%;height:190%;transform:rotate(28deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),rgba(255,255,255,.08),transparent);animation:vera-shine 5.8s ease-in-out infinite}
-        .vera-orbit:before,.vera-orbit:after{content:"";position:absolute;inset:-9px;border:1px solid rgba(196,181,253,.22);border-radius:50%;animation:vera-pulse 4s ease-out infinite}
-        .vera-orbit:after{animation-delay:2s}
+        .vera-shell{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
+        .vera-hero{position:relative;overflow:hidden;border:0;border-radius:0;background:transparent;padding:25px 24px 19px;text-align:center}
+        .vera-orbit{width:76px;height:76px;margin:0 auto 15px;border-radius:50%;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle at 30% 22%,#e1d5ff 0%,#b99aff 18%,#9561f5 43%,#672ac5 70%,#32105f 100%);border:1px solid rgba(235,225,255,.62);box-shadow:0 0 0 6px rgba(167,139,250,.08),0 0 35px rgba(139,92,246,.34),inset 0 2px 8px rgba(255,255,255,.35),inset 0 -7px 12px rgba(28,5,61,.35);animation:vera-breathe 3.8s ease-in-out infinite;transition:transform .35s,filter .35s}
+        .vera-orbit:after{content:"";position:absolute;top:-45%;left:-65%;width:42%;height:190%;transform:rotate(28deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),rgba(255,255,255,.08),transparent);animation:vera-shine 5.8s ease-in-out infinite}
+        .vera-orbit:before{content:"";position:absolute;inset:-8px;border:1px solid rgba(196,181,253,.22);border-radius:50%;animation:vera-pulse 4s ease-out infinite;pointer-events:none}
+        .vera-orbit:active{transform:rotateY(12deg) rotateX(-6deg) scale(.97)}
+        .vera-shell.is-thinking .vera-orbit{animation:vera-breathe 1.35s ease-in-out infinite}
         .vera-symbol{font:700 37px/1 Georgia,serif;color:white;text-shadow:0 2px 16px rgba(35,10,75,.5)}
         .vera-eyebrow{font-size:10px;letter-spacing:2.2px;text-transform:uppercase;color:#c4b5fd;font-weight:700}
         .vera-hero h1{font-size:clamp(28px,5vw,38px);letter-spacing:-1.4px;margin:9px 0 7px;font-weight:750}
@@ -98,7 +101,9 @@ export default function VeraView() {
         .vera-bubble{max-width:84%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;animation:vera-message-in .34s cubic-bezier(.2,.8,.2,1) both}
         .vera-bubble.model{align-self:flex-start;background:#211a2d;border:1px solid rgba(196,181,253,.12);color:#eee9f6;border-top-left-radius:5px}
         .vera-bubble.user{align-self:flex-end;background:linear-gradient(135deg,#7040bd,#59319d);color:#fff;border-top-right-radius:5px}
-        .vera-thinking{align-self:flex-start;display:flex;align-items:center;gap:8px;color:#c4b5fd;font-size:12px;padding:5px 10px;animation:vera-message-in .25s ease both}\n        .vera-mini-coin{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#e1d5ff,#a879ff 42%,#5923a7 80%);box-shadow:0 0 12px rgba(167,139,250,.4);animation:vera-breathe 1.5s ease-in-out infinite}\n        .vera-dots{display:inline-flex;gap:3px;align-items:center}.vera-dots i{width:4px;height:4px;border-radius:50%;background:#c8adff;animation:vera-dot-wave .9s ease-in-out infinite}.vera-dots i:nth-child(2){animation-delay:.14s}.vera-dots i:nth-child(3){animation-delay:.28s}
+        .vera-thinking{align-self:flex-start;display:flex;align-items:center;gap:8px;color:#c4b5fd;font-size:12px;padding:5px 10px;animation:vera-message-in .25s ease both}
+        .vera-mini-coin{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#e1d5ff,#a879ff 42%,#5923a7 80%);box-shadow:0 0 12px rgba(167,139,250,.4);animation:vera-breathe 1.5s ease-in-out infinite}
+        .vera-dots{display:inline-flex;gap:3px;align-items:center}.vera-dots i{width:4px;height:4px;border-radius:50%;background:#c8adff;animation:vera-dot-wave .9s ease-in-out infinite}.vera-dots i:nth-child(2){animation-delay:.14s}.vera-dots i:nth-child(3){animation-delay:.28s}
         .vera-starters{display:flex;flex-wrap:wrap;gap:7px;padding:0 17px 15px}
         .vera-starter{border:1px solid rgba(196,181,253,.2);background:#191522;color:#d8cafa;border-radius:20px;padding:8px 11px;font-size:11px;cursor:pointer}
         .vera-starter:disabled{opacity:.5;cursor:default}
@@ -110,13 +115,17 @@ export default function VeraView() {
         .vera-send:disabled{opacity:.38;cursor:default}.vera-send.ready{background:linear-gradient(145deg,#c3a7ff,#8648e8);box-shadow:0 0 17px rgba(139,92,246,.25)}.vera-send-arrow{display:block;transition:transform .2s}.vera-send:not(:disabled):hover .vera-send-arrow{transform:translate(2px,-2px)}
         .vera-error{padding:0 17px 13px;color:#f0b4c0;font-size:12px}
         .vera-privacy{margin:12px 3px 0;color:#898194;font-size:10px;line-height:1.6;text-align:center}
-        @keyframes vera-breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.1)}}\n        @keyframes vera-shine{0%,62%{left:-65%;opacity:0}70%{opacity:.9}88%,100%{left:130%;opacity:0}}\n        @keyframes vera-dot-wave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-4px);opacity:1}}\n        @keyframes vera-message-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+        @keyframes vera-breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.1)}}
+        @keyframes vera-shine{0%,62%{left:-65%;opacity:0}70%{opacity:.9}88%,100%{left:130%;opacity:0}}
+        @keyframes vera-dot-wave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-4px);opacity:1}}
+        @keyframes vera-message-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
         @keyframes vera-pulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.2);opacity:0}}
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:13px}.vera-starters{padding:0 12px 13px}.vera-compose{padding:11px}.vera-period{max-width:125px}}
         @media(prefers-reduced-motion:reduce){.vera-orbit,.vera-orbit:before,.vera-orbit:after,.vera-orbit:after,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking{animation:none!important}}
       `}</style>
 
-      <section className="vera-shell" aria-label="Asistente financiera VERA">\n      <header className="vera-hero" aria-labelledby="vera-title">
+      <section className={`vera-shell${sending ? " is-thinking" : ""}`} aria-label="Asistente financiera VERA">
+      <header className="vera-hero" aria-labelledby="vera-title">
         <button className="vera-orbit" type="button" aria-label="Moneda de VERA"><span className="vera-symbol">V</span></button>
         <div className="vera-eyebrow">Tu compañera financiera</div>
         <h1 id="vera-title">Hola, soy <span>VERA.</span></h1>
@@ -160,6 +169,7 @@ export default function VeraView() {
           </form>
           <p className="vera-privacy">VERA analiza los movimientos registrados en FINANCETRACK. No realiza operaciones ni modifica tus cuentas.</p>
         </div>
+      </section>
       </section>
     </div>
   );
