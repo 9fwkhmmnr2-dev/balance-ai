@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
@@ -10,6 +10,12 @@ type AccountOption = { id: string; name: string; currency: string };
 
 export default function QuickMovement() {
   const [open, setOpen] = useState(false);
+  const [compactButton, setCompactButton] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setCompactButton(true), 2700);
+    return () => window.clearTimeout(timeout);
+  }, []);
   const today = new Date();
   const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const [type, setType] = useState<"expense" | "income">("expense");
@@ -90,7 +96,7 @@ export default function QuickMovement() {
 
   return (
     <>
-      <button id="registrar-movimiento" className="quick-add-button" aria-label="Registrar movimiento" title="Registrar movimiento" onClick={() => void openModal()}>
+      <button id="registrar-movimiento" className={`quick-add-button${compactButton ? " is-compact" : ""}`} aria-label="Registrar movimiento" title="Registrar movimiento" onClick={() => void openModal()}>
         <span className="quick-add-icon" aria-hidden="true">＋</span><span className="quick-add-label">Registrar movimiento</span>
       </button>
       {open && (
