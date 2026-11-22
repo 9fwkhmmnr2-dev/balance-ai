@@ -8,11 +8,23 @@ type Period = "daily" | "weekly" | "monthly" | "yearly";
 type Conversation = { id: string; title: string; last_message_at: string; archived_at: string | null; created_at?: string };
 
 const starters = ["¿Cómo vienen mis finanzas este mes?", "¿En qué estoy gastando más?", "Ayudame a entender mis gastos."];
+const welcomePhrases = [
+  "Tus cuentas al día, tu cabeza tranquila.",
+  "Un paso a la vez. Tus finanzas también tienen su ritmo.",
+  "Cada movimiento cuenta. Vamos a entenderlos juntos.",
+  "Un poco más de claridad para tomar mejores decisiones.",
+  "Tu progreso no siempre se mide en números.",
+];
+function pickWelcomePhrase(previous?: string) {
+  const choices = welcomePhrases.filter((phrase) => phrase !== previous);
+  return choices[Math.floor(Math.random() * choices.length)] ?? welcomePhrases[0];
+}
 const periodLabels: Record<Period, string> = { daily: "Hoy", weekly: "Últimos 7 días", monthly: "Este mes", yearly: "Este año" };
 
 export default function VeraView() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [welcomePhrase, setWelcomePhrase] = useState(() => pickWelcomePhrase());
   const [period, setPeriod] = useState<Period>("monthly");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -90,6 +102,7 @@ export default function VeraView() {
     setConversationId(null);
     setMessages([]);
     setDraft("");
+    setWelcomePhrase((current) => pickWelcomePhrase(current));
     setError("");
     setShowHistory(false);
     setShowArchived(false);
@@ -180,7 +193,7 @@ export default function VeraView() {
         .vera-eyebrow{font-size:10px;letter-spacing:2.2px;text-transform:uppercase;color:#c4b5fd;font-weight:700}
         .vera-hero h1{font-size:clamp(28px,5vw,38px);letter-spacing:-1.4px;margin:9px 0 7px;font-weight:750}
         .vera-hero h1 span{color:#c4b5fd}
-        .vera-sub{max-width:520px;margin:0 auto;color:#b8b2c5;font-size:13px;line-height:1.65}
+        .vera-sub{max-width:520px;margin:0 auto;color:#b8b2c5;font-size:13px;line-height:1.65}\n        .vera-welcome-phrase{margin:15px auto 0;color:#c4b5fd;font-size:13px;font-style:italic;letter-spacing:.1px;line-height:1.6;animation:vera-phrase-in .9s ease both;text-shadow:0 0 18px rgba(167,139,250,.18)}
                 .vera-chat{margin-top:0;border:0;border-top:1px solid var(--line);border-radius:0;overflow:hidden;background:rgba(10,8,15,.22)}
         .vera-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
         .vera-chat-head strong{font-size:13px}.vera-chat-head small{display:block;color:#9e96ad;font-size:11px;margin-top:3px}
@@ -216,7 +229,7 @@ export default function VeraView() {
         .vera-history-open{display:block;width:100%;text-align:left;background:transparent;border:0;color:#eee8f7;cursor:pointer;padding:0;font-size:12px;line-height:1.4}.vera-history-date{display:block;color:#8e849d;font-size:10px;margin-top:4px}
         .vera-history-actions{display:flex;gap:12px;margin-top:8px}.vera-history-action{border:0;background:transparent;color:#bba5e9;font-size:10px;padding:0;cursor:pointer}.vera-history-action.delete{color:#d99ba9}
         .vera-history-empty{padding:24px 10px;text-align:center;color:#968ba5;font-size:12px;line-height:1.6}
-        @keyframes vera-aurora{0%{transform:translate3d(-2%,0,0) rotate(-4deg) scale(1)}50%{transform:translate3d(3%,2%,0) rotate(3deg) scale(1.06)}100%{transform:translate3d(-1%,4%,0) rotate(-2deg) scale(1.02)}}
+        @keyframes vera-phrase-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}\n        @keyframes vera-aurora{0%{transform:translate3d(-2%,0,0) rotate(-4deg) scale(1)}50%{transform:translate3d(3%,2%,0) rotate(3deg) scale(1.06)}100%{transform:translate3d(-1%,4%,0) rotate(-2deg) scale(1.02)}}
         @keyframes vera-breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.1)}}
         @keyframes vera-shine{0%,62%{left:-65%;opacity:0}70%{opacity:.9}88%,100%{left:130%;opacity:0}}
         @keyframes vera-dot-wave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-4px);opacity:1}}
@@ -224,7 +237,7 @@ export default function VeraView() {
         @keyframes vera-pulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.2);opacity:0}}
         @keyframes vera-drawer-in{from{transform:translateX(-18px);opacity:.6}to{transform:translateX(0);opacity:1}}
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{grid-template-columns:1fr;padding:0 12px 16px;gap:8px}.vera-starter{min-height:50px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
-        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-orbit,.vera-orbit:before,.vera-orbit:after,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer{animation:none!important}}
+        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-orbit,.vera-orbit:before,.vera-orbit:after,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
       `}</style>
 
       {showHistory && <div className="vera-drawer-backdrop" onClick={() => setShowHistory(false)}>
@@ -267,7 +280,7 @@ export default function VeraView() {
           <button className="vera-orbit" type="button" aria-label="Moneda de VERA"><span className="vera-symbol">V</span></button>
           <div className="vera-eyebrow">Tu compañera financiera</div>
           <h1 id="vera-title">Hola, soy <span>VERA.</span></h1>
-          <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>
+          <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>\n          {messages.length === 0 && <p className="vera-welcome-phrase" key={welcomePhrase}>{welcomePhrase}</p>}
         </header>
           <div className="vera-messages" aria-live="polite">
             {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.content}</div>)}
