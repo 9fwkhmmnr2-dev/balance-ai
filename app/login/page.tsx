@@ -61,25 +61,25 @@ export default function LoginPage() {
       minHeight: "100vh",
       display: "grid",
       placeItems: "center",
-      background: "#FAFAF9",
+      background: "#090A0D",
       padding: 20
     }}>
       <form onSubmit={handleSubmit} style={{
         width: "100%",
         maxWidth: 400,
-        background: "#FFFFFF",
+        background: "#17191F",
+        color: "#F2F0EB",
         padding: 30,
-        borderRadius: 16,
-        border: "1px solid #E8E6E5"
+        borderRadius: 18,
+        border: "1px solid #34363D",
+        boxShadow: "0 24px 80px rgba(0,0,0,.38)"
       }}>
-        <h1 style={{ fontSize: 26, color: "#0D0D0D" }}>
-          BALANCE AI
-        </h1>
-        <p style={{ color: "#78716C", marginBottom: 24 }}>
+        <h1 className="login-brand">FINANCE<span>TRACK</span></h1>
+        <p style={{ color: "#A7A7AD", marginBottom: 24 }}>
           {mode === "login" ? "Iniciá sesión en tu cuenta" : "Creá tu cuenta"}
         </p>
 
-        <label style={{ display: "block", marginBottom: 8 }}>
+        <label className="login-label">
           Correo electrónico
         </label>
         <input
@@ -90,8 +90,10 @@ export default function LoginPage() {
           style={{
             width: "100%",
             padding: 12,
-            border: "1px solid #D6D3D1",
-            borderRadius: 8,
+            border: "1px solid #3B3D45",
+            borderRadius: 9,
+            background: "#101116",
+            color: "#F2F0EB",
             marginBottom: 18
           }}
         />
@@ -122,21 +124,21 @@ export default function LoginPage() {
             padding: 13,
             border: 0,
             borderRadius: 8,
-            background: "#3BA6F1",
-            color: "#FFFFFF",
-            fontWeight: 600
+            background: "#C8A96B",
+            color: "#17130B",
+            fontWeight: 700
           }}
         >
           {loading ? "Procesando..." : mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
         </button>
 
         {message && (
-          <p style={{ color: "#78716C", fontSize: 13, marginTop: 16 }}>
+          <p style={{ color: "#D9B8B5", fontSize: 13, marginTop: 16 }}>
             {message}
           </p>
         )}
 
-        <p style={{ textAlign: "center", marginTop: 22, fontSize: 14 }}>
+        <p className="login-switch">
           {mode === "login" ? "¿No tenés cuenta?" : "¿Ya tenés cuenta?"}{" "}
           <button
             type="button"
@@ -147,7 +149,7 @@ export default function LoginPage() {
             style={{
               border: 0,
               background: "none",
-              color: "#3398E1",
+              color: "#C8A96B",
               fontWeight: 600
             }}
           >
