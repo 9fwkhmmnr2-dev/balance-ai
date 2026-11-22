@@ -171,7 +171,7 @@ export default function OnboardingGate({
   }
 
   if (loading) {
-    return <main className="onboarding-loading">Preparando tu espacio...</main>;
+    return <main className="financetrack-loading" aria-live="polite"><div className="financetrack-loading-mark">F<span>.</span></div><p>Preparando tu espacio</p><span className="financetrack-loading-line" /></main>;
   }
 
   if (completed) {
@@ -182,7 +182,7 @@ export default function OnboardingGate({
     <main className="onboarding-page">
       <section className="onboarding-card">
         <div className="onboarding-brand">
-          FINANCE<span>.</span> AI
+          FINANCE<span>TRACK</span>
         </div>
 
         <p className="onboarding-step">
@@ -193,8 +193,8 @@ export default function OnboardingGate({
 
         <p className="onboarding-description">
           {mode === "edit"
-            ? "Actualizá tus ingresos, hábitos y preferencias para que FINANCE AI y VERA mantengan el contexto correcto."
-            : "Contanos un poco sobre tus ingresos y gastos para adaptar FINANCE AI a tu realidad. Podés dejar cualquier dato sin completar."}
+            ? "Actualizá tus ingresos, hábitos y preferencias para que FINANCETRACK y VERA mantengan el contexto correcto."
+            : "Contanos un poco sobre tus ingresos y gastos para adaptar FINANCETRACK a tu realidad. Podés dejar cualquier dato sin completar."}
         </p>
 
         <form onSubmit={(event) => saveProfile(event)}>
