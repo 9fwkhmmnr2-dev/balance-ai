@@ -187,7 +187,6 @@ export default function DashboardStats() {
             ))}
           </div>
         )}
-        <small className="dashboard-data-note">Saldo inicial + ingresos − gastos + transferencias recibidas − transferencias enviadas. No se convierten monedas.</small>
       </section>
 
       <section className="stats-grid dashboard-stat-cards">
