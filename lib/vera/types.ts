@@ -18,7 +18,6 @@ export type VeraFinancialContext = {
   netBalance: number;
   movementsCount: number;
   categoryTotals: Array<{ category: string; amount: number }>;
-  accountBalances: Array<{ name: string; currency: string; balance: number }>;
 };
 
 export type VeraProviderResponse = {
