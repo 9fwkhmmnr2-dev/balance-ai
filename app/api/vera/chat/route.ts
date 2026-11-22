@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getVeraProvider } from "../../../lib/vera/provider";
-import type { VeraMessage, VeraFinancialContext } from "../../../lib/vera/types";
+import { getVeraProvider } from "@/lib/vera/provider";
+import type { VeraMessage, VeraFinancialContext } from "@/lib/vera/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
