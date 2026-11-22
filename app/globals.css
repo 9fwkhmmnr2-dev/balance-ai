@@ -1207,3 +1207,44 @@ body{background:#090A0D;color:#F2F0EB}
 .dashboard-overview .dashboard-disclaimer{color:#85838D}
 .dashboard-overview .empty-state{color:#A7A4AE}
 .dashboard-footer{color:#85838D}
+
+
+/* FINANCETRACK · contraste consistente en todas las secciones */
+.quick-add-button{
+  background:#C8A96B;color:#090A0D;
+  box-shadow:0 8px 24px rgba(200,169,107,.18);
+}
+.quick-add-button:hover{background:#B89555;color:#090A0D}
+.profile-vera-summary{color:#E7E2EC!important}
+.profile-vera-summary p,.profile-vera-summary span{color:#E7E2EC}
+.movements-summary,.movements-filters,.movements-list-card,
+.accounts-total-section,.accounts-empty,.account-card,
+.converter-card,.transfers-card{
+  background:#17191F!important;border-color:#30323A!important;color:#F2F0EB;
+}
+.movements-total-currency,.accounts-total-card{
+  background:#202229!important;border-color:#343640!important;color:#F2F0EB;
+}
+.movements-row{border-bottom-color:#30323A}
+.movements-list-heading{border-bottom-color:#383A43}
+.account-card-bottom{border-top-color:#383A43}
+.accounts-text-button,.account-card-bottom button,.accounts-secondary-button{
+  background:#202229;color:#C8A96B;border-color:#45404A;
+}
+.account-type-icon{background:#30253F;color:#C8A96B}
+.movements-filters input,.movements-filters select,
+.movement-edit-modal input,.movement-edit-modal select,
+.accounts-modal form input,.accounts-modal form select,
+.transfers-card input,.transfers-card select,
+.converter-amount-field input,.converter-currency-row select,
+.converter-quick-source select{
+  background:#202229!important;color:#F2F0EB!important;border-color:#41434D!important;
+}
+.quick-modal{background:#17191F;color:#F2F0EB;border-color:#383A43}
+.quick-modal-heading h2,.quick-modal-form label{color:#F2F0EB}
+.quick-modal-form input,.quick-modal-form select{
+  background:#202229;color:#F2F0EB;border-color:#41434D;
+}
+.movement-type-switch{background:#202229}
+.movement-type-switch button.selected{background:#34303B;color:#E3C98E}
+.quick-modal-close{background:#292B33;color:#D8D5CE}
