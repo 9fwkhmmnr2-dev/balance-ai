@@ -169,7 +169,7 @@ export default function VeraView() {
       <style>{`
         .vera-page{--v:#a78bfa;--v2:#7c3aed;--ink:#09090d;--panel:#14121c;--line:rgba(196,181,253,.15);color:#f5f3fa;max-width:1000px;margin:0 auto;padding:12px 0 48px}
         .vera-shell{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
-        .vera-shell:before,.vera-shell:after{content:"";position:absolute;inset:-28%;pointer-events:none;z-index:0;filter:blur(34px);opacity:.62;background:radial-gradient(ellipse at 18% 26%,rgba(124,58,237,.27),transparent 31%),radial-gradient(ellipse at 78% 18%,rgba(167,139,250,.2),transparent 29%),radial-gradient(ellipse at 52% 76%,rgba(91,33,182,.23),transparent 34%);animation:vera-aurora 16s ease-in-out infinite alternate}.vera-shell:after{opacity:.35;filter:blur(52px);background:radial-gradient(ellipse at 72% 62%,rgba(196,181,253,.2),transparent 28%),radial-gradient(ellipse at 28% 82%,rgba(109,40,217,.2),transparent 30%);animation-duration:22s;animation-direction:alternate-reverse}.vera-shell>*{position:relative;z-index:1}
+        .vera-shell:before,.vera-shell:after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;filter:blur(18px);opacity:.95;background:radial-gradient(ellipse 58% 24% at 8% 20%,rgba(124,58,237,.46),transparent 72%),radial-gradient(ellipse 54% 25% at 92% 34%,rgba(167,139,250,.38),transparent 72%),radial-gradient(ellipse 60% 30% at 50% 86%,rgba(91,33,182,.42),transparent 72%);animation:vera-aurora 13s ease-in-out infinite alternate}.vera-shell:after{opacity:.72;filter:blur(24px);background:linear-gradient(112deg,transparent 8%,rgba(139,92,246,.12) 25%,transparent 39%,rgba(196,181,253,.15) 57%,transparent 72%),radial-gradient(ellipse 45% 20% at 72% 68%,rgba(196,181,253,.27),transparent 75%);animation-duration:18s;animation-direction:alternate-reverse}.vera-shell>*{position:relative;z-index:1}
         .vera-hero{position:relative;overflow:hidden;border:0;border-radius:0;background:transparent;padding:25px 24px 19px;text-align:center}
         .vera-orbit{width:76px;height:76px;margin:0 auto 15px;border-radius:50%;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle at 30% 22%,#e1d5ff 0%,#b99aff 18%,#9561f5 43%,#672ac5 70%,#32105f 100%);border:1px solid rgba(235,225,255,.62);box-shadow:0 0 0 6px rgba(167,139,250,.08),0 0 35px rgba(139,92,246,.34),inset 0 2px 8px rgba(255,255,255,.35),inset 0 -7px 12px rgba(28,5,61,.35);animation:vera-breathe 3.8s ease-in-out infinite;transition:transform .35s,filter .35s}
         .vera-orbit:after{content:"";position:absolute;top:-45%;left:-65%;width:42%;height:190%;transform:rotate(28deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),rgba(255,255,255,.08),transparent);animation:vera-shine 5.8s ease-in-out infinite}
@@ -181,26 +181,23 @@ export default function VeraView() {
         .vera-hero h1{font-size:clamp(28px,5vw,38px);letter-spacing:-1.4px;margin:9px 0 7px;font-weight:750}
         .vera-hero h1 span{color:#c4b5fd}
         .vera-sub{max-width:520px;margin:0 auto;color:#b8b2c5;font-size:13px;line-height:1.65}
-        .vera-status{display:inline-flex;align-items:center;gap:8px;margin-top:15px;border:1px solid rgba(167,139,250,.23);background:rgba(139,92,246,.1);border-radius:30px;padding:7px 12px;color:#d8ccff;font-size:11px}
-        .vera-dot{width:7px;height:7px;border-radius:50%;background:#a78bfa;box-shadow:0 0 12px #a78bfa}
-        .vera-chat{margin-top:0;border:0;border-top:1px solid var(--line);border-radius:0;overflow:hidden;background:rgba(10,8,15,.22)}
+                .vera-chat{margin-top:0;border:0;border-top:1px solid var(--line);border-radius:0;overflow:hidden;background:rgba(10,8,15,.22)}
         .vera-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
         .vera-chat-head strong{font-size:13px}.vera-chat-head small{display:block;color:#9e96ad;font-size:11px;margin-top:3px}
         .vera-head-actions{display:flex;align-items:center;gap:8px}.vera-history-toggle,.vera-new-chat{border:1px solid rgba(196,181,253,.2);background:#1c1728;color:#e7dcff;border-radius:10px;padding:8px 10px;font-size:11px;cursor:pointer}.vera-history-toggle{display:grid;place-items:center;width:36px;height:36px;padding:0;font-size:19px;line-height:1}
         .vera-period{background:#1c1728;border:1px solid rgba(196,181,253,.2);border-radius:9px;padding:8px;color:#ddd3f2;font-size:11px;max-width:150px}
         .vera-messages{display:flex;flex-direction:column;gap:13px;min-height:245px;max-height:470px;overflow-y:auto;padding:20px 17px}
-        .vera-empty{margin:auto;text-align:center;max-width:430px;padding:12px}
-        .vera-empty-mark{font-size:25px;color:#c4b5fd;margin-bottom:9px}
-        .vera-empty strong{display:block;font-size:14px;color:#eee8f8;margin-bottom:6px}
-        .vera-empty p{font-size:12px;line-height:1.6;color:#a9a1b4}
-        .vera-bubble{max-width:84%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;animation:vera-message-in .34s cubic-bezier(.2,.8,.2,1) both}
+                .vera-bubble{max-width:84%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;animation:vera-message-in .34s cubic-bezier(.2,.8,.2,1) both}
         .vera-bubble.model{align-self:flex-start;background:#211a2d;border:1px solid rgba(196,181,253,.12);color:#eee9f6;border-top-left-radius:5px}
         .vera-bubble.user{align-self:flex-end;background:linear-gradient(135deg,#7040bd,#59319d);color:#fff;border-top-right-radius:5px}
         .vera-thinking{align-self:flex-start;display:flex;align-items:center;gap:8px;color:#c4b5fd;font-size:12px;padding:5px 10px;animation:vera-message-in .25s ease both}
         .vera-mini-coin{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#e1d5ff,#a879ff 42%,#5923a7 80%);box-shadow:0 0 12px rgba(167,139,250,.4);animation:vera-breathe 1.5s ease-in-out infinite}
         .vera-dots{display:inline-flex;gap:3px;align-items:center}.vera-dots i{width:4px;height:4px;border-radius:50%;background:#c8adff;animation:vera-dot-wave .9s ease-in-out infinite}.vera-dots i:nth-child(2){animation-delay:.14s}.vera-dots i:nth-child(3){animation-delay:.28s}
-        .vera-starters{display:flex;flex-wrap:wrap;gap:7px;padding:0 17px 15px}
-        .vera-starter{border:1px solid rgba(196,181,253,.2);background:#191522;color:#d8cafa;border-radius:20px;padding:8px 11px;font-size:11px;cursor:pointer}
+        .vera-starters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 17px 20px}
+        .vera-starters-label{grid-column:1/-1;color:#bca8e8;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;padding:0 2px 1px}
+        .vera-starter{display:flex;align-items:center;gap:10px;min-height:58px;text-align:left;border:1px solid rgba(196,181,253,.24);background:linear-gradient(145deg,rgba(124,58,237,.16),rgba(25,21,34,.92));color:#e8defa;border-radius:14px;padding:11px 12px;font-size:12px;line-height:1.45;cursor:pointer;transition:border-color .2s,background .2s,transform .2s,box-shadow .2s}
+        .vera-starter:before{content:"✧";display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:9px;background:rgba(167,139,250,.15);color:#d8c4ff;font-size:17px;box-shadow:inset 0 0 0 1px rgba(196,181,253,.16)}
+        .vera-starter:hover{border-color:rgba(196,181,253,.55);background:linear-gradient(145deg,rgba(124,58,237,.28),rgba(35,27,49,.96));transform:translateY(-2px);box-shadow:0 8px 24px rgba(76,29,149,.16)}
         .vera-starter:disabled{opacity:.5;cursor:default}
         .vera-compose{padding:13px 15px 15px;border-top:1px solid var(--line);background:rgba(8,7,12,.45)}
         .vera-compose form{display:flex;align-items:flex-end;gap:9px}
@@ -226,7 +223,7 @@ export default function VeraView() {
         @keyframes vera-message-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
         @keyframes vera-pulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.2);opacity:0}}
         @keyframes vera-drawer-in{from{transform:translateX(-18px);opacity:.6}to{transform:translateX(0);opacity:1}}
-        @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{padding:0 12px 13px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
+        @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{grid-template-columns:1fr;padding:0 12px 16px;gap:8px}.vera-starter{min-height:50px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
         @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-orbit,.vera-orbit:before,.vera-orbit:after,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer{animation:none!important}}
       `}</style>
 
@@ -271,13 +268,12 @@ export default function VeraView() {
           <div className="vera-eyebrow">Tu compañera financiera</div>
           <h1 id="vera-title">Hola, soy <span>VERA.</span></h1>
           <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>
-          <div className="vera-status"><span className="vera-dot" /> {sending ? "Estoy analizando tus datos" : "Acá estoy, lista para conversar"}</div>
         </header>
           <div className="vera-messages" aria-live="polite">
-            {messages.length === 0 ? <div className="vera-empty"><div className="vera-empty-mark">✦</div><strong>¿Qué te gustaría entender hoy?</strong><p>Podés preguntarme por tus ingresos, gastos y categorías. Voy a usar los movimientos registrados del período que elijas.</p></div> : messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.content}</div>)}
+            {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.content}</div>)}
             {sending && <div className="vera-thinking" role="status"><span className="vera-mini-coin" aria-hidden="true" /><span>VERA está pensando</span><span className="vera-dots" aria-hidden="true"><i /><i /><i /></span></div>}
           </div>
-          {messages.length === 0 && <div className="vera-starters">{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
+          {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
           {error && <div className="vera-error" role="alert">{error}</div>}
           <div className="vera-compose"><form onSubmit={handleSubmit}><textarea className="vera-input" rows={1} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Escribile a VERA…" aria-label="Mensaje para VERA" maxLength={3000} disabled={sending} /><button className={`vera-send${draft.trim() ? " ready" : ""}`} type="submit" aria-label="Enviar mensaje" disabled={sending || !draft.trim()}><span className="vera-send-arrow">↑</span></button></form><p className="vera-privacy">VERA analiza los movimientos registrados en FINANCETRACK. No realiza operaciones ni modifica tus cuentas.</p></div>
         </section>
