@@ -1574,3 +1574,62 @@ body{background:#090A0D;color:#F2F0EB}
   }
   .quick-add-button .quick-add-label{display:none!important;animation:none!important}
 }
+
+
+/* Corrección final del botón flotante: compactación real y centrado */
+.quick-add-button{
+  display:flex!important;
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  width:232px!important;
+  min-width:232px!important;
+  max-width:232px!important;
+  height:54px!important;
+  min-height:54px!important;
+  padding:0 16px!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+  animation-name:quick-add-collapse-final!important;
+  animation-duration:.6s!important;
+  animation-timing-function:cubic-bezier(.2,.8,.2,1)!important;
+  animation-delay:2.7s!important;
+  animation-fill-mode:forwards!important;
+}
+.quick-add-button .quick-add-label{
+  flex:0 0 auto!important;
+  width:auto!important;
+  max-width:190px!important;
+  white-space:nowrap!important;
+  animation:quick-add-label-final .15s ease 2.7s forwards!important;
+}
+.quick-add-button .quick-add-icon{
+  flex:0 0 24px!important;
+  width:24px!important;
+  text-align:center!important;
+}
+@keyframes quick-add-collapse-final{
+  to{
+    width:56px;
+    min-width:56px;
+    max-width:56px;
+    padding-left:0;
+    padding-right:0;
+    justify-content:center;
+  }
+}
+@keyframes quick-add-label-final{
+  to{width:0;max-width:0;opacity:0;visibility:hidden;overflow:hidden}
+}
+/* El campo de fecha no debe desbordar la tarjeta */
+.onboarding-card,.onboarding-field,.onboarding-field input,
+.onboarding-field select,.onboarding-income{
+  box-sizing:border-box!important;
+  min-width:0!important;
+}
+.onboarding-field input[type="date"]{
+  display:block;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
