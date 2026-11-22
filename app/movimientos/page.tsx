@@ -199,7 +199,7 @@ function MovementsContent() {
       <MobileMenu />
       <header className="movements-desktop-nav">
         <a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a>
-        <nav><a href="/">Inicio</a><a href="/movimientos" aria-current="page">Movimientos</a><a href="/cuentas">Mis cuentas</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></nav>
+        <nav><a href="/">Inicio</a><a href="/movimientos" aria-current="page">Movimientos</a><a href="/cuentas">Mis cuentas</a><a href="/transferencias">Transferencias</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></nav>
       </header>
       <main className="movements-main">
         <div className="movements-heading">
