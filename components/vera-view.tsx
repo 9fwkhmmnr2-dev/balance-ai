@@ -280,7 +280,8 @@ export default function VeraView() {
           <button className="vera-orbit" type="button" aria-label="Moneda de VERA"><span className="vera-symbol">V</span></button>
           <div className="vera-eyebrow">Tu compañera financiera</div>
           <h1 id="vera-title">Hola, soy <span>VERA.</span></h1>
-          <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>\n          {messages.length === 0 && <p className="vera-welcome-phrase" key={welcomePhrase}>{welcomePhrase}</p>}
+          <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>
+          {messages.length === 0 && <p className="vera-welcome-phrase" key={welcomePhrase}>{welcomePhrase}</p>}
         </header>
           <div className="vera-messages" aria-live="polite">
             {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.content}</div>)}
