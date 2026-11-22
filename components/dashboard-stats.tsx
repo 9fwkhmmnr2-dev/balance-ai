@@ -165,7 +165,6 @@ export default function DashboardStats() {
   }, [periodMovements]);
   const maxCategory = Math.max(1, ...categoryData.map((item) => item.amount));
   const accountPositiveTotal = activeAccounts.reduce((sum, account) => sum + Math.max(0, accountBalances[account.id] ?? 0), 0);
-  const maxAccount = Math.max(1, ...activeAccounts.map((account) => Math.max(0, accountBalances[account.id] ?? 0)));
 
   const openingBalanceAtRange = activeAccounts.reduce((sum, account) => sum + Number(account.initial_balance), 0)
     + selected.filter((item) => item.account_id && activeAccountIds.has(item.account_id) && item.movement_date?.slice(0, 10) < startKey)
@@ -200,7 +199,6 @@ export default function DashboardStats() {
     <div className="dashboard-overview">
       <header className="dashboard-identity-compact" aria-label="FINANCETRACK">
         <MobileMenu />
-        <div className="dashboard-identity-brand">FINANCE<span>.</span>TRACK</div>
         <p>Entendé qué está pasando con tu dinero.</p>
       </header>
 
@@ -300,7 +298,7 @@ export default function DashboardStats() {
                 const share = accountPositiveTotal > 0 ? Math.max(0, balance) / accountPositiveTotal * 100 : 0;
                 return <div className="dashboard-distribution-row" key={account.id}>
                   <div className="dashboard-category-meta"><span><i className={`category-dot category-dot-${index % 5}`} />{account.name}</span><strong>{money(balance, currency)}</strong></div>
-                  <div className="dashboard-progress-track"><span className={`category-fill category-fill-${index % 5}`} style={{ width: (Math.max(0, balance) / maxAccount * 100) + "%" }} /></div>
+                  <div className="dashboard-progress-track"><span className={`category-fill category-fill-${index % 5}`} style={{ width: share + "%" }} /></div>
                   <small>{share.toFixed(1)}% del saldo positivo en tus cuentas</small>
                 </div>;
               })}
