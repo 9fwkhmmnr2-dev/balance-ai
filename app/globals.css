@@ -1149,3 +1149,61 @@ body{background:#090A0D;color:#F2F0EB}
 .financetrack-loading-line:after{content:"";position:absolute;inset:0;width:38%;background:#C8A96B;animation:financetrack-loading-progress 1.25s ease-in-out infinite}
 @keyframes financetrack-loading-progress{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
 @media(prefers-reduced-motion:reduce){.financetrack-loading-line:after{animation:none;left:31%}}
+
+
+/* FINANCETRACK · ajustes de contraste del dashboard */
+.dashboard-identity-card{
+  background:linear-gradient(115deg,#17191F 0%,#20212A 100%);
+  border:1px solid #34313D;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.dashboard-identity-brand{color:#F2F0EB}
+.dashboard-identity-brand span{color:#C8A96B}
+.dashboard-identity-card p{color:#B7B5BC}
+.dashboard-balance-card{
+  background:linear-gradient(115deg,#17191F 0%,#24202B 62%,#302719 100%);
+  border:1px solid #3A3540;
+}
+.dashboard-overview .currency-picker select{
+  background:#17191F;color:#F2F0EB;border-color:#383A43;
+}
+.dashboard-overview .dashboard-account-card{
+  background:#17191F;border:1px solid #30323A;color:#F2F0EB;
+}
+.dashboard-overview .dashboard-account-card small{color:#A7A4AE}
+.dashboard-overview .stat-card{
+  background:#17191F;border:1px solid #30323A;color:#F2F0EB;
+}
+.dashboard-overview .stat-card .card-label,
+.dashboard-overview .stat-card .card-note{color:#B7B5BC}
+.dashboard-overview .income-stat-card{border-top:2px solid #3F8F68}
+.dashboard-overview .expense-stat-card{border-top:2px solid #B9675B}
+.dashboard-overview .movements-stat-card{border-top:2px solid #8B72B8}
+.dashboard-overview .vera-insight-card{
+  background:linear-gradient(120deg,#191A22,#211E2B);
+  border:1px solid #40364F;color:#F2F0EB;
+}
+.dashboard-overview .vera-insight-top .eyebrow{color:#C8A96B}
+.dashboard-overview .vera-insight-top h3{color:#F2F0EB}
+.dashboard-overview .vera-mark{background:#30253F;color:#C5A7E8;border:1px solid #59466E}
+.dashboard-overview .insight-status{background:#30253F;color:#D3B8F0}
+.dashboard-overview .vera-insight-card>p{color:#C7C3CD}
+.dashboard-overview .vera-insight-card>small{color:#96919F}
+.dashboard-overview .activity-card,
+.dashboard-overview .recent-card{
+  background:#17191F;border:1px solid #30323A;color:#F2F0EB;
+}
+.dashboard-overview .section-heading h3{color:#F2F0EB}
+.dashboard-overview .chart-legend{color:#B7B5BC}
+.dashboard-overview .legend-income{background:#43A879}
+.dashboard-overview .legend-expense{background:#C96E65}
+.dashboard-overview .income-bar{background:linear-gradient(180deg,#55B98B,#26734F)}
+.dashboard-overview .expense-bar{background:linear-gradient(180deg,#D98278,#8F4545)}
+.dashboard-overview .recent-movement{border-bottom-color:#30323A}
+.dashboard-overview .amount-income{color:#63C995}
+.dashboard-overview .amount-expense{color:#E18A80}
+.dashboard-overview .dot-income{background:#43A879}
+.dashboard-overview .dot-expense{background:#C96E65}
+.dashboard-overview .dashboard-disclaimer{color:#85838D}
+.dashboard-overview .empty-state{color:#A7A4AE}
+.dashboard-footer{color:#85838D}
