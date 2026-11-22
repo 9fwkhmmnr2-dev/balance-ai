@@ -176,6 +176,7 @@ export default function CurrencyConverterView() {
           <a href="/">Inicio</a>
           <a href="/movimientos">Movimientos</a>
           <a href="/cuentas">Mis cuentas</a>
+          <a href="/transferencias">Transferencias</a>
           <a href="/conversor" aria-current="page">Conversor</a>
           <a href="/perfil">Perfil</a>
         </nav>
