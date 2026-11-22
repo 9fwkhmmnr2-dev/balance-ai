@@ -1114,3 +1114,38 @@ a {
 .transfers-empty p,.transfers-note{margin:10px 0 16px;color:var(--muted);font-size:12px;line-height:1.7}
 .transfers-note{margin-top:14px}
 @media(max-width:700px){.transfers-desktop-nav{display:none}.transfers-main{padding:22px 16px 70px}.transfers-heading h1{font-size:27px}.transfers-card{padding:18px}}
+
+
+/* FINANCETRACK · identidad obsidiana */
+:root{
+  --canvas:#090A0D;
+  --white:#17191F;
+  --graphite:#F2F0EB;
+  --gray:#B7B5BC;
+  --muted:#85838D;
+  --border:#30323A;
+  --cyan:#C8A96B;
+  --cyan-dark:#B89555;
+  --cyan-light:#756143;
+}
+body{background:#090A0D;color:#F2F0EB}
+.login-label{display:block;margin-bottom:8px;color:#D8D6D0;font-size:13px;font-weight:600}
+.login-switch{text-align:center;margin-top:22px;font-size:14px;color:#B7B5BC}
+.login-brand{font-family:'Manrope',sans-serif;font-size:25px;letter-spacing:-1px;color:#F2F0EB;margin-bottom:9px}
+.login-brand span{color:#C8A96B}
+.login-switch button{color:#C8A96B!important}
+.login-page input:focus{outline:none;border-color:#C8A96B}
+.financetrack-loading{
+  min-height:100svh;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:24px;background:radial-gradient(ellipse at 50% 42%,rgba(200,169,107,.09),transparent 42%),#090A0D;color:#F2F0EB
+}
+.financetrack-loading-mark{
+  width:58px;height:58px;display:grid;place-items:center;border:1px solid rgba(200,169,107,.55);border-radius:18px;
+  color:#C8A96B;font-family:'Manrope',sans-serif;font-size:30px;font-weight:800;box-shadow:0 0 34px rgba(200,169,107,.10)
+}
+.financetrack-loading-mark span{color:#9B78D0}
+.financetrack-loading p{font-family:'Manrope',sans-serif;font-size:13px;letter-spacing:.04em;color:#C8C5BD}
+.financetrack-loading-line{width:84px;height:2px;overflow:hidden;border-radius:4px;background:#292A30;position:relative}
+.financetrack-loading-line:after{content:"";position:absolute;inset:0;width:38%;background:#C8A96B;animation:financetrack-loading-progress 1.25s ease-in-out infinite}
+@keyframes financetrack-loading-progress{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+@media(prefers-reduced-motion:reduce){.financetrack-loading-line:after{animation:none;left:31%}}
