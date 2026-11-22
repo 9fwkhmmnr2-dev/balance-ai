@@ -108,7 +108,7 @@ export default function TransfersView() {
     <div className="transfers-page">
       <MobileMenu />
       <nav className="transfers-desktop-nav">
-        <a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a>
+        <a href="/" className="mobile-brand">FINANCE<span>.</span>TRACK</a>
         <div>
           <a href="/">Inicio</a>
           <a href="/movimientos">Movimientos</a>
