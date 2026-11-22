@@ -11,14 +11,14 @@ export type VeraConversationInput = {
 };
 
 export type VeraFinancialContext = {
-  currency?: string;
-  period?: "daily" | "weekly" | "monthly" | "yearly";
-  income?: number;
-  expenses?: number;
-  netBalance?: number;
-  movementsCount?: number;
-  categoryTotals?: Array<{ category: string; amount: number }>;
-  upcomingIncomeDate?: string | null;
+  currency: string;
+  period: "daily" | "weekly" | "monthly" | "yearly";
+  income: number;
+  expenses: number;
+  netBalance: number;
+  movementsCount: number;
+  categoryTotals: Array<{ category: string; amount: number }>;
+  accountBalances: Array<{ name: string; currency: string; balance: number }>;
 };
 
 export type VeraProviderResponse = {
