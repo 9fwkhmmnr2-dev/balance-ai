@@ -12,7 +12,7 @@ export default function Home() {
       <OnboardingGate>
         <div className="dashboard">
           <aside className="sidebar">
-            <div className="brand"><LogoutButton />FINANCE<span>.</span> AI</div>
+            <div className="brand"><LogoutButton />FINANCE<span>.</span>TRACK</div>
             <div className="nav-label">MENÚ PRINCIPAL</div>
             <nav className="nav-list">
               {navigation.map((item) => <a key={item.href} href={item.href} className={`nav-item ${item.href === "/" ? "active" : ""}`}>{item.label}</a>)}
@@ -23,7 +23,7 @@ export default function Home() {
           </aside>
           <main className="main-content">
             <DashboardStats />
-            <footer className="dashboard-footer">FINANCE AI · Entendé tu dinero</footer>
+            <footer className="dashboard-footer">FINANCETRACK · Entendé tu dinero</footer>
           </main>
           <QuickMovement />
         </div>
