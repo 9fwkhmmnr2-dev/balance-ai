@@ -110,8 +110,10 @@ export default function LoginPage() {
           style={{
             width: "100%",
             padding: 12,
-            border: "1px solid #D6D3D1",
-            borderRadius: 8,
+            border: "1px solid #3B3D45",
+            borderRadius: 9,
+            background: "#101116",
+            color: "#F2F0EB",
             marginBottom: 18
           }}
         />
