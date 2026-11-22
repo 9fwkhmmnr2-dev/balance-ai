@@ -1087,3 +1087,30 @@ a {
 
 .converter-quote-result>div small.converter-stale-meta{color:#A44232;font-weight:700}
 .converter-quote-result>div small.converter-market-meta{color:#8A650E;font-weight:700}
+
+
+/* TRANSFERENCIAS */
+.transfers-page{min-height:100vh;background:var(--canvas)}
+.transfers-desktop-nav{max-width:1180px;margin:0 auto;padding:25px 28px 10px;display:flex;align-items:center;justify-content:space-between}
+.transfers-desktop-nav>div{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.transfers-desktop-nav>div a{padding:10px 12px;border-radius:9px;color:var(--gray);font-size:13px}
+.transfers-desktop-nav>div a[aria-current="page"]{background:#FFF4D9;color:#9A6A00;font-weight:700}
+.transfers-main{width:100%;max-width:720px;margin:0 auto;padding:35px 28px 70px}
+.transfers-heading{margin-bottom:22px}
+.transfers-heading h1{font-family:'Manrope',sans-serif;font-size:32px;letter-spacing:-1px;margin:5px 0 7px}
+.transfers-heading>p:last-child{font-size:13px;color:var(--gray)}
+.transfers-card{padding:24px;background:#fff;border:1px solid var(--border);border-radius:14px}
+.transfers-card form{display:grid;gap:16px}
+.transfers-card label{display:grid;gap:7px;color:var(--gray);font-size:12px;font-weight:700}
+.transfers-card input,.transfers-card select{width:100%;min-height:45px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--graphite);font-size:13px}
+.transfers-card label small{font-size:10px;color:var(--muted);font-weight:400}
+.transfers-primary-button{display:inline-flex;align-items:center;justify-content:center;min-height:45px;padding:0 18px;border:0;border-radius:9px;background:#F9A600;color:#261B07;font-size:13px;font-weight:700;text-decoration:none}
+.transfers-primary-button:disabled{opacity:.55;cursor:not-allowed}
+.transfers-error,.transfers-success{font-size:12px;line-height:1.6}
+.transfers-error{color:#B42318}
+.transfers-success{padding:12px;border-radius:9px;background:#EEF7F0;color:#287447}
+.transfers-empty{text-align:center}
+.transfers-empty h2{font-family:'Manrope',sans-serif;font-size:18px}
+.transfers-empty p,.transfers-note{margin:10px 0 16px;color:var(--muted);font-size:12px;line-height:1.7}
+.transfers-note{margin-top:14px}
+@media(max-width:700px){.transfers-desktop-nav{display:none}.transfers-main{padding:22px 16px 70px}.transfers-heading h1{font-size:27px}.transfers-card{padding:18px}}
