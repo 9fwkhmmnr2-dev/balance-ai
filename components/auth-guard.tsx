@@ -43,7 +43,7 @@ export default function AuthGuard({
   }, [router]);
 
   if (checking) {
-    return <main style={{ padding: 40 }}>Verificando sesión...</main>;
+    return <main className="financetrack-loading" aria-live="polite"><div className="financetrack-loading-mark">F<span>.</span></div><p>Preparando tu espacio</p><span className="financetrack-loading-line" /></main>;
   }
 
   return <>{children}</>;
