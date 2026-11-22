@@ -6,12 +6,27 @@ import MobileMenu from "./mobile-menu";
 
 type Movement = {
   id: string;
+  account_id: string | null;
   type: "income" | "expense";
   amount: number;
   currency: string;
   movement_date: string;
   description: string;
   category: string;
+};
+
+type Account = {
+  id: string;
+  name: string;
+  currency: string;
+  initial_balance: number;
+  is_archived: boolean;
+};
+
+type Transfer = {
+  from_account_id: string;
+  to_account_id: string;
+  amount: number;
 };
 
 function dateKey(date: Date) {
@@ -28,6 +43,8 @@ function money(amount: number, currency: string) {
 
 export default function DashboardStats() {
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [currency, setCurrency] = useState("");
   const [currencies, setCurrencies] = useState(["ARS"]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +58,23 @@ export default function DashboardStats() {
       const { data: profile, error: profileError } = await supabase.from("financial_profiles").select("currency").eq("user_id", userData.user.id).maybeSingle();
       if (profileError) throw profileError;
       const preferred = profile?.currency || "ARS";
-      const { data, error: movementError } = await supabase.from("movements").select("id, type, amount, currency, movement_date, description, category").order("movement_date", { ascending: false }).order("created_at", { ascending: false });
+      const [
+        { data: movementRows, error: movementError },
+        { data: accountRows, error: accountError },
+        { data: transferRows, error: transferError }
+      ] = await Promise.all([
+        supabase.from("movements").select("id, account_id, type, amount, currency, movement_date, description, category").eq("user_id", userData.user.id).order("movement_date", { ascending: false }).order("created_at", { ascending: false }),
+        supabase.from("financial_accounts").select("id, name, currency, initial_balance, is_archived").eq("user_id", userData.user.id).order("created_at", { ascending: true }),
+        supabase.from("account_transfers").select("from_account_id, to_account_id, amount").eq("user_id", userData.user.id)
+      ]);
       if (movementError) throw movementError;
-      const rows = (data ?? []) as Movement[];
+      if (accountError) throw accountError;
+      if (transferError) throw transferError;
+      const rows = (movementRows ?? []) as Movement[];
       setMovements(rows);
-      setCurrencies(Array.from(new Set([preferred, ...rows.map((row) => row.currency)])));
+      setAccounts((accountRows ?? []) as Account[]);
+      setTransfers((transferRows ?? []) as Transfer[]);
+      setCurrencies(Array.from(new Set([preferred, ...(accountRows ?? []).map((row) => row.currency), ...rows.map((row) => row.currency)])));
       setCurrency((current) => current || preferred);
     } catch {
       setError("No pudimos cargar tus datos financieros. Intentá recargar.");
@@ -58,10 +87,37 @@ export default function DashboardStats() {
     void loadData();
     const refresh = () => { void loadData(); };
     window.addEventListener("finance:movement-saved", refresh);
-    return () => window.removeEventListener("finance:movement-saved", refresh);
+    window.addEventListener("finance:transfer-saved", refresh);
+    return () => {
+      window.removeEventListener("finance:movement-saved", refresh);
+      window.removeEventListener("finance:transfer-saved", refresh);
+    };
   }, [loadData]);
 
   const selected = useMemo(() => movements.filter((item) => item.currency === currency), [movements, currency]);
+  const accountBalances = useMemo(() => {
+    const balances: Record<string, number> = {};
+    accounts.forEach((account) => {
+      balances[account.id] = Number(account.initial_balance);
+    });
+    movements.forEach((movement) => {
+      if (!movement.account_id || balances[movement.account_id] === undefined) return;
+      balances[movement.account_id] += (movement.type === "income" ? 1 : -1) * Number(movement.amount);
+    });
+    transfers.forEach((transfer) => {
+      if (balances[transfer.from_account_id] !== undefined) balances[transfer.from_account_id] -= Number(transfer.amount);
+      if (balances[transfer.to_account_id] !== undefined) balances[transfer.to_account_id] += Number(transfer.amount);
+    });
+    return balances;
+  }, [accounts, movements, transfers]);
+  const activeAccounts = useMemo(
+    () => accounts.filter((account) => !account.is_archived && account.currency === currency),
+    [accounts, currency]
+  );
+  const accountTotal = activeAccounts.reduce(
+    (sum, account) => sum + (accountBalances[account.id] ?? Number(account.initial_balance)),
+    0
+  );
   const now = new Date();
   const monthKey = dateKey(new Date(now.getFullYear(), now.getMonth(), 1)).slice(0, 7);
   const monthly = selected.filter((item) => item.movement_date?.slice(0, 7) === monthKey);
@@ -111,6 +167,27 @@ export default function DashboardStats() {
           <p className="balance-caption">{monthlyNet > 0 ? "Registraste más ingresos que gastos." : monthlyNet < 0 ? "Tus gastos registrados superan tus ingresos." : "Tus ingresos y gastos registrados están equilibrados."}</p>
         </div>
         <div className="balance-period"><span>Balance acumulado</span><strong>{money(allTimeNet, currency)}</strong><small>Desde tus primeros movimientos</small></div>
+      </section>
+
+      <section className="dashboard-accounts-section">
+        <div className="section-heading">
+          <div><p className="eyebrow">PATRIMONIO POR CUENTAS</p><h3>Tu dinero disponible</h3></div>
+          <strong>{money(accountTotal, currency)}</strong>
+        </div>
+        {activeAccounts.length === 0 ? (
+          <p className="empty-state">Todavía no tenés cuentas activas en {currency}. Podés agregarlas desde Mis cuentas.</p>
+        ) : (
+          <div className="dashboard-account-grid">
+            {activeAccounts.map((account) => (
+              <article className="dashboard-account-card" key={account.id}>
+                <span>{account.name}</span>
+                <strong>{money(accountBalances[account.id] ?? Number(account.initial_balance), currency)}</strong>
+                <small>{account.currency}</small>
+              </article>
+            ))}
+          </div>
+        )}
+        <small className="dashboard-data-note">Saldo inicial + ingresos − gastos + transferencias recibidas − transferencias enviadas. No se convierten monedas.</small>
       </section>
 
       <section className="stats-grid dashboard-stat-cards">
