@@ -1482,3 +1482,95 @@ body{background:#090A0D;color:#F2F0EB}
   .quick-add-button{animation:none;width:56px;padding:0;gap:0}
   .quick-add-button .quick-add-label{display:none}
 }
+
+
+/* Perfil financiero · paleta FINANCETRACK */
+.onboarding-page{
+  background:#090A0D!important;
+  color:#F2F0EB!important;
+}
+.onboarding-card{
+  background:#17191F!important;
+  color:#F2F0EB!important;
+  border:1px solid #343640!important;
+  box-shadow:0 18px 55px rgba(0,0,0,.28)!important;
+}
+.onboarding-brand{color:#F2F0EB!important}
+.onboarding-brand span{color:#C8A96B!important}
+.onboarding-step{color:#C8A96B!important}
+.onboarding-card h1{color:#F2F0EB!important}
+.onboarding-description,.onboarding-field>label{color:#D8D5CE!important}
+.onboarding-field>label span{color:#A7A4AE!important}
+.onboarding-field select,
+.onboarding-field input:not([type="checkbox"]){
+  background:#202229!important;
+  color:#F2F0EB!important;
+  border:1px solid #41434D!important;
+  color-scheme:dark;
+}
+.onboarding-field select:focus,
+.onboarding-field input:focus{
+  border-color:#C8A96B!important;
+  box-shadow:0 0 0 3px rgba(200,169,107,.12)!important;
+}
+.onboarding-option{
+  background:#202229!important;
+  color:#E7E3DC!important;
+  border:1px solid #343640!important;
+}
+.onboarding-option input{accent-color:#C8A96B!important}
+.onboarding-submit{
+  background:#C8A96B!important;
+  color:#090A0D!important;
+  font-weight:800;
+}
+.onboarding-submit:hover{background:#B89555!important}
+.onboarding-skip{color:#C8A96B!important}
+.onboarding-privacy{color:#A7A4AE!important}
+.onboarding-error{color:#E18A80!important}
+
+/* CTA registrar movimiento: texto legible y desaparición completa */
+.quick-add-button{
+  box-sizing:border-box!important;
+  width:232px!important;
+  height:54px!important;
+  min-height:54px!important;
+  padding:0 16px!important;
+  gap:9px!important;
+  border-radius:999px!important;
+  justify-content:flex-start!important;
+  animation:quick-add-collapse-clean .55s cubic-bezier(.2,.8,.2,1) 2.7s forwards!important;
+}
+.quick-add-button .quick-add-icon{
+  width:24px!important;
+  height:24px!important;
+  flex:0 0 24px!important;
+  font-size:25px!important;
+  line-height:24px!important;
+}
+.quick-add-button .quick-add-label{
+  display:block!important;
+  max-width:none!important;
+  white-space:nowrap!important;
+  overflow:visible!important;
+  font-size:12px!important;
+  line-height:1!important;
+  opacity:1!important;
+  animation:quick-add-label-hide .12s ease 2.7s forwards!important;
+}
+@keyframes quick-add-collapse-clean{
+  from{width:232px;min-width:232px;padding-left:16px;padding-right:16px;gap:9px}
+  to{width:56px;min-width:56px;padding-left:0;padding-right:0;gap:0}
+}
+@keyframes quick-add-label-hide{
+  from{opacity:1;visibility:visible}
+  to{opacity:0;visibility:hidden}
+}
+@media(prefers-reduced-motion:reduce){
+  .quick-add-button{
+    animation:none!important;
+    width:56px!important;min-width:56px!important;
+    padding:0!important;justify-content:center!important;
+  }
+  .quick-add-button .quick-add-label{display:none!important;animation:none!important}
+}
