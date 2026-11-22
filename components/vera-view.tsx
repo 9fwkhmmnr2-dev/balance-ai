@@ -168,7 +168,8 @@ export default function VeraView() {
     <div className="vera-page">
       <style>{`
         .vera-page{--v:#a78bfa;--v2:#7c3aed;--ink:#09090d;--panel:#14121c;--line:rgba(196,181,253,.15);color:#f5f3fa;max-width:1000px;margin:0 auto;padding:12px 0 48px}
-        .vera-shell{position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
+        .vera-shell{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
+        .vera-shell:before,.vera-shell:after{content:"";position:absolute;inset:-28%;pointer-events:none;z-index:0;filter:blur(34px);opacity:.62;background:radial-gradient(ellipse at 18% 26%,rgba(124,58,237,.27),transparent 31%),radial-gradient(ellipse at 78% 18%,rgba(167,139,250,.2),transparent 29%),radial-gradient(ellipse at 52% 76%,rgba(91,33,182,.23),transparent 34%);animation:vera-aurora 16s ease-in-out infinite alternate}.vera-shell:after{opacity:.35;filter:blur(52px);background:radial-gradient(ellipse at 72% 62%,rgba(196,181,253,.2),transparent 28%),radial-gradient(ellipse at 28% 82%,rgba(109,40,217,.2),transparent 30%);animation-duration:22s;animation-direction:alternate-reverse}.vera-shell>*{position:relative;z-index:1}
         .vera-hero{position:relative;overflow:hidden;border:0;border-radius:0;background:transparent;padding:25px 24px 19px;text-align:center}
         .vera-orbit{width:76px;height:76px;margin:0 auto 15px;border-radius:50%;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle at 30% 22%,#e1d5ff 0%,#b99aff 18%,#9561f5 43%,#672ac5 70%,#32105f 100%);border:1px solid rgba(235,225,255,.62);box-shadow:0 0 0 6px rgba(167,139,250,.08),0 0 35px rgba(139,92,246,.34),inset 0 2px 8px rgba(255,255,255,.35),inset 0 -7px 12px rgba(28,5,61,.35);animation:vera-breathe 3.8s ease-in-out infinite;transition:transform .35s,filter .35s}
         .vera-orbit:after{content:"";position:absolute;top:-45%;left:-65%;width:42%;height:190%;transform:rotate(28deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),rgba(255,255,255,.08),transparent);animation:vera-shine 5.8s ease-in-out infinite}
@@ -185,7 +186,7 @@ export default function VeraView() {
         .vera-chat{margin-top:0;border:0;border-top:1px solid var(--line);border-radius:0;overflow:hidden;background:rgba(10,8,15,.22)}
         .vera-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid var(--line)}
         .vera-chat-head strong{font-size:13px}.vera-chat-head small{display:block;color:#9e96ad;font-size:11px;margin-top:3px}
-        .vera-head-actions{display:flex;align-items:center;gap:8px}.vera-history-toggle,.vera-new-chat{border:1px solid rgba(196,181,253,.2);background:#1c1728;color:#e7dcff;border-radius:10px;padding:8px 10px;font-size:11px;cursor:pointer}.vera-history-toggle{display:flex;align-items:center;gap:6px}
+        .vera-head-actions{display:flex;align-items:center;gap:8px}.vera-history-toggle,.vera-new-chat{border:1px solid rgba(196,181,253,.2);background:#1c1728;color:#e7dcff;border-radius:10px;padding:8px 10px;font-size:11px;cursor:pointer}.vera-history-toggle{display:grid;place-items:center;width:36px;height:36px;padding:0;font-size:19px;line-height:1}
         .vera-period{background:#1c1728;border:1px solid rgba(196,181,253,.2);border-radius:9px;padding:8px;color:#ddd3f2;font-size:11px;max-width:150px}
         .vera-messages{display:flex;flex-direction:column;gap:13px;min-height:245px;max-height:470px;overflow-y:auto;padding:20px 17px}
         .vera-empty{margin:auto;text-align:center;max-width:430px;padding:12px}
@@ -213,11 +214,12 @@ export default function VeraView() {
         .vera-drawer{width:min(340px,88vw);height:100%;overflow-y:auto;background:linear-gradient(165deg,#1a1425,#0d0b12 70%);border-right:1px solid rgba(196,181,253,.2);box-shadow:20px 0 60px rgba(0,0,0,.35);padding:20px 15px;animation:vera-drawer-in .22s ease both}
         .vera-drawer-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.vera-drawer-top strong{font-size:16px}.vera-drawer-close{background:transparent;border:0;color:#cfc3e4;font-size:23px;cursor:pointer}
         .vera-drawer-new{width:100%;padding:11px;border:1px solid rgba(196,181,253,.25);border-radius:12px;background:linear-gradient(120deg,rgba(124,58,237,.28),rgba(76,29,149,.18));color:#f1eaff;font-size:12px;font-weight:650;cursor:pointer;margin-bottom:17px}
-        .vera-drawer-tabs{display:flex;gap:6px;margin-bottom:13px}.vera-drawer-tab{flex:1;border:1px solid rgba(196,181,253,.15);border-radius:9px;padding:8px;background:#15111d;color:#a99dbb;font-size:11px;cursor:pointer}.vera-drawer-tab.active{background:rgba(124,58,237,.24);border-color:rgba(196,181,253,.35);color:#eee5ff}
+        .vera-drawer-tabs{display:flex;gap:6px;margin-bottom:15px}.vera-filter-label{display:block;color:#a99dbb;font-size:10px;letter-spacing:.7px;text-transform:uppercase;margin:0 0 7px 2px}.vera-period-drawer{width:100%;max-width:none;margin-bottom:18px}.vera-drawer-tab{flex:1;border:1px solid rgba(196,181,253,.15);border-radius:9px;padding:8px;background:#15111d;color:#a99dbb;font-size:11px;cursor:pointer}.vera-drawer-tab.active{background:rgba(124,58,237,.24);border-color:rgba(196,181,253,.35);color:#eee5ff}
         .vera-history-item{padding:10px;border:1px solid transparent;border-radius:11px;margin-bottom:6px;background:rgba(255,255,255,.025)}.vera-history-item.selected{border-color:rgba(167,139,250,.28);background:rgba(124,58,237,.12)}
         .vera-history-open{display:block;width:100%;text-align:left;background:transparent;border:0;color:#eee8f7;cursor:pointer;padding:0;font-size:12px;line-height:1.4}.vera-history-date{display:block;color:#8e849d;font-size:10px;margin-top:4px}
         .vera-history-actions{display:flex;gap:12px;margin-top:8px}.vera-history-action{border:0;background:transparent;color:#bba5e9;font-size:10px;padding:0;cursor:pointer}.vera-history-action.delete{color:#d99ba9}
         .vera-history-empty{padding:24px 10px;text-align:center;color:#968ba5;font-size:12px;line-height:1.6}
+        @keyframes vera-aurora{0%{transform:translate3d(-2%,0,0) rotate(-4deg) scale(1)}50%{transform:translate3d(3%,2%,0) rotate(3deg) scale(1.06)}100%{transform:translate3d(-1%,4%,0) rotate(-2deg) scale(1.02)}}
         @keyframes vera-breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.1)}}
         @keyframes vera-shine{0%,62%{left:-65%;opacity:0}70%{opacity:.9}88%,100%{left:130%;opacity:0}}
         @keyframes vera-dot-wave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-4px);opacity:1}}
@@ -225,7 +227,7 @@ export default function VeraView() {
         @keyframes vera-pulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.2);opacity:0}}
         @keyframes vera-drawer-in{from{transform:translateX(-18px);opacity:.6}to{transform:translateX(0);opacity:1}}
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{padding:0 12px 13px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
-        @media(prefers-reduced-motion:reduce){.vera-orbit,.vera-orbit:before,.vera-orbit:after,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer{animation:none!important}}
+        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-orbit,.vera-orbit:before,.vera-orbit:after,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer{animation:none!important}}
       `}</style>
 
       {showHistory && <div className="vera-drawer-backdrop" onClick={() => setShowHistory(false)}>
@@ -236,6 +238,10 @@ export default function VeraView() {
             <button type="button" className={showArchived ? "vera-drawer-tab" : "vera-drawer-tab active"} onClick={() => setShowArchived(false)}>Recientes</button>
             <button type="button" className={showArchived ? "vera-drawer-tab active" : "vera-drawer-tab"} onClick={() => setShowArchived(true)}>Archivadas</button>
           </div>
+          <label className="vera-filter-label" htmlFor="vera-period-filter">Período de análisis</label>
+          <select id="vera-period-filter" className="vera-period vera-period-drawer" aria-label="Período de análisis" value={period} onChange={(event) => setPeriod(event.target.value as Period)}>
+            {Object.entries(periodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
           {historyLoading ? <div className="vera-history-empty">Cargando conversaciones…</div> : visibleConversations.length === 0 ? <div className="vera-history-empty">{showArchived ? "Todavía no hay conversaciones archivadas." : "Tus conversaciones aparecerán acá cuando charles con VERA."}</div> : visibleConversations.map((conversation) => (
             <div className={`vera-history-item${conversationId === conversation.id ? " selected" : ""}`} key={conversation.id}>
               <button className="vera-history-open" type="button" onClick={() => void openConversation(conversation.id)}>
@@ -251,6 +257,15 @@ export default function VeraView() {
       </div>}
 
       <section className={`vera-shell${sending ? " is-thinking" : ""}`} aria-label="Asistente financiera VERA">
+
+        <section className="vera-chat" aria-label="Conversación con VERA">
+          <header className="vera-chat-head">
+            <div><strong>{conversationId ? "Tu conversación" : "Conversá con VERA"}</strong><small>{conversationId ? "Podés retomarla cuando quieras" : "Un espacio para entender mejor tus finanzas"}</small></div>
+            <div className="vera-head-actions">
+              <button className="vera-history-toggle" type="button" aria-label="Abrir historial y filtros" title="Historial y filtros" onClick={() => { setShowHistory(true); void loadHistory(); }}>☰</button>
+              <button className="vera-new-chat" type="button" onClick={newConversation}>＋</button>
+            </div>
+          </header>
         <header className="vera-hero" aria-labelledby="vera-title">
           <button className="vera-orbit" type="button" aria-label="Moneda de VERA"><span className="vera-symbol">V</span></button>
           <div className="vera-eyebrow">Tu compañera financiera</div>
@@ -258,17 +273,6 @@ export default function VeraView() {
           <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>
           <div className="vera-status"><span className="vera-dot" /> {sending ? "Estoy analizando tus datos" : "Acá estoy, lista para conversar"}</div>
         </header>
-        <section className="vera-chat" aria-label="Conversación con VERA">
-          <header className="vera-chat-head">
-            <div><strong>{conversationId ? "Tu conversación" : "Conversá con VERA"}</strong><small>{conversationId ? "Podés retomarla cuando quieras" : "Un espacio para entender mejor tus finanzas"}</small></div>
-            <div className="vera-head-actions">
-              <button className="vera-history-toggle" type="button" onClick={() => { setShowHistory(true); void loadHistory(); }}>☰ Historial</button>
-              <button className="vera-new-chat" type="button" onClick={newConversation}>＋</button>
-              <select className="vera-period" aria-label="Período de análisis" value={period} onChange={(event) => setPeriod(event.target.value as Period)}>
-                {Object.entries(periodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </div>
-          </header>
           <div className="vera-messages" aria-live="polite">
             {messages.length === 0 ? <div className="vera-empty"><div className="vera-empty-mark">✦</div><strong>¿Qué te gustaría entender hoy?</strong><p>Podés preguntarme por tus ingresos, gastos y categorías. Voy a usar los movimientos registrados del período que elijas.</p></div> : messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.content}</div>)}
             {sending && <div className="vera-thinking" role="status"><span className="vera-mini-coin" aria-hidden="true" /><span>VERA está pensando</span><span className="vera-dots" aria-hidden="true"><i /><i /><i /></span></div>}
