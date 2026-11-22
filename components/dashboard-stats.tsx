@@ -145,9 +145,9 @@ export default function DashboardStats() {
 
   return (
     <div className="dashboard-overview">
-      <section className="dashboard-identity-card" aria-label="FINANCE.AI">
+      <section className="dashboard-identity-card" aria-label="FINANCETRACK">
         <MobileMenu />
-        <div className="dashboard-identity-brand">FINANCE<span>.</span>AI</div>
+        <div className="dashboard-identity-brand">FINANCE<span>.</span>TRACK</div>
         <p>Entendé qué está pasando con tu dinero.</p>
       </section>
 
@@ -209,7 +209,7 @@ export default function DashboardStats() {
         </section>
         <section className="card recent-card"><div className="section-heading"><div><p className="eyebrow">REGISTRO</p><h3>Movimientos recientes</h3></div></div>{recent.length === 0 ? <p className="empty-state">Tus movimientos aparecerán acá cuando registres el primero.</p> : recent.map((item) => <div className="recent-movement" key={item.id}><span className={`movement-dot ${item.type === "income" ? "dot-income" : "dot-expense"}`} /><div className="recent-description"><strong>{item.description}</strong><small>{item.category} · {item.movement_date}</small></div><b className={item.type === "income" ? "amount-income" : "amount-expense"}>{item.type === "income" ? "+" : "−"}{money(Number(item.amount), currency)}</b></div>)}</section>
       </div>
-      <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en los movimientos que registraste en FINANCE AI. No representan saldos bancarios.</p>
+      <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en los movimientos que registraste en FINANCETRACK. No representan saldos bancarios.</p>
     </div>
   );
 }
