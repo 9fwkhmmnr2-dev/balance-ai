@@ -157,7 +157,7 @@ export default function TransfersView() {
             </form>
           </section>
         )}
-        <p className="transfers-note">Esto registra un movimiento entre tus cuentas en FINANCE.AI. No envía dinero desde tu banco o billetera.</p>
+        <p className="transfers-note">Esto registra un movimiento entre tus cuentas en FINANCETRACK. No envía dinero desde tu banco o billetera.</p>
       </main>
     </div>
   );
