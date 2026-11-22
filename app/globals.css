@@ -1248,3 +1248,91 @@ body{background:#090A0D;color:#F2F0EB}
 .movement-type-switch{background:#202229}
 .movement-type-switch button.selected{background:#34303B;color:#E3C98E}
 .quick-modal-close{background:#292B33;color:#D8D5CE}
+
+
+/* FINANCETRACK · depuración visual global */
+:root{
+  --canvas:#090A0D;--white:#17191F;--graphite:#F2F0EB;
+  --gray:#B7B5BC;--muted:#92909A;--border:#30323A;
+  --cyan:#C8A96B;--cyan-dark:#B89555;--cyan-light:#756143;
+}
+.brand,.dashboard-identity-brand,.mobile-brand{
+  color:#F2F0EB!important;letter-spacing:-.7px;
+}
+.brand span,.dashboard-identity-brand span,.mobile-brand span{
+  color:#9B78D0!important;
+}
+.dashboard-identity-brand{font-weight:850;text-shadow:0 1px 18px rgba(155,120,208,.12)}
+/* Menú violeta */
+.mobile-menu-button{
+  background:#30253F!important;border:1px solid #59466E!important;
+  color:#D9C7F0!important;
+}
+.mobile-menu-button:hover,.mobile-nav-item.active{
+  background:#403052!important;color:#F2EAFB!important;
+}
+.mobile-menu-panel{background:#17151E;border:1px solid #40364F;border-radius:13px;padding:10px!important}
+.mobile-nav-item{color:#D8D2E1!important;border-radius:8px}
+.nav-item.active,.accounts-desktop-nav a[aria-current="page"],
+.converter-desktop-nav a[aria-current="page"],.transfers-desktop-nav a[aria-current="page"],
+.movements-desktop-nav nav a[aria-current="page"]{
+  background:#30253F!important;color:#D9C7F0!important;
+}
+/* Champagne: acciones principales y acentos antes naranjas */
+.quick-add-button,.profile-edit-action,.accounts-add-button,
+.movements-add-link,.movements-save-button,.converter-refresh-button,
+.transfers-primary-button,.primary-button{
+  background:#C8A96B!important;color:#090A0D!important;border-color:#C8A96B!important;
+}
+.quick-add-button:hover,.profile-edit-action:hover,.accounts-add-button:hover,
+.movements-add-link:hover,.movements-save-button:hover,.converter-refresh-button:hover,
+.transfers-primary-button:hover,.primary-button:hover{
+  background:#B89555!important;color:#090A0D!important;
+}
+.text-button,.accounts-text-button,.account-card-bottom button,
+.accounts-secondary-button,.movements-row-actions button:first-child{
+  color:#D8BD86!important;
+}
+.converter-mode-switch button.selected,.converter-source-option.active{
+  background:#282331!important;border-color:#80649F!important;color:#F2F0EB!important;
+}
+.converter-mode-switch button>span:first-child,.account-type-icon{
+  background:#30253F!important;color:#D9C7F0!important;
+}
+/* Superficies oscuras: eliminar paneles blancos en todos los módulos */
+.card,.quick-modal,.movement-edit-modal,.accounts-modal,.converter-card,
+.transfers-card,.movements-summary,.movements-filters,.movements-list-card,
+.accounts-total-section,.accounts-empty,.account-card,.vera-insight-card,
+.converter-quote-result,.dashboard-account-card,.stat-card{
+  background:#17191F!important;color:#F2F0EB!important;border-color:#343640!important;
+}
+.movements-total-currency,.accounts-total-card,.converter-result-placeholder,
+.converter-status,.converter-live-label,.converter-advanced-tag,
+.quick-modal-close,.movement-edit-heading>button,.accounts-modal-heading>button,
+.converter-live-label.pending{
+  background:#202229!important;color:#D8D5CE!important;border-color:#3A3C46!important;
+}
+.quick-modal-form input,.quick-modal-form select,
+.movement-edit-modal input,.movement-edit-modal select,
+.accounts-modal form input,.accounts-modal form select,
+.movements-filters input,.movements-filters select,
+.converter-amount-field input,.converter-currency-row select,
+.converter-quick-source select,.transfers-card input,.transfers-card select{
+  background:#202229!important;color:#F2F0EB!important;border-color:#41434D!important;
+}
+.movement-type-switch{background:#202229!important}
+.movement-type-switch button{color:#B7B5BC}
+.movement-type-switch button.selected{background:#403052!important;color:#E5D7F5!important}
+.quick-modal-form label,.accounts-modal form label,.movement-edit-modal label{color:#E4E1DA!important}
+.card-label,.card-note,.accounts-muted,.account-balance-label,
+.accounts-footnote,.converter-source-note,.transfers-note,
+.dashboard-data-note,.recent-description span,.movements-row-info span{
+  color:#B7B5BC!important;
+}
+.profile-vera-summary{background:#211E2B!important;color:#E7E2EC!important;border-color:#59466E!important}
+.profile-vera-summary *{color:#E7E2EC!important}
+.accounts-total-card span,.movements-total-currency>span{color:#D8BD86!important}
+.converter-swap{background:#30253F!important;color:#D9C7F0!important;border-color:#59466E!important}
+.converter-source-option{background:#17191F!important;color:#F2F0EB!important;border-color:#343640!important}
+.transfers-success{background:#183126!important;color:#9AD6B1!important}
+.dashboard-data-note{display:none!important}
