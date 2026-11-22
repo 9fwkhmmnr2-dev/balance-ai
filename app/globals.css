@@ -1748,27 +1748,24 @@ body{background:#090A0D;color:#F2F0EB}
   padding-bottom:112px;
 }
 .dashboard-identity-compact{
-  display:grid;
-  grid-template-columns:auto 1fr;
-  grid-template-areas:"menu brand" "menu tagline";
-  align-items:center;
-  column-gap:12px;
-  margin:0 0 14px;
-  min-height:38px;
+  display:block;
+  margin:0 0 12px;
+  min-height:0;
 }
 .dashboard-identity-compact .mobile-menu-bar{
-  grid-area:menu;
-  justify-content:flex-start;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
 }
-.dashboard-identity-compact .dashboard-identity-brand{
-  grid-area:brand;
+.dashboard-identity-compact .mobile-brand{
   font-size:16px;
   line-height:1.1;
   letter-spacing:-.5px;
 }
 .dashboard-identity-compact>p{
-  grid-area:tagline;
-  margin-top:2px;
+  margin:2px 0 0 2px;
   color:#92909A;
   font-size:10px;
   line-height:1.2;
