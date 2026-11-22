@@ -19,7 +19,7 @@ export default function MobileMenu() {
   return (
     <div className="mobile-menu">
       <div className="mobile-menu-bar">
-        <a className="mobile-brand" href="/" aria-label="FINANCE.AI, ir al inicio">FINANCE<span>.</span>AI</a>
+        <a className="mobile-brand" href="/" aria-label="FINANCETRACK, ir al inicio">FINANCE<span>.</span>TRACK</a>
         <button
           className="mobile-menu-button"
           onClick={() => setOpen(!open)}
