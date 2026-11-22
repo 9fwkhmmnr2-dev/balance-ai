@@ -17,6 +17,7 @@ type Account = {
   created_at: string;
 };
 type Movement = { account_id: string | null; type: "income" | "expense"; amount: number; currency: string };
+type Transfer = { from_account_id: string; to_account_id: string; amount: number };
 
 const accountTypes: { value: AccountType; label: string }[] = [
   { value: "cash", label: "Efectivo" },
@@ -43,6 +44,7 @@ function money(value: number, currency: string) {
 export default function AccountsView() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -61,9 +63,10 @@ export default function AccountsView() {
       const { data: auth, error: authError } = await supabase.auth.getUser();
       if (authError || !auth.user) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
 
-      const [{ data: accountRows, error: accountError }, { data: movementRows, error: movementError }] = await Promise.all([
+      const [{ data: accountRows, error: accountError }, { data: movementRows, error: movementError }, { data: transferRows, error: transferError }] = await Promise.all([
         supabase.from("financial_accounts").select("id, name, type, currency, initial_balance, is_archived, created_at").eq("user_id", auth.user.id).order("created_at", { ascending: true }),
-        supabase.from("movements").select("account_id, type, amount, currency").eq("user_id", auth.user.id).not("account_id", "is", null)
+        supabase.from("movements").select("account_id, type, amount, currency").eq("user_id", auth.user.id).not("account_id", "is", null),
+        supabase.from("account_transfers").select("from_account_id, to_account_id, amount").eq("user_id", auth.user.id)
       ]);
       if (accountError) {
         if (accountError.message.toLowerCase().includes("financial_accounts") || accountError.code === "42P01") {
@@ -72,8 +75,10 @@ export default function AccountsView() {
         throw accountError;
       }
       if (movementError) throw movementError;
+      if (transferError) throw transferError;
       setAccounts((accountRows ?? []) as Account[]);
       setMovements((movementRows ?? []) as Movement[]);
+      setTransfers((transferRows ?? []) as Transfer[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No pudimos cargar tus cuentas.");
     } finally {
@@ -81,7 +86,12 @@ export default function AccountsView() {
     }
   }, []);
 
-  useEffect(() => { void loadAccounts(); }, [loadAccounts]);
+  useEffect(() => {
+    void loadAccounts();
+    const refresh = () => { void loadAccounts(); };
+    window.addEventListener("finance:transfer-saved", refresh);
+    return () => window.removeEventListener("finance:transfer-saved", refresh);
+  }, [loadAccounts]);
 
   const balances = useMemo(() => {
     const result: Record<string, number> = {};
@@ -90,8 +100,12 @@ export default function AccountsView() {
       if (!movement.account_id || result[movement.account_id] === undefined) return;
       result[movement.account_id] += (movement.type === "income" ? 1 : -1) * Number(movement.amount);
     });
+    transfers.forEach((transfer) => {
+      if (result[transfer.from_account_id] !== undefined) result[transfer.from_account_id] -= Number(transfer.amount);
+      if (result[transfer.to_account_id] !== undefined) result[transfer.to_account_id] += Number(transfer.amount);
+    });
     return result;
-  }, [accounts, movements]);
+  }, [accounts, movements, transfers]);
 
   const activeAccounts = accounts.filter((account) => !account.is_archived);
   const visibleAccounts = accounts.filter((account) => showArchived || !account.is_archived);
@@ -171,6 +185,14 @@ export default function AccountsView() {
         .eq("account_id", account.id);
       if (countError) throw countError;
 
+      const { count: transferCount, error: transferCountError } = await supabase
+        .from("account_transfers")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", auth.user.id)
+        .or(`from_account_id.eq.${account.id},to_account_id.eq.${account.id}`);
+      if (transferCountError) throw transferCountError;
+      if (transferCount) throw new Error("No podés eliminar una cuenta que tiene transferencias registradas. Podés archivarla.");
+
       const historyMessage = count
         ? ` Los ${count} movimientos asociados se conservarán, pero dejarán de estar vinculados a esta cuenta.`
         : " Esta cuenta no tiene movimientos asociados.";
@@ -195,7 +217,7 @@ export default function AccountsView() {
   return (
     <div className="accounts-page">
       <MobileMenu />
-      <nav className="accounts-desktop-nav"><a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a><div><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas" aria-current="page">Mis cuentas</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></div></nav>
+      <nav className="accounts-desktop-nav"><a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a><div><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas" aria-current="page">Mis cuentas</a><a href="/transferencias">Transferencias</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></div></nav>
       <header className="accounts-heading">
         <div><p className="eyebrow">ORGANIZÁ TU DINERO</p><h1>Mis cuentas</h1><p>Reuní tus saldos y conocé dónde está tu dinero.</p></div>
         <button className="accounts-add-button" onClick={() => { resetForm(); setModalOpen(true); }}>＋ Agregar cuenta</button>
