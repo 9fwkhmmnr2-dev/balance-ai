@@ -199,6 +199,7 @@ export default function DashboardStats() {
     <div className="dashboard-overview">
       <header className="dashboard-identity-compact" aria-label="FINANCETRACK">
         <MobileMenu />
+        <div className="dashboard-identity-brand">FINANCE<span>.</span>TRACK</div>
         <p>Entendé qué está pasando con tu dinero.</p>
       </header>
 
