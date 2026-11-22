@@ -1739,3 +1739,459 @@ body{background:#090A0D;color:#F2F0EB}
   .period-chart-yearly{gap:2px}
   .period-chart-yearly .period-column{font-size:8px}
 }
+
+
+/* FINANCETRACK · Dashboard compacto y analítica */
+.dashboard-overview{
+  max-width:1180px;
+  margin:0 auto;
+  padding-bottom:112px;
+}
+.dashboard-identity-compact{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  grid-template-areas:"menu brand" "menu tagline";
+  align-items:center;
+  column-gap:12px;
+  margin:0 0 14px;
+  min-height:38px;
+}
+.dashboard-identity-compact .mobile-menu-bar{
+  grid-area:menu;
+  justify-content:flex-start;
+}
+.dashboard-identity-compact .dashboard-identity-brand{
+  grid-area:brand;
+  font-size:16px;
+  line-height:1.1;
+  letter-spacing:-.5px;
+}
+.dashboard-identity-compact>p{
+  grid-area:tagline;
+  margin-top:2px;
+  color:#92909A;
+  font-size:10px;
+  line-height:1.2;
+}
+.dashboard-balance-compact{
+  padding:20px 22px!important;
+  margin-bottom:13px!important;
+  border-radius:16px!important;
+  background:linear-gradient(120deg,#17191F 0%,#211E2B 72%,#292318 100%)!important;
+}
+.dashboard-balance-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.dashboard-balance-heading h2{
+  margin-top:3px;
+  color:#F2F0EB;
+  font-family:'Manrope',sans-serif;
+  font-size:19px;
+  line-height:1.2;
+  letter-spacing:-.5px;
+}
+.dashboard-balance-heading .eyebrow{margin:0}
+.dashboard-overview .currency-picker{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:#B7B5BC;
+  font-size:11px;
+  white-space:nowrap;
+}
+.dashboard-overview .currency-picker select{
+  min-width:68px;
+  padding:7px 9px;
+  border:1px solid #41434D;
+  border-radius:8px;
+  background:#202229;
+  color:#F2F0EB;
+  font-size:12px;
+}
+.dashboard-balance-controls{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:15px 0 17px;
+  padding-bottom:14px;
+  border-bottom:1px solid #343640;
+}
+.dashboard-balance-controls>span{
+  color:#B7B5BC;
+  font-size:11px;
+  font-weight:600;
+}
+.dashboard-balance-controls .dashboard-period-switch{
+  flex:1;
+  justify-content:flex-end;
+  border:0;
+  background:transparent;
+  padding:0;
+}
+.dashboard-balance-controls .dashboard-period-switch button{
+  min-height:31px;
+  padding:0 11px;
+  font-size:11px;
+}
+.dashboard-balance-main{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:18px;
+}
+.dashboard-balance-main h1{
+  margin:5px 0 4px;
+  color:#F2F0EB;
+  font-family:'Manrope',sans-serif;
+  font-size:clamp(27px,4vw,37px);
+  font-weight:800;
+  letter-spacing:-1.2px;
+  overflow-wrap:anywhere;
+}
+.dashboard-balance-main .balance-kicker{
+  color:#C8A96B;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:.8px;
+}
+.dashboard-balance-main .balance-caption{
+  max-width:440px;
+  color:#B7B5BC;
+  font-size:11px;
+  line-height:1.45;
+}
+.dashboard-balance-main .balance-period{
+  min-width:145px;
+  padding-left:15px;
+  border-left:1px solid #41404A;
+}
+.dashboard-balance-main .balance-period span,
+.dashboard-balance-main .balance-period small{
+  display:block;
+  color:#92909A;
+  font-size:10px;
+}
+.dashboard-balance-main .balance-period strong{
+  display:block;
+  margin:4px 0;
+  color:#E7D5AF;
+  font-size:15px;
+  overflow-wrap:anywhere;
+}
+.dashboard-stat-cards{
+  gap:9px!important;
+  margin:0 0 16px!important;
+}
+.dashboard-stat-cards .stat-card{
+  min-width:0;
+  padding:12px 14px!important;
+  border-radius:11px!important;
+}
+.dashboard-stat-cards .card-label{font-size:10px!important}
+.dashboard-stat-cards .card-value{
+  margin-top:5px!important;
+  font-size:clamp(15px,2vw,19px)!important;
+  letter-spacing:-.4px!important;
+  overflow-wrap:anywhere;
+}
+.dashboard-recent-top{
+  margin:0 0 19px;
+  padding:17px 19px!important;
+  border-radius:13px!important;
+}
+.dashboard-recent-top .section-heading,
+.dashboard-chart-card .section-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:9px;
+}
+.dashboard-recent-top .section-heading h3,
+.dashboard-chart-card .section-heading h3{
+  color:#F2F0EB;
+  font-family:'Manrope',sans-serif;
+  font-size:15px;
+}
+.dashboard-section-note{
+  color:#92909A;
+  font-size:10px;
+  white-space:nowrap;
+}
+.dashboard-recent-top .recent-movement{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 0;
+  border-bottom:1px solid #30323A;
+}
+.dashboard-recent-top .recent-movement:last-child{border-bottom:0;padding-bottom:2px}
+.dashboard-recent-top .recent-description{flex:1;min-width:0}
+.dashboard-recent-top .recent-description strong{
+  display:block;
+  overflow:hidden;
+  color:#F2F0EB;
+  font-size:12px;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.dashboard-recent-top .recent-description small{
+  display:block;
+  margin-top:3px;
+  color:#92909A;
+  font-size:10px;
+}
+.dashboard-recent-top .recent-movement>b{
+  flex:none;
+  font-size:12px;
+  white-space:nowrap;
+}
+.dashboard-accounts-top{margin:0 0 17px!important}
+.dashboard-accounts-top .section-heading h3{
+  color:#F2F0EB;
+  font-family:'Manrope',sans-serif;
+  font-size:15px;
+}
+.dashboard-accounts-top .section-heading>strong{
+  color:#E7D5AF;
+  font-size:14px;
+}
+.vera-insight-compact{
+  margin:0 0 24px;
+  padding:13px 16px!important;
+  border-radius:12px!important;
+}
+.vera-insight-compact .vera-insight-top{align-items:center;gap:10px}
+.vera-insight-compact .vera-mark{
+  width:29px;height:29px;min-width:29px;
+  display:grid;place-items:center;
+  font-size:13px;
+}
+.vera-insight-compact .vera-insight-top .eyebrow{font-size:9px}
+.vera-insight-compact .vera-insight-top h3{
+  margin-top:2px;
+  font-size:12px;
+  line-height:1.3;
+}
+.vera-insight-compact .insight-status{font-size:9px}
+.vera-insight-compact>p{
+  margin:8px 0 0 39px;
+  color:#C6C1CD;
+  font-size:11px;
+  line-height:1.45;
+}
+.dashboard-charts-section{margin-top:6px}
+.dashboard-charts-heading{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin:0 0 13px;
+}
+.dashboard-charts-heading h2{
+  margin-top:3px;
+  color:#F2F0EB;
+  font-family:'Manrope',sans-serif;
+  font-size:19px;
+  letter-spacing:-.4px;
+}
+.dashboard-charts-heading>span{
+  color:#92909A;
+  font-size:10px;
+  text-align:right;
+}
+.dashboard-charts-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:13px;
+}
+.dashboard-chart-card{
+  min-width:0;
+  padding:17px!important;
+  border-radius:13px!important;
+}
+.dashboard-chart-card .eyebrow{
+  color:#C8A96B;
+  font-size:9px;
+  letter-spacing:.8px;
+}
+.dashboard-category-list,.dashboard-account-distribution{
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  margin-top:13px;
+}
+.dashboard-category-meta{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:6px;
+}
+.dashboard-category-meta>span{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  color:#D8D5CE;
+  font-size:11px;
+  overflow-wrap:anywhere;
+}
+.dashboard-category-meta>strong{
+  flex:none;
+  color:#F2F0EB;
+  font-size:11px;
+  white-space:nowrap;
+}
+.category-dot{
+  width:7px;height:7px;flex:none;border-radius:50%;
+  background:#C8A96B;
+}
+.category-dot-1{background:#9B78D0}
+.category-dot-2{background:#6F9B88}
+.category-dot-3{background:#B87970}
+.category-dot-4{background:#8D91B5}
+.dashboard-progress-track{
+  width:100%;
+  height:6px;
+  overflow:hidden;
+  border-radius:99px;
+  background:#30323A;
+}
+.category-fill,.comparison-income-fill,.comparison-expense-fill{
+  display:block;
+  height:100%;
+  border-radius:99px;
+  transition:width .25s ease;
+}
+.category-fill-0{background:#C8A96B}
+.category-fill-1{background:#9B78D0}
+.category-fill-2{background:#6F9B88}
+.category-fill-3{background:#B87970}
+.category-fill-4{background:#8D91B5}
+.dashboard-category-row>small,.dashboard-distribution-row>small{
+  display:block;
+  margin-top:4px;
+  color:#85838D;
+  font-size:9px;
+}
+.dashboard-evolution-value{
+  margin:11px 0 2px;
+  color:#E7D5AF;
+  font-family:'Manrope',sans-serif;
+  font-size:20px;
+  font-weight:800;
+}
+.dashboard-evolution-chart svg{
+  display:block;
+  width:100%;
+  height:115px;
+  overflow:visible;
+}
+.evolution-axis{stroke:#383A43;stroke-width:1}
+.evolution-line{
+  fill:none;
+  stroke:#9B78D0;
+  stroke-width:2.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.evolution-point{fill:#C8A96B;stroke:#17191F;stroke-width:1.5}
+.dashboard-evolution-labels{
+  display:flex;
+  justify-content:space-between;
+  color:#85838D;
+  font-size:9px;
+}
+.dashboard-evolution-chart>small{
+  display:block;
+  margin-top:9px;
+  color:#92909A;
+  font-size:9px;
+  line-height:1.4;
+}
+.dashboard-comparison{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  margin-top:19px;
+}
+.dashboard-comparison-row>div:first-child{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:7px;
+}
+.dashboard-comparison-row span{color:#B7B5BC;font-size:11px}
+.dashboard-comparison-row strong{color:#F2F0EB;font-size:11px}
+.comparison-income-fill{background:#63C995}
+.comparison-expense-fill{background:#E18A80}
+.dashboard-comparison-result{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding-top:12px;
+  border-top:1px solid #30323A;
+}
+.dashboard-comparison-result span{color:#92909A;font-size:10px}
+.dashboard-comparison-result strong{font-size:12px}
+.dashboard-timeline-card{grid-column:1/-1}
+.dashboard-timeline-card .period-chart{margin-top:8px}
+.dashboard-timeline-card .chart-legend{font-size:9px;color:#B7B5BC}
+.dashboard-overview .dashboard-disclaimer{
+  margin-top:18px;
+  padding-bottom:20px;
+  color:#85838D;
+  font-size:10px;
+  line-height:1.5;
+}
+@media(max-width:700px){
+  .dashboard-overview{padding-bottom:125px}
+  .dashboard-identity-compact{margin-bottom:10px}
+  .dashboard-balance-compact{padding:16px!important}
+  .dashboard-balance-heading h2{font-size:16px}
+  .dashboard-overview .currency-picker{gap:5px;font-size:10px}
+  .dashboard-overview .currency-picker select{min-width:61px;padding:6px 6px}
+  .dashboard-balance-controls{margin:12px 0 14px;gap:6px}
+  .dashboard-balance-controls>span{font-size:10px}
+  .dashboard-balance-controls .dashboard-period-switch{gap:2px}
+  .dashboard-balance-controls .dashboard-period-switch button{flex:1;min-width:0;padding:0 5px;font-size:10px}
+  .dashboard-balance-main{align-items:flex-start;flex-direction:column;gap:12px}
+  .dashboard-balance-main h1{font-size:29px}
+  .dashboard-balance-main .balance-period{
+    width:100%;
+    min-width:0;
+    padding:9px 0 0;
+    border-left:0;
+    border-top:1px solid #41404A;
+  }
+  .dashboard-balance-main .balance-period strong{font-size:14px}
+  .dashboard-stat-cards{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+  .dashboard-stat-cards .stat-card{padding:10px 8px!important}
+  .dashboard-stat-cards .card-label{font-size:9px!important}
+  .dashboard-stat-cards .card-value{font-size:13px!important}
+  .dashboard-recent-top{padding:14px!important}
+  .dashboard-recent-top .section-heading h3,.dashboard-accounts-top .section-heading h3{font-size:14px}
+  .dashboard-section-note{font-size:9px}
+  .dashboard-recent-top .recent-movement{gap:8px}
+  .dashboard-recent-top .recent-movement>b{font-size:10px}
+  .dashboard-account-card{gap:6px!important}
+  .dashboard-account-card span{font-size:11px}
+  .dashboard-account-card strong{font-size:12px}
+  .vera-insight-compact{padding:11px 12px!important;margin-bottom:19px}
+  .vera-insight-compact .insight-status{display:none}
+  .dashboard-charts-heading{align-items:flex-start;flex-direction:column;gap:4px}
+  .dashboard-charts-heading h2{font-size:17px}
+  .dashboard-charts-heading>span{text-align:left}
+  .dashboard-charts-grid{grid-template-columns:1fr;gap:10px}
+  .dashboard-chart-card{padding:15px!important}
+  .dashboard-timeline-card{grid-column:auto}
+  .dashboard-chart-card .section-heading h3{font-size:14px}
+  .dashboard-evolution-chart svg{height:105px}
+}
