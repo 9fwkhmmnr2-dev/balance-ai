@@ -9,6 +9,7 @@ const navigation = [
   { label: "Mis cuentas", href: "/cuentas" },
   { label: "Transferencias", href: "/transferencias" },
   { label: "Conversor", href: "/conversor" },
+  { label: "VERA", href: "/vera" },
   { label: "Perfil", href: "/perfil" }
 ];
 
