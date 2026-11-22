@@ -45,6 +45,18 @@ export async function GET(request: Request) {
     const { supabase, userId } = auth;
     const url = new URL(request.url);
     const archived = url.searchParams.get("archived") === "true";
+    const conversationId = url.searchParams.get("id");
+    if (conversationId) {
+      const { data, error } = await supabase
+        .from("vera_conversations")
+        .select("id, title, messages, last_message_at, archived_at")
+        .eq("id", conversationId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return NextResponse.json({ error: "No encontré esa conversación." }, { status: 404 });
+      return NextResponse.json({ conversation: data });
+    }
 
     if (!archived) {
       const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
