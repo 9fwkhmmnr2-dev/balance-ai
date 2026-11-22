@@ -69,11 +69,14 @@ export async function GET(request: Request) {
       if (error) throw error;
     }
 
-    const { data, error } = await supabase
+    let conversationsQuery = supabase
       .from("vera_conversations")
       .select("id, title, last_message_at, archived_at, created_at")
-      .eq("user_id", userId)
-      .is("archived_at", archived ? "not.null" : null)
+      .eq("user_id", userId);
+    conversationsQuery = archived
+      ? conversationsQuery.not("archived_at", "is", null)
+      : conversationsQuery.is("archived_at", null);
+    const { data, error } = await conversationsQuery
       .order("last_message_at", { ascending: false })
       .limit(100);
     if (error) throw error;
