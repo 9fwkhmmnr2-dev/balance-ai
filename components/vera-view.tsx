@@ -50,7 +50,7 @@ export default function VeraView() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          messages: nextMessages.slice(-11),
+          messages: nextMessages.slice(-11).filter((message, index, list) => index > 0 || message.role === "user"),
           period,
         }),
       });
