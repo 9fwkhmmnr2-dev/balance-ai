@@ -217,7 +217,7 @@ export default function AccountsView() {
   return (
     <div className="accounts-page">
       <MobileMenu />
-      <nav className="accounts-desktop-nav"><a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a><div><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas" aria-current="page">Mis cuentas</a><a href="/transferencias">Transferencias</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></div></nav>
+      <nav className="accounts-desktop-nav"><a href="/" className="mobile-brand">FINANCE<span>.</span>TRACK</a><div><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas" aria-current="page">Mis cuentas</a><a href="/transferencias">Transferencias</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></div></nav>
       <header className="accounts-heading">
         <div><p className="eyebrow">ORGANIZÁ TU DINERO</p><h1>Mis cuentas</h1><p>Reuní tus saldos y conocé dónde está tu dinero.</p></div>
         <button className="accounts-add-button" onClick={() => { resetForm(); setModalOpen(true); }}>＋ Agregar cuenta</button>
@@ -227,7 +227,6 @@ export default function AccountsView() {
         <section className="accounts-total-section">
           <div><p className="eyebrow">SALDOS POR MONEDA</p><h2>Tu dinero disponible</h2></div>
           {totals.length === 0 ? <p className="accounts-muted">Todavía no agregaste cuentas.</p> : <div className="accounts-total-grid">{totals.map(([code, value]) => <article className="accounts-total-card" key={code}><span>{code}</span><strong>{money(value, code)}</strong></article>)}</div>}
-          <p className="accounts-footnote">Los saldos se calculan con el saldo inicial y los movimientos asociados. No se convierten monedas.</p>
         </section>
 
         <div className="accounts-list-heading"><div><p className="eyebrow">TU ORGANIZACIÓN</p><h2>{showArchived ? "Todas las cuentas" : "Cuentas activas"}</h2></div><button className="accounts-text-button" onClick={() => setShowArchived((value) => !value)}>{showArchived ? "Ocultar archivadas" : "Ver archivadas"}</button></div>
