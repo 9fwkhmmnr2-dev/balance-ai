@@ -1336,3 +1336,59 @@ body{background:#090A0D;color:#F2F0EB}
 .converter-source-option{background:#17191F!important;color:#F2F0EB!important;border-color:#343640!important}
 .transfers-success{background:#183126!important;color:#9AD6B1!important}
 .dashboard-data-note{display:none!important}
+
+
+/* Microajustes de depuración · tarjetas de moneda y acciones */
+.accounts-total-card,
+.movements-total-currency,
+.dashboard-currency-card,
+.currency-summary-card,
+.currency-balance-card{
+  background:#202229!important;
+  border:1px solid #383A45!important;
+  color:#F2F0EB!important;
+}
+.accounts-total-card span,
+.movements-total-currency>span{
+  color:#C8A96B!important;
+}
+.accounts-total-card strong,
+.movements-total-currency strong{
+  color:#F2F0EB!important;
+}
+.movements-clear-filters{
+  background:#30253F!important;
+  border:1px solid #59466E!important;
+  color:#D9C7F0!important;
+}
+.movements-clear-filters:hover{
+  background:#403052!important;
+  border-color:#80649F!important;
+}
+.account-card-bottom button.account-delete-button{
+  background:#29232A!important;
+  border:1px solid #59414A!important;
+  color:#D9958C!important;
+}
+.account-card-bottom button.account-delete-button:hover{
+  background:#3A292F!important;
+  border-color:#8A555E!important;
+}
+.converter-mode-switch button{
+  background:#17191F!important;
+  border:1px solid #343640!important;
+  color:#F2F0EB!important;
+}
+.converter-mode-switch button.selected{
+  background:#30253F!important;
+  border:1px solid #80649F!important;
+  color:#F2F0EB!important;
+  box-shadow:0 0 0 2px rgba(128,100,159,.12)!important;
+}
+.converter-mode-switch button>span:first-child{
+  background:#403052!important;
+  color:#D9C7F0!important;
+}
+.converter-mode-switch button small{
+  color:#B7B5BC!important;
+}
