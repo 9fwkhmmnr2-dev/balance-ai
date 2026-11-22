@@ -131,7 +131,7 @@ export default function VeraView() {
         <h1 id="vera-title">Hola, soy <span>VERA.</span></h1>
         <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>
         <div className="vera-status"><span className="vera-dot" /> {sending ? "Estoy analizando tus datos" : "Acá estoy, lista para conversar"}</div>
-      </section>
+      </header>
 
       <section className="vera-chat" aria-label="Conversación con VERA">
         <header className="vera-chat-head">
