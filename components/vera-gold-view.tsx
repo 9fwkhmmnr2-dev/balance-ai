@@ -70,6 +70,7 @@ export default function VeraGoldView() {
             conectar información y acompañar tus decisiones financieras.
           </p>
           <a className={styles.primaryButton} href="#beneficios">Explorar GOLD <span>↓</span></a>
+          <a className={styles.secondaryButton} href="/vera/gold/demo">Probar experiencia de GOLD <span>→</span></a>
           <p className={styles.heroNote}>Una sola VERA. Más profundidad cuando la necesitás.</p>
           <div className={styles.heroOrb} aria-hidden="true">
             <div className={styles.orbRing} />
