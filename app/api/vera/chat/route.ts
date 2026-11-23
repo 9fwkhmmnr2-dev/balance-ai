@@ -11,6 +11,7 @@ type MovementRow = {
   type: "income" | "expense";
   amount: number | string;
   category: string | null;
+  movement_date: string;
 };
 
 function buenosAiresToday() {
@@ -31,6 +32,37 @@ function startDate(period: Period, today: string) {
   if (period === "monthly") date.setUTCDate(1);
   if (period === "yearly") date.setUTCMonth(0, 1);
   return date.toISOString().slice(0, 10);
+}
+
+function previousStartDate(period: Period, currentFrom: string) {
+  const [year, month, day] = currentFrom.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (period === "daily") date.setUTCDate(date.getUTCDate() - 1);
+  if (period === "weekly") date.setUTCDate(date.getUTCDate() - 7);
+  if (period === "monthly") date.setUTCMonth(date.getUTCMonth() - 1);
+  if (period === "yearly") date.setUTCFullYear(date.getUTCFullYear() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function summarizeMovements(movements: MovementRow[]) {
+  const income = movements.filter((item) => item.type === "income")
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+  const expenses = movements.filter((item) => item.type === "expense")
+    .reduce((sum, item) => sum + Number(item.amount), 0);
+  const categories = new Map<string, number>();
+  movements.filter((item) => item.type === "expense").forEach((item) => {
+    const category = item.category?.trim() || "Sin categoría";
+    categories.set(category, (categories.get(category) ?? 0) + Number(item.amount));
+  });
+  return {
+    income,
+    expenses,
+    netBalance: income - expenses,
+    movementsCount: movements.length,
+    categoryTotals: Array.from(categories, ([category, amount]) => ({ category, amount }))
+      .sort((a, b) => b.amount - a.amount)
+      .slice(0, 8),
+  };
 }
 
 function isPeriod(value: unknown): value is Period {
@@ -173,40 +205,44 @@ export async function POST(request: Request) {
     const currency = typeof profile?.currency === "string" ? profile.currency : "ARS";
     const today = buenosAiresToday();
     const from = startDate(input.period, today);
+    const isGold = authData.user.app_metadata?.plan === "gold" &&
+      authData.user.app_metadata?.gold_active === true;
+    const previousFrom = previousStartDate(input.period, from);
+    const previousToDate = new Date(`${from}T00:00:00.000Z`);
+    previousToDate.setUTCDate(previousToDate.getUTCDate() - 1);
+    const previousTo = previousToDate.toISOString().slice(0, 10);
+
     const { data: rows, error: movementError } = await supabase
       .from("movements")
-      .select("type, amount, category")
+      .select("type, amount, category, movement_date")
       .eq("user_id", authData.user.id)
       .eq("currency", currency)
-      .gte("movement_date", from)
+      .gte("movement_date", isGold ? previousFrom : from)
       .lte("movement_date", today)
       .order("movement_date", { ascending: false })
       .limit(5000);
     if (movementError) throw movementError;
 
-    const movements = (rows ?? []) as MovementRow[];
-    const income = movements
-      .filter((item) => item.type === "income")
-      .reduce((sum, item) => sum + Number(item.amount), 0);
-    const expenses = movements
-      .filter((item) => item.type === "expense")
-      .reduce((sum, item) => sum + Number(item.amount), 0);
-    const categories = new Map<string, number>();
-    movements.filter((item) => item.type === "expense").forEach((item) => {
-      const category = item.category?.trim() || "Sin categoría";
-      categories.set(category, (categories.get(category) ?? 0) + Number(item.amount));
-    });
+    const allMovements = (rows ?? []) as MovementRow[];
+    const movements = allMovements.filter((item) => item.movement_date >= from);
+    const currentSummary = summarizeMovements(movements);
+    const previousMovements = isGold
+      ? allMovements.filter((item) => item.movement_date >= previousFrom && item.movement_date <= previousTo)
+      : [];
+    const previousSummary = isGold ? summarizeMovements(previousMovements) : null;
 
     const financialContext: VeraFinancialContext = {
       currency,
       period: input.period,
-      income,
-      expenses,
-      netBalance: income - expenses,
-      movementsCount: movements.length,
-      categoryTotals: Array.from(categories, ([category, amount]) => ({ category, amount }))
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, 8),
+      ...currentSummary,
+      experience: isGold ? "gold" : "standard",
+      ...(previousSummary ? {
+        previousPeriod: {
+          from: previousFrom,
+          to: previousTo,
+          ...previousSummary,
+        },
+      } : {}),
     };
 
     const provider = getVeraProvider();
