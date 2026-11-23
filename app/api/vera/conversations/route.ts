@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     const firstUserMessage = input.messages.find((message) => message.role === "user")?.content ?? "Nueva conversación";
     const title = firstUserMessage.replace(/\s+/g, " ").trim().slice(0, 64) || "Nueva conversación";
     const now = new Date().toISOString();
-    const values = { title, messages: input.messages, last_message_at: now, updated_at: now, archived_at: null };
+    const values = { messages: input.messages, last_message_at: now, updated_at: now, archived_at: null };
 
     if (typeof input.id === "string" && input.id.length <= 64) {
       const { data, error } = await supabase
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from("vera_conversations")
-      .insert({ ...values, user_id: userId })
+      .insert({ ...values, title, user_id: userId })
       .select("id, title, last_message_at, archived_at")
       .single();
     if (error) throw error;
@@ -137,8 +137,29 @@ export async function PATCH(request: Request) {
     const { supabase, userId } = auth;
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ error: "La solicitud no es válida." }, { status: 400 });
-    const input = body as { id?: unknown; action?: unknown };
-    if (typeof input.id !== "string" || input.id.length > 64 || !["archive", "restore"].includes(String(input.action))) {
+    const input = body as { id?: unknown; action?: unknown; title?: unknown };
+    if (typeof input.id !== "string" || input.id.length > 64) {
+      return NextResponse.json({ error: "La conversación no es válida." }, { status: 400 });
+    }
+
+    if (input.action === "rename") {
+      const title = typeof input.title === "string" ? input.title.replace(/\s+/g, " ").trim() : "";
+      if (!title || title.length > 64) {
+        return NextResponse.json({ error: "El título debe tener entre 1 y 64 caracteres." }, { status: 400 });
+      }
+      const { data, error } = await supabase
+        .from("vera_conversations")
+        .update({ title, updated_at: new Date().toISOString() })
+        .eq("id", input.id)
+        .eq("user_id", userId)
+        .select("id, title, last_message_at, archived_at")
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return NextResponse.json({ error: "No encontré esa conversación." }, { status: 404 });
+      return NextResponse.json({ conversation: data });
+    }
+
+    if (input.action !== "archive" && input.action !== "restore") {
       return NextResponse.json({ error: "La acción no es válida." }, { status: 400 });
     }
     const archivedAt = input.action === "archive" ? new Date().toISOString() : null;
