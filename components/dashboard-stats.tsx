@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import MobileMenu from "./mobile-menu";
+import VeraGoldContextPromo from "./vera-gold-context-promo";
 
 type Movement = {
   id: string;
@@ -337,6 +338,10 @@ export default function DashboardStats() {
           </section>
         </div>
       </section>
+
+      {((period === "monthly" || period === "yearly") && periodMovements.length >= 6 && categoryData.length >= 2) && (
+        <VeraGoldContextPromo plan="free" />
+      )}
 
       <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en tus movimientos registrados. Las transferencias entre tus cuentas no se cuentan como ingresos ni gastos.</p>
     </div>
