@@ -136,7 +136,24 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply: result.text });
   } catch (error) {
-    const code = error instanceof Error ? error.message : "";
+    const rawCode = error instanceof Error ? error.message : "";
+    const providerHttpMatch = rawCode.match(/^VERA_PROVIDER_HTTP_(\\d{3})$/);
+    const safeCode = [
+      "VERA_AI_NOT_CONFIGURED",
+      "VERA_PROVIDER_RATE_LIMIT",
+      "VERA_EMPTY_RESPONSE",
+      "VERA_PROVIDER_TIMEOUT",
+      "VERA_PROVIDER_NETWORK_ERROR",
+    ].includes(rawCode)
+      ? rawCode
+      : providerHttpMatch
+        ? `GEMINI_HTTP_${providerHttpMatch[1]}`
+        : "UNCLASSIFIED_SERVER_ERROR";
+
+    // Never log API keys, authorization headers, prompts, or financial data.
+    console.error("[VERA_CHAT_DIAGNOSTIC]", { code: safeCode });
+
+    const code = rawCode;
     if (code === "VERA_AI_NOT_CONFIGURED") {
       return NextResponse.json({ error: "VERA todavía no tiene su conexión de IA configurada." }, { status: 503 });
     }
@@ -145,6 +162,9 @@ export async function POST(request: Request) {
     }
     if (code === "VERA_EMPTY_RESPONSE") {
       return NextResponse.json({ error: "No pude preparar una respuesta esta vez. Intentemos de nuevo." }, { status: 502 });
+    }
+    if (code === "VERA_PROVIDER_TIMEOUT") {
+      return NextResponse.json({ error: "La conexión con VERA tardó demasiado. Probá nuevamente." }, { status: 504 });
     }
     return NextResponse.json({ error: "No pude conectar con VERA en este momento. Intentá nuevamente." }, { status: 502 });
   }
