@@ -1,0 +1,60 @@
+.promo {
+  position: relative;
+  margin: 22px 0 8px;
+  padding: 22px 24px 20px;
+  overflow: hidden;
+  border: 1px solid rgba(200,169,107,.3);
+  border-radius: 12px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(200,169,107,.11), transparent 52%),
+    linear-gradient(115deg, rgba(200,169,107,.055), rgba(16,18,23,.96) 58%);
+  box-shadow: 0 12px 35px rgba(0,0,0,.12);
+}
+.promo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, #e4cf9e, #8d7040);
+}
+.heading { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.mark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(200,169,107,.55);
+  border-radius: 8px 8px 8px 3px;
+  color: #e4cf9e;
+  font-family: Georgia, serif;
+  font-size: 14px;
+}
+.brand { color: #e8e3d8; font-size: 10px; letter-spacing: .13em; font-weight: 700; }
+.brand strong { color: #c8a96b; }
+.context { color: #9d8b67; font-size: 9px; letter-spacing: .12em; font-weight: 650; }
+.promo h3 { max-width: 720px; margin: 16px 0 8px; color: #f0eee8; font-size: 17px; line-height: 1.35; font-weight: 600; }
+.promo p { max-width: 760px; margin: 0; color: #aaa9a2; font-size: 12px; line-height: 1.75; }
+.link { display: inline-flex; align-items: center; gap: 9px; margin-top: 15px; color: #d7bd83; text-decoration: none; font-size: 11px; font-weight: 700; }
+.link:hover { color: #f0dfb8; }
+.promo small { display: block; margin-top: 12px; color: #74756f; font-size: 9px; line-height: 1.5; }
+.dismiss {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 27px;
+  height: 27px;
+  border: 0;
+  border-radius: 6px;
+  color: #9b9a92;
+  background: transparent;
+  cursor: pointer;
+  font-size: 19px;
+}
+.dismiss:hover { color: #f2f0eb; background: rgba(255,255,255,.06); }
+@media (max-width: 600px) {
+  .promo { padding: 19px 17px 17px; }
+  .promo h3 { padding-right: 12px; font-size: 15px; }
+  .context { width: 100%; margin-left: 33px; }
+}
