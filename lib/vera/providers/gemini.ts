@@ -37,24 +37,32 @@ export class GeminiVeraProvider implements VeraProvider {
       buildContext(input),
     ].filter(Boolean).join("\n\n");
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        contents: input.messages.map((message) => ({
-          role: message.role,
-          parts: [{ text: message.content }],
-        })),
-        generationConfig: { temperature: 0.65, maxOutputTokens: 900 },
-      }),
-      signal: AbortSignal.timeout(20000),
-      cache: "no-store",
-    });
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: input.messages.map((message) => ({
+            role: message.role,
+            parts: [{ text: message.content }],
+          })),
+          generationConfig: { temperature: 0.65, maxOutputTokens: 900 },
+        }),
+        signal: AbortSignal.timeout(20000),
+        cache: "no-store",
+      });
+    } catch (error) {
+      if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
+        throw new Error("VERA_PROVIDER_TIMEOUT");
+      }
+      throw new Error("VERA_PROVIDER_NETWORK_ERROR");
+    }
 
     if (!response.ok) {
       if (response.status === 429) throw new Error("VERA_PROVIDER_RATE_LIMIT");
-      throw new Error("VERA_PROVIDER_UNAVAILABLE");
+      throw new Error(`VERA_PROVIDER_HTTP_${response.status}`);
     }
 
     const payload = (await response.json()) as GeminiResponse;
