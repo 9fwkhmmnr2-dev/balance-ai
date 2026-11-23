@@ -141,6 +141,8 @@ export default function VeraView() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showCorePanel, setShowCorePanel] = useState(false);
   const [showGoldPanel, setShowGoldPanel] = useState(false);
+  const [isGold, setIsGold] = useState(false);
+  const [showGoldWelcome, setShowGoldWelcome] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -179,6 +181,36 @@ export default function VeraView() {
   useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   useEffect(() => () => { speechRecognitionRef.current?.stop(); }, []);
+
+  // GOLD solo se reconoce desde app_metadata, que Supabase administra del lado servidor.
+  // El usuario no puede activar este estado modificando datos locales o su perfil público.
+  useEffect(() => {
+    let active = true;
+    void supabase.auth.getUser().then(({ data, error: userError }) => {
+      if (!active || userError || !data.user) return;
+      const metadata = data.user.app_metadata as Record<string, unknown> | undefined;
+      const verifiedGold = metadata?.plan === "gold" && metadata?.gold_active === true;
+      if (!verifiedGold) return;
+      setIsGold(true);
+      let welcomeSeen = false;
+      try {
+        const key = `vera-gold-welcome-seen:${data.user.id}`;
+        welcomeSeen = window.localStorage.getItem(key) === "true";
+        if (!welcomeSeen) window.localStorage.setItem(key, "true");
+      } catch {
+        // Si el almacenamiento está bloqueado, la experiencia sigue funcionando.
+      }
+      if (!welcomeSeen) setShowGoldWelcome(true);
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!showGoldWelcome) return;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const timeout = window.setTimeout(() => setShowGoldWelcome(false), reducedMotion ? 350 : 5400);
+    return () => window.clearTimeout(timeout);
+  }, [showGoldWelcome]);
 
   function toggleDictation() {
     if (listening) {
@@ -469,8 +501,165 @@ export default function VeraView() {
         @keyframes vera-core-inner{0%,100%{transform:translate(0,0) scale(.94);opacity:.65}50%{transform:translate(3px,-2px) scale(1.12);opacity:1}}
         @keyframes vera-core-drift{0%,100%{transform:translate(0,0);opacity:.55}50%{transform:translate(3px,-5px);opacity:1}}
         @keyframes vera-drawer-in{from{transform:translateX(-18px);opacity:.6}to{transform:translateX(0);opacity:1}}
+
+        .vera-shell.is-gold{border-color:rgba(200,169,107,.34);background:radial-gradient(ellipse at 50% -10%,rgba(200,169,107,.16),transparent 48%),linear-gradient(155deg,#17140f,#0d0b09 58%,#09090a);box-shadow:0 22px 65px rgba(0,0,0,.28),0 0 34px rgba(200,169,107,.06)}
+        .vera-shell.is-gold:before,.vera-shell.is-gold:after{background:radial-gradient(ellipse 58% 24% at 8% 20%,rgba(173,132,62,.24),transparent 72%),radial-gradient(ellipse 54% 25% at 92% 34%,rgba(224,195,130,.2),transparent 72%),radial-gradient(ellipse 60% 30% at 50% 86%,rgba(126,91,38,.22),transparent 72%)}
+        .vera-core-visual.is-gold{filter:drop-shadow(0 0 14px rgba(200,169,107,.42)) drop-shadow(0 0 28px rgba(155,115,45,.22))}
+        .vera-chat-head.is-welcome .vera-core-visual.is-gold{filter:drop-shadow(0 0 24px rgba(218,185,112,.55))}
+        .vera-core-visual.is-gold:before{background:radial-gradient(ellipse at 29% 19%,rgba(255,255,255,.99) 0%,rgba(255,239,195,.96) 8%,rgba(239,205,130,.95) 20%,rgba(190,145,62,.97) 42%,rgba(111,77,29,.99) 69%,#24190b 100%);box-shadow:inset 2px 3px 8px rgba(255,255,255,.7),inset -7px -9px 15px rgba(27,17,5,.76),inset 3px -2px 9px rgba(255,226,163,.26),0 0 20px rgba(200,169,107,.5),0 0 42px rgba(155,115,45,.3)}
+        .vera-core-visual.is-gold:after{border-color:rgba(230,204,148,.55)}
+        .vera-core-visual.is-gold .vera-core-depth{background:radial-gradient(ellipse at 68% 72%,rgba(38,25,8,.88),rgba(116,80,26,.42) 32%,transparent 68%)}
+        .vera-core-visual.is-gold .vera-core-inner{background:radial-gradient(ellipse at 35% 30%,rgba(255,255,255,.99),rgba(255,231,174,.76) 15%,rgba(216,174,94,.3) 42%,rgba(128,87,29,.08) 68%,transparent 74%);box-shadow:0 0 16px rgba(255,226,163,.28)}
+        .vera-core-visual.is-gold .vera-core-filament{border-color:rgba(255,236,192,.64);border-left-color:transparent;border-bottom-color:rgba(200,169,107,.18)}
+        .vera-core-visual.is-gold .vera-core-particle{background:#fff0c9;box-shadow:0 0 9px rgba(255,226,163,.95)}
+        .vera-gold-status{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(200,169,107,.34);border-radius:7px;background:linear-gradient(115deg,#17130d,#090a0d);color:#e1c78f;padding:7px 10px;font-size:9px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+        .vera-gold-status:before{content:"";width:5px;height:5px;border-radius:50%;background:#d8b76d;box-shadow:0 0 8px rgba(216,183,109,.8)}
+        .vera-gold-cinematic{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 48%,rgba(83,59,23,.24),transparent 42%),#050505;color:#f5edda;animation:vera-gold-screen-in .9s ease both}
+        .vera-gold-cinematic:before{content:"";position:absolute;inset:-30%;background:radial-gradient(ellipse at center,rgba(200,169,107,.14),transparent 38%);animation:vera-gold-aura 4.8s ease-in-out both}
+        .vera-gold-cinematic-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px}
+        .vera-gold-cinematic-core{width:112px;height:112px;margin-bottom:30px;animation:vera-gold-core-arrive 2s cubic-bezier(.2,.8,.2,1) both}
+        .vera-gold-cinematic-core .vera-core-visual{width:100%;height:100%}
+        .vera-gold-cinematic-kicker{color:#d7bc7e;font-size:10px;font-weight:750;letter-spacing:.34em;text-transform:uppercase;opacity:0;animation:vera-gold-text-in .8s 1.7s ease forwards}
+        .vera-gold-cinematic h2{margin:12px 0 8px;color:#f5edda;font-size:clamp(30px,7vw,54px);font-weight:500;letter-spacing:.12em;opacity:0;animation:vera-gold-text-in 1s 2s ease forwards}
+        .vera-gold-cinematic p{max-width:330px;margin:0;color:#b8ad97;font-size:13px;line-height:1.7;opacity:0;animation:vera-gold-text-in 1s 2.35s ease forwards}
+        .vera-gold-skip{position:absolute;z-index:3;right:20px;top:20px;border:1px solid rgba(200,169,107,.3);border-radius:8px;background:rgba(10,10,10,.72);color:#dfc78f;padding:9px 12px;font-size:11px;cursor:pointer}
+        .vera-gold-sparks{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+        .vera-gold-sparks i{position:absolute;top:-12%;left:var(--x);width:2px;height:var(--h);border-radius:99px;background:linear-gradient(180deg,transparent,#f4d99a,transparent);opacity:0;filter:drop-shadow(0 0 5px rgba(238,204,132,.9));animation:vera-gold-fall var(--duration) var(--delay) linear both}
+        .vera-gold-sparks i:nth-child(1){--x:8%;--h:26px;--duration:3.4s;--delay:.1s}.vera-gold-sparks i:nth-child(2){--x:17%;--h:17px;--duration:4s;--delay:.5s}.vera-gold-sparks i:nth-child(3){--x:28%;--h:32px;--duration:3.7s;--delay:.2s}.vera-gold-sparks i:nth-child(4){--x:39%;--h:20px;--duration:4.2s;--delay:.8s}.vera-gold-sparks i:nth-child(5){--x:51%;--h:28px;--duration:3.5s;--delay:.4s}.vera-gold-sparks i:nth-child(6){--x:62%;--h:18px;--duration:4.1s;--delay:.1s}.vera-gold-sparks i:nth-child(7){--x:73%;--h:30px;--duration:3.8s;--delay:.7s}.vera-gold-sparks i:nth-child(8){--x:84%;--h:22px;--duration:4.3s;--delay:.3s}.vera-gold-sparks i:nth-child(9){--x:94%;--h:27px;--duration:3.6s;--delay:.9s}
+        @keyframes vera-gold-screen-in{from{opacity:0}to{opacity:1}}@keyframes vera-gold-aura{0%{transform:scale(.55);opacity:0}45%{opacity:1}100%{transform:scale(1.18);opacity:.75}}@keyframes vera-gold-core-arrive{0%{transform:scale(.18) rotate(-35deg);opacity:0;filter:brightness(2)}58%{transform:scale(1.12) rotate(8deg);opacity:1;filter:brightness(1.8)}100%{transform:scale(1) rotate(0);opacity:1;filter:brightness(1)}}@keyframes vera-gold-text-in{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes vera-gold-fall{0%{transform:translateY(0);opacity:0}12%{opacity:.9}85%{opacity:.65}100%{transform:translateY(120vh);opacity:0}}
+
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{grid-template-columns:1fr;padding:0 12px 16px;gap:8px}.vera-starter{min-height:50px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
-        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-mic.is-listening,.vera-tools-menu,.vera-gold-panel,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
+        @media(prefers-reduced-motion:reduce){.vera-gold-cinematic,.vera-gold-cinematic:before,.vera-gold-cinematic-core,.vera-gold-cinematic-kicker,.vera-gold-cinematic h2,.vera-gold-cinematic p,.vera-gold-sparks i{animation:none!important;opacity:1!important;transform:none!important}.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-mic.is-listening,.vera-tools-menu,.vera-gold-panel,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
+      `}</style>
+
+      {showGoldWelcome && isGold && <div className="vera-gold-cinematic" role="dialog" aria-modal="true" aria-label="Bienvenida a VERA GOLD" onClick={() => setShowGoldWelcome(false)}>
+        <button className="vera-gold-skip" type="button" onClick={() => setShowGoldWelcome(false)}>Omitir animación</button>
+        <div className="vera-gold-sparks" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>
+        <div className="vera-gold-cinematic-content">
+          <div className="vera-gold-cinematic-core"><span className="vera-core-visual is-gold" aria-hidden="true"><span className="vera-core-depth" /><span className="vera-core-inner" /><span className="vera-core-filament" /><span className="vera-core-glint" /><span className="vera-core-particle one" /><span className="vera-core-particle two" /></span></div>
+          <div className="vera-gold-cinematic-kicker">Una nueva etapa</div>
+          <h2>VERA GOLD</h2>
+          <p>La misma VERA. Más profundidad para entender tu dinero y acompañar tus objetivos.</p>
+        </div>
+      </div>}
+
+      {showHistory && <div className="vera-drawer-backdrop" onClick={() => setShowHistory(false)}>
+        <aside className="vera-drawer" aria-label="Historial de conversaciones" onClick={(event) => event.stopPropagation()}>
+          <div className="vera-drawer-top"><strong>Tu historial</strong><button className="vera-drawer-close" type="button" onClick={() => setShowHistory(false)} aria-label="Cerrar historial">×</button></div>
+          <button className="vera-drawer-new" type="button" onClick={newConversation}>＋ Nueva conversación</button>
+          <div className="vera-drawer-tabs">
+            <button type="button" className={showArchived ? "vera-drawer-tab" : "vera-drawer-tab active"} onClick={() => setShowArchived(false)}>Recientes</button>
+            <button type="button" className={showArchived ? "vera-drawer-tab active" : "vera-drawer-tab"} onClick={() => setShowArchived(true)}>Archivadas</button>
+          </div>
+          <label className="vera-filter-label" htmlFor="vera-period-filter">Período de análisis</label>
+          <select id="vera-period-filter" className="vera-period vera-period-drawer" aria-label="Período de análisis" value={period} onChange={(event) => setPeriod(event.target.value as Period)}>
+            {Object.entries(periodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          {historyLoading ? <div className="vera-history-empty">Cargando conversaciones…</div> : visibleConversations.length === 0 ? <div className="vera-history-empty">{showArchived ? "Todavía no hay conversaciones archivadas." : "Tus conversaciones aparecerán acá cuando charles con VERA."}</div> : visibleConversations.map((conversation) => (
+            <div className={`vera-history-item${conversationId === conversation.id ? " selected" : ""}`} key={conversation.id}>
+              {editingConversationId === conversation.id ? (
+                <form className="vera-history-edit" onSubmit={(event) => { event.preventDefault(); void renameConversation(conversation.id); }}>
+                  <input value={editingTitle} onChange={(event) => setEditingTitle(event.target.value)} maxLength={64} aria-label="Nuevo título de la conversación" autoFocus />
+                  <button type="submit" disabled={!editingTitle.trim() || savingTitle}>Guardar</button>
+                  <button type="button" onClick={() => { setEditingConversationId(null); setEditingTitle(""); }}>Cancelar</button>
+                </form>
+              ) : (
+                <>
+                  <button className="vera-history-open" type="button" onClick={() => void openConversation(conversation.id)}>
+                    {conversation.title}<span className="vera-history-date">{new Date(conversation.last_message_at).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}</span>
+                  </button>
+                  <div className="vera-history-actions">
+                    <button className="vera-history-action" type="button" onClick={() => { setEditingConversationId(conversation.id); setEditingTitle(conversation.title); }}>Editar título</button>
+                    <button className="vera-history-action" type="button" onClick={() => void changeArchive(conversation.id, showArchived ? "restore" : "archive")}>{showArchived ? "Restaurar" : "Archivar"}</button>
+                    <button className="vera-history-action delete" type="button" onClick={() => void deleteConversation(conversation.id)}>Eliminar</button>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </aside>
+      </div>}
+
+      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
+
+        <section className="vera-chat" aria-label="Conversación con VERA">
+          <div className="vera-gold-entry">
+            {isGold ? <span className="vera-gold-status" aria-label="Plan VERA GOLD activo">VERA GOLD</span> : <button className="vera-gold-trigger" type="button" aria-expanded={showGoldPanel} aria-controls="vera-gold-panel" onClick={() => setShowGoldPanel((current) => !current)}>✦ Mejorar a GOLD</button>}
+          </div>
+          {showGoldPanel && <section className="vera-gold-panel" id="vera-gold-panel" aria-label="Beneficios de VERA GOLD">
+            <div className="vera-gold-panel-head"><div><span className="vera-gold-panel-mark">VERA / GOLD</span><h2>Una experiencia más profunda.</h2><p className="vera-gold-panel-intro">La misma VERA que ya conocés, con más capacidad para conectar información, profundizar análisis y acompañar tus objetivos.</p></div><button className="vera-gold-close" type="button" onClick={() => setShowGoldPanel(false)} aria-label="Cerrar beneficios GOLD">×</button></div>
+            <div className="vera-gold-benefits">
+              <div className="vera-gold-benefit"><strong>Análisis más profundos</strong><span>Informes extensos y relaciones entre tus finanzas.</span></div>
+              <div className="vera-gold-benefit"><strong>Más capacidad para conversar</strong><span>Más margen para explorar temas y continuar análisis.</span></div>
+              <div className="vera-gold-benefit"><strong>Documentos financieros</strong><span>Extractos, contratos y planillas explicados con claridad.</span></div>
+              <div className="vera-gold-benefit"><strong>Memoria y contexto ampliados</strong><span>Más continuidad para tus preferencias y objetivos.</span></div>
+              <div className="vera-gold-benefit"><strong>Planificación avanzada</strong><span>Escenarios y simulaciones con supuestos explícitos.</span></div>
+              <div className="vera-gold-benefit"><strong>Seguimiento inteligente</strong><span>Señales sobre hábitos, compromisos y movimientos.</span></div>
+            </div>
+            <div className="vera-gold-panel-foot"><p>GOLD está en preparación. La suscripción, el precio y sus funciones se habilitarán cuando estén disponibles.</p><a className="vera-gold-details" href="/vera/gold">Conocer todos los detalles →</a></div>
+          </section>}
+          <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
+            <div className="vera-brand">
+              <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
+                <span className={`vera-core-visual${sending ? " is-thinking" : ""}${isGold ? " is-gold" : ""}`} aria-hidden="true">
+                  <span className="vera-core-depth" />
+                  <span className="vera-core-inner" />
+                  <span className="vera-core-filament" />
+                  <span className="vera-core-glint" />
+                  <span className="vera-core-particle one" />
+                  <span className="vera-core-particle two" />
+                </span>
+              </button>
+              {messages.length > 0 && <div className="vera-brand-copy"><strong>VERA</strong><small>Entendé tu dinero</small></div>}
+            </div>
+            <div className="vera-head-actions">
+              <button className="vera-history-toggle" type="button" aria-label="Abrir historial y filtros" title="Historial y filtros" onClick={() => { setShowHistory(true); void loadHistory(); }}>☰</button>
+              <button className="vera-new-chat" type="button" onClick={newConversation}>＋</button>
+            </div>
+          </header>
+          {showCorePanel && <div className="vera-core-panel" id="vera-core-panel" role="status" aria-live="polite">
+            <div><strong>{sending ? "VERA está procesando" : "VERA está disponible"}</strong><p>{sending ? "Estoy analizando tu consulta." : "El núcleo acompaña visualmente la actividad de VERA."}</p></div>
+            <button type="button" onClick={() => setShowCorePanel(false)}>Cerrar</button>
+          </div>}
+          {messages.length === 0 && <header className="vera-hero" aria-labelledby="vera-title">
+            <div className="vera-eyebrow">Tu asistente financiera</div>
+            <h1 id="vera-title">Hola, soy <span>VERA.</span></h1>
+            <p className="vera-sub">Estoy acá para ayudarte a entender tu dinero, descubrir oportunidades y tomar decisiones con más claridad.</p>
+            <p className="vera-welcome-phrase" key={welcomePhrase}>{welcomePhrase}</p>
+          </header>}
+          <div className="vera-messages" aria-live="polite">
+            {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.role === "model" ? <>{renderModelContent(message.content)}{message.financialSummary && (() => { const summary = message.financialSummary; const comparison = getFinancialComparison(summary); return <div className="vera-financial-card" aria-label="Comparación de ingresos y gastos del período"><div className="vera-financial-card-head"><span className="vera-financial-card-title">Tu período en cifras</span><span className="vera-financial-card-period">{periodLabels[summary.period]}</span></div><div className="vera-financial-grid"><div className="vera-financial-metric"><span>Ingresos</span><strong>{formatFinancialAmount(summary.income, summary.currency)}</strong></div><div className="vera-financial-metric"><span>Gastos</span><strong>{formatFinancialAmount(summary.expenses, summary.currency)}</strong></div><div className="vera-financial-metric net"><span>Balance neto</span><strong>{formatFinancialAmount(summary.netBalance, summary.currency)}</strong></div></div><div className="vera-financial-comparison"><div className="vera-financial-comparison-head"><strong>Ingresos vs. gastos</strong><span>{comparison.expenseRatio === null ? "Sin ingresos para comparar" : `${comparison.expenseRatio.toLocaleString("es-AR",{maximumFractionDigits:1})}% de los ingresos`}</span></div><div className="vera-financial-bar-row"><span className="vera-financial-bar-label">Ingresos</span><div className="vera-financial-track"><div className="vera-financial-fill income" style={{width:`${comparison.incomeWidth}%`}} /></div></div><div className="vera-financial-bar-row"><span className="vera-financial-bar-label">Gastos</span><div className="vera-financial-track"><div className="vera-financial-fill expenses" style={{width:`${comparison.expensesWidth}%`}} /></div></div><div className="vera-financial-insight"><strong>{comparison.outcome}.</strong> {comparison.difference > 0 ? `${summary.netBalance > 0 ? "Quedaron" : "Faltaron"} ${formatFinancialAmount(comparison.difference,summary.currency)} en el período.` : "El total de ingresos y gastos fue el mismo."}</div></div><div className="vera-financial-foot">{summary.movementsCount} movimientos registrados · {summary.currency}</div></div>; })()}</> : message.content}</div>)}
+            {sending && <div className="vera-thinking" role="status"><span className="vera-mini-coin" aria-hidden="true" /><span>VERA está pensando</span><span className="vera-dots" aria-hidden="true"><i /><i /><i /></span></div>}
+          </div>
+          {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
+          {error && <div className="vera-error" role="alert">{error}</div>}
+          <div className="vera-compose">
+            <form onSubmit={handleSubmit}>
+              <div className="vera-compose-tools">
+                <button className="vera-tool-trigger" type="button" aria-label="Abrir herramientas" aria-expanded={showTools} onClick={() => setShowTools((current) => !current)} disabled={sending}>＋</button>
+                {showTools && <div className="vera-tools-menu" role="group" aria-label="Herramientas rápidas">
+                  <strong className="vera-tools-title">Accesos rápidos</strong>
+                  <label className="vera-tools-label" htmlFor="vera-compose-period">Período para el análisis</label>
+                  <select id="vera-compose-period" className="vera-tools-period" value={period} onChange={(event) => setPeriod(event.target.value as Period)}>
+                    {Object.entries(periodLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                  <button className="vera-tools-action" type="button" onClick={() => { setShowTools(false); void sendMessage("Analizá mis principales gastos del período seleccionado y explicame qué patrones encontrás."); }}><span className="vera-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M10 19V5M16 19v-7M22 19V8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M2.5 21h20" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg></span>Analizar mis gastos</button>
+                  <button className="vera-tools-action" type="button" onClick={() => { setShowTools(false); void sendMessage("Ayudame a revisar mi progreso financiero en el período seleccionado."); }}><span className="vera-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18.5 9 13l3.5 3.2L20 7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M14.8 7H20v5.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Revisar mi progreso</button>
+                </div>}
+              </div>
+              <textarea ref={composeRef} className="vera-input" rows={1} value={draft} onChange={(event) => handleDraftChange(event.target.value)} placeholder="Escribile a VERA…" aria-label="Mensaje para VERA" maxLength={3000} disabled={sending} />
+              <button className={`vera-mic${listening ? " is-listening" : ""}`} type="button" onClick={toggleDictation} aria-label={listening ? "Detener dictado" : "Dictar mensaje"} aria-pressed={listening} disabled={sending}>{listening ? "◉" : "⌁"}</button>
+              <button className={`vera-send${draft.trim() ? " ready" : ""}`} type="submit" aria-label="Enviar mensaje" disabled={sending || !draft.trim()}><span className="vera-send-arrow">↑</span></button>
+            </form>
+            {listening && <p className="vera-listening-label" role="status">Escuchando… hablá con claridad. Tocá el micrófono para terminar.</p>}
+            <p className="vera-privacy">VERA analiza los movimientos registrados en FINANCETRACK. No realiza operaciones ni modifica tus cuentas.</p>
+          </div>
+        </section>
+      </section>
+    </div>
+  );
+}
+.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-mic.is-listening,.vera-tools-menu,.vera-gold-panel,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
       `}</style>
 
       {showHistory && <div className="vera-drawer-backdrop" onClick={() => setShowHistory(false)}>
