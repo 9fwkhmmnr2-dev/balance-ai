@@ -52,7 +52,9 @@ function getFinancialComparison(summary: FinancialSummary) {
 }
 
 function shouldShowFinancialSummary(message: string) {
-  return /\b(finanzas?|gastos?|ingresos?|balance|saldo|movimientos?|categorías?|ahorro|cuánto gasté|cuánto ingresé|resumen financiero)\b/i.test(message);
+  const financialIntent = /\b(finanzas?|gastos?|ingresos?|balance|saldo|movimientos?|categorías?|ahorro|cuánto gasté|cuánto ingresé|resumen financiero)\b/i.test(message);
+  const visualIntent = /\b(tarjetas? (?:gráficas?|visuales?)|gráfic[oa]s?|comparaci[oó]n visual|visualiz(?:á|a|ame|ar)|mostrame (?:una )?(?:tarjeta|gráfico|gráfica|comparación))\b/i.test(message);
+  return financialIntent || visualIntent;
 }
 
 function renderInlineMarkdown(text: string) {
