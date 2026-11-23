@@ -140,6 +140,7 @@ export default function VeraView() {
   const [showArchived, setShowArchived] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showCorePanel, setShowCorePanel] = useState(false);
+  const [showGoldPanel, setShowGoldPanel] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -404,6 +405,7 @@ export default function VeraView() {
         .vera-head-actions{display:flex;align-items:center;gap:8px}
         .vera-chat-head.is-welcome .vera-head-actions{position:absolute;top:14px;right:16px}
         .vera-history-toggle,.vera-new-chat{border:1px solid rgba(196,181,253,.2);background:linear-gradient(145deg,rgba(42,31,59,.96),rgba(22,17,31,.98));color:#e7dcff;border-radius:10px;padding:8px 10px;font-size:11px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 5px 14px rgba(0,0,0,.16);transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease}.vera-history-toggle{display:grid;place-items:center;width:36px;height:36px;padding:0;font-size:19px;line-height:1}
+        .vera-gold-entry{display:flex;justify-content:flex-start;padding:12px 16px 0}.vera-gold-trigger{border:1px solid rgba(200,169,107,.42);border-radius:7px;background:linear-gradient(115deg,#17130d,#090a0d);color:#d8bb7d;padding:7px 10px;font-size:9px;font-weight:750;letter-spacing:.13em;text-transform:uppercase;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.18);transition:border-color .2s,transform .2s,box-shadow .2s}.vera-gold-trigger:hover{border-color:rgba(228,207,158,.8);transform:translateY(-1px);box-shadow:0 6px 20px rgba(200,169,107,.12)}.vera-gold-panel{margin:12px 16px 0;padding:18px;border:1px solid rgba(200,169,107,.3);border-radius:15px;background:radial-gradient(ellipse at 0% 0%,rgba(200,169,107,.12),transparent 55%),linear-gradient(145deg,#15130f,#0b0b0d 72%);box-shadow:0 16px 36px rgba(0,0,0,.24);animation:vera-message-in .28s ease both}.vera-gold-panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.vera-gold-panel-mark{color:#e2c98f;font-size:10px;font-weight:750;letter-spacing:.16em}.vera-gold-panel h2{margin:8px 0 5px;color:#f2ead8;font-size:19px;letter-spacing:-.3px}.vera-gold-panel-intro{margin:0;color:#aaa397;font-size:11px;line-height:1.65;max-width:560px}.vera-gold-close{border:1px solid rgba(200,169,107,.22);border-radius:8px;background:rgba(255,255,255,.025);color:#cbb98f;width:30px;height:30px;flex:0 0 30px;cursor:pointer;font-size:17px}.vera-gold-benefits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:15px}.vera-gold-benefit{padding:10px 11px;border:1px solid rgba(200,169,107,.13);border-radius:10px;background:rgba(255,255,255,.025)}.vera-gold-benefit strong{display:block;color:#e7d6ae;font-size:11px;margin-bottom:4px}.vera-gold-benefit span{display:block;color:#a8a196;font-size:10px;line-height:1.5}.vera-gold-panel-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;padding-top:13px;border-top:1px solid rgba(200,169,107,.13)}.vera-gold-panel-foot p{margin:0;color:#8f897e;font-size:10px;line-height:1.5}.vera-gold-details{flex:0 0 auto;color:#e0c487;text-decoration:none;font-size:10px;font-weight:700}.vera-gold-details:hover{text-decoration:underline}@media(max-width:520px){.vera-gold-benefits{grid-template-columns:1fr}.vera-gold-panel{margin-left:10px;margin-right:10px;padding:14px}.vera-gold-panel-foot{align-items:flex-start;flex-direction:column}.vera-gold-entry{padding-left:12px}}
         .vera-core-panel{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);background:linear-gradient(110deg,rgba(124,58,237,.16),rgba(20,18,28,.9))}
         .vera-core-panel strong{display:block;color:#eee8fa;font-size:12px}
         .vera-core-panel p{margin-top:4px;color:#aaa1b8;font-size:11px;line-height:1.45}
@@ -511,6 +513,21 @@ export default function VeraView() {
       <section className={`vera-shell${sending ? " is-thinking" : ""}`} aria-label="Asistente financiera VERA">
 
         <section className="vera-chat" aria-label="Conversación con VERA">
+          <div className="vera-gold-entry">
+            <button className="vera-gold-trigger" type="button" aria-expanded={showGoldPanel} aria-controls="vera-gold-panel" onClick={() => setShowGoldPanel((current) => !current)}>✦ Mejorar a GOLD</button>
+          </div>
+          {showGoldPanel && <section className="vera-gold-panel" id="vera-gold-panel" aria-label="Beneficios de VERA GOLD">
+            <div className="vera-gold-panel-head"><div><span className="vera-gold-panel-mark">VERA / GOLD</span><h2>Una experiencia más profunda.</h2><p className="vera-gold-panel-intro">La misma VERA que ya conocés, con más capacidad para conectar información, profundizar análisis y acompañar tus objetivos.</p></div><button className="vera-gold-close" type="button" onClick={() => setShowGoldPanel(false)} aria-label="Cerrar beneficios GOLD">×</button></div>
+            <div className="vera-gold-benefits">
+              <div className="vera-gold-benefit"><strong>Análisis más profundos</strong><span>Informes extensos y relaciones entre tus finanzas.</span></div>
+              <div className="vera-gold-benefit"><strong>Más capacidad para conversar</strong><span>Más margen para explorar temas y continuar análisis.</span></div>
+              <div className="vera-gold-benefit"><strong>Documentos financieros</strong><span>Extractos, contratos y planillas explicados con claridad.</span></div>
+              <div className="vera-gold-benefit"><strong>Memoria y contexto ampliados</strong><span>Más continuidad para tus preferencias y objetivos.</span></div>
+              <div className="vera-gold-benefit"><strong>Planificación avanzada</strong><span>Escenarios y simulaciones con supuestos explícitos.</span></div>
+              <div className="vera-gold-benefit"><strong>Seguimiento inteligente</strong><span>Señales sobre hábitos, compromisos y movimientos.</span></div>
+            </div>
+            <div className="vera-gold-panel-foot"><p>GOLD está en preparación. La suscripción, el precio y sus funciones se habilitarán cuando estén disponibles.</p><a className="vera-gold-details" href="/vera/gold">Conocer todos los detalles →</a></div>
+          </section>}
           <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
