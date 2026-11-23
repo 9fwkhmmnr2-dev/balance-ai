@@ -131,13 +131,22 @@ export default function OnboardingGate({
     return () => { active = false; };
   }, [mode]);
 
+  useEffect(() => {
+    if (step === 1 && !essentialCategories.some((item) => item.value === category)) {
+      setCategory("housing");
+    }
+    if (step === 2 && !otherCategories.some((item) => item.value === category)) {
+      setCategory("installment");
+    }
+  }, [step, category]);
+
   const completion = useMemo(() => {
     const checks = [
       Boolean(frequency),
       Boolean(income && Number(parseLocalizedAmount(income)) > 0),
       expenseCategories.length > 0,
       commitments.length > 0,
-      Boolean(reserveAmount && Number(parseLocalizedAmount(reserveAmount)) >= 0)
+      Boolean(reserveAmount && parseLocalizedAmount(reserveAmount) !== null && Number(parseLocalizedAmount(reserveAmount)) >= 0)
     ];
     return Math.round((checks.filter(Boolean).length / checks.length) * 100);
   }, [frequency, income, expenseCategories, commitments, reserveAmount]);
@@ -229,7 +238,7 @@ export default function OnboardingGate({
     setSaving(true); setError("");
     try {
       if (step === 0) await saveIncome();
-      if (step === 1) await saveCategories();
+      if (step === 1 || step === 2) await saveCategories();
       if (step === 3) await saveReserve();
       if (step < steps.length - 1) setStep((current) => current + 1);
       else await finish();
@@ -240,6 +249,28 @@ export default function OnboardingGate({
 
   async function skipStep() {
     setError("");
+    if (step === 1 || step === 2) {
+      setSaving(true);
+      try {
+        await saveCategories();
+      } catch {
+        setSaving(false);
+        setError("No pudimos guardar las categorías seleccionadas.");
+        return;
+      }
+      setSaving(false);
+    }
+    if (step === 3 && reserveAmount) {
+      setSaving(true);
+      try {
+        await saveReserve();
+      } catch {
+        setSaving(false);
+        setError("No pudimos guardar tu reserva.");
+        return;
+      }
+      setSaving(false);
+    }
     if (step === 0) {
       setFrequency("none");
       setIncome("");
@@ -268,15 +299,6 @@ export default function OnboardingGate({
 
   const progressWidth = ((step + 1) / steps.length) * 100;
   const currentCategories = step === 1 ? essentialCategories : otherCategories;
-
-  useEffect(() => {
-    if (step === 1 && !essentialCategories.some((item) => item.value === category)) {
-      setCategory("housing");
-    }
-    if (step === 2 && !otherCategories.some((item) => item.value === category)) {
-      setCategory("installment");
-    }
-  }, [step, category]);
 
   return (
     <main className="onboarding-page">
