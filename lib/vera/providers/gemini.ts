@@ -64,7 +64,8 @@ export class GeminiVeraProvider implements VeraProvider {
           })),
           generationConfig: { temperature: 0.65, maxOutputTokens: input.financialContext?.experience === "gold" ? 1500 : 900 },
         }),
-        signal: AbortSignal.timeout(20000),
+        // Permit slower cold starts while keeping a bounded request duration.
+        signal: AbortSignal.timeout(30000),
         cache: "no-store",
       });
     } catch (error) {
