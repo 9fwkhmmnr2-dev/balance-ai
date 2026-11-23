@@ -10,6 +10,7 @@ const navigation = [
   { label: "Transferencias", href: "/transferencias" },
   { label: "Conversor", href: "/conversor" },
   { label: "VERA", href: "/vera" },
+  { label: "VERA GOLD", href: "/vera/gold", gold: true },
   { label: "Perfil", href: "/perfil" }
 ];
 
@@ -35,17 +36,20 @@ export default function MobileMenu() {
 
       {open && (
         <nav className="mobile-menu-panel" id="mobile-navigation" aria-label="Navegación principal">
-          {navigation.map((item) => (
-            <a
-              key={item.href}
-              className={`mobile-nav-item ${pathname === item.href ? "active" : ""}`}
-              href={item.href}
-              aria-current={pathname === item.href ? "page" : undefined}
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </a>
-          ))}
+          {navigation.map((item) => {
+            const active = pathname === item.href || (item.href === "/vera" && pathname.startsWith("/vera/"));
+            return (
+              <a
+                key={item.href}
+                className={`mobile-nav-item ${active ? "active" : ""} ${item.gold ? "mobile-nav-gold" : ""}`}
+                href={item.href}
+                aria-current={pathname === item.href ? "page" : undefined}
+                onClick={() => setOpen(false)}
+              >
+                {item.label}{item.gold && <span className="mobile-nav-gold-tag">GOLD</span>}
+              </a>
+            );
+          })}
         </nav>
       )}
     </div>
