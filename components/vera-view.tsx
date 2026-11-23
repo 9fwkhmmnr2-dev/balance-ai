@@ -143,6 +143,7 @@ export default function VeraView() {
   const [showGoldPanel, setShowGoldPanel] = useState(false);
   const [isGold, setIsGold] = useState(false);
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
+  const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "flash" | "black" | "reveal" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -203,6 +204,25 @@ export default function VeraView() {
       if (!welcomeSeen) setShowGoldWelcome(true);
     });
     return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (window.location.search.includes("goldDemo=1")) {
+      window.history.replaceState({}, "", window.location.pathname);
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reducedMotion) {
+        setGoldDemoPhase("complete");
+        return;
+      }
+      setGoldDemoPhase("unstable");
+      const timers = [
+        window.setTimeout(() => setGoldDemoPhase("flash"), 2300),
+        window.setTimeout(() => setGoldDemoPhase("black"), 2580),
+        window.setTimeout(() => setGoldDemoPhase("reveal"), 3250),
+        window.setTimeout(() => setGoldDemoPhase("complete"), 5700),
+      ];
+      return () => timers.forEach(window.clearTimeout);
+    }
   }, []);
 
   useEffect(() => {
@@ -403,7 +423,7 @@ export default function VeraView() {
   const visibleConversations = showArchived ? archived : conversations;
 
   return (
-    <div className="vera-page">
+    <div className={`vera-page${goldDemoPhase !== "idle" ? ` gold-demo-${goldDemoPhase}` : ""}`}>
       <style>{`
         .vera-page{--v:#a78bfa;--v2:#7c3aed;--ink:#09090d;--panel:#14121c;--line:rgba(196,181,253,.15);color:#f5f3fa;max-width:1000px;margin:0 auto;padding:12px 0 48px}
         .vera-shell{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
@@ -531,7 +551,41 @@ export default function VeraView() {
 
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{grid-template-columns:1fr;padding:0 12px 16px;gap:8px}.vera-starter{min-height:50px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
         @media(prefers-reduced-motion:reduce){.vera-gold-cinematic,.vera-gold-cinematic:before,.vera-gold-cinematic-core,.vera-gold-cinematic-kicker,.vera-gold-cinematic h2,.vera-gold-cinematic p,.vera-gold-sparks i{animation:none!important;opacity:1!important;transform:none!important}.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-mic.is-listening,.vera-tools-menu,.vera-gold-panel,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
+        .vera-page.gold-demo-unstable{animation:vera-demo-shake .16s steps(2,end) infinite}
+        .vera-core-visual.is-demo-unstable{animation:vera-demo-core-flicker .34s steps(2,end) infinite;filter:drop-shadow(0 0 22px rgba(196,181,253,.85)) drop-shadow(0 0 54px rgba(139,92,246,.65))}
+        .vera-core-visual.is-demo-unstable:before{animation:vera-demo-pulse .42s steps(2,end) infinite,vera-core-morph 1.2s ease-in-out infinite}
+        .vera-demo-flash,.vera-demo-blackout,.vera-demo-reveal{position:fixed;z-index:1200;inset:0;pointer-events:none}
+        .vera-demo-flash{background:#fff;animation:vera-demo-flash .62s ease-out both}
+        .vera-demo-blackout{background:#020203;animation:vera-demo-black .68s ease both}
+        .vera-demo-reveal{display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(184,137,55,.2),transparent 32%),#050505;color:#f7edda;animation:vera-demo-reveal-in 1s ease both}
+        .vera-demo-reveal:before,.vera-demo-reveal:after{content:"";position:absolute;width:20vmin;height:20vmin;border:1px solid rgba(239,205,130,.85);border-radius:50%;box-shadow:0 0 30px rgba(200,169,107,.55),inset 0 0 25px rgba(200,169,107,.3);animation:vera-demo-wave 2.8s cubic-bezier(.12,.68,.18,1) both}
+        .vera-demo-reveal:after{animation-delay:.28s}
+        .vera-demo-reveal-core{position:relative;z-index:2;width:110px;height:110px;animation:vera-gold-core-arrive 1.8s cubic-bezier(.2,.8,.2,1) both}
+        .vera-demo-reveal-core .vera-core-visual{width:100%;height:100%}
+        .vera-demo-reveal-copy{position:absolute;z-index:3;top:calc(50% + 105px);width:min(90vw,460px);text-align:center;opacity:0;animation:vera-demo-title 1s 1.25s ease forwards}
+        .vera-demo-reveal-copy small{color:#d7bc7e;font-size:10px;font-weight:750;letter-spacing:.32em;text-transform:uppercase}
+        .vera-demo-reveal-copy h2{margin:12px 0 7px;color:#f5edda;font-size:clamp(29px,7vw,48px);font-weight:500;letter-spacing:.08em}
+        .vera-demo-reveal-copy p{margin:0;color:#c0b49a;font-size:13px}
+        .vera-demo-continue{margin-top:22px;padding:10px 18px;border:1px solid rgba(200,169,107,.45);border-radius:7px;background:rgba(200,169,107,.1);color:#ead8ad;font-size:11px;cursor:pointer}
+        .vera-demo-reveal .vera-gold-sparks{z-index:1}
+        @keyframes vera-demo-shake{0%{transform:translate(0,0)}25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}100%{transform:translate(-1px,0)}}
+        @keyframes vera-demo-core-flicker{0%,100%{opacity:1;transform:scale(1)}20%{opacity:.35;transform:scale(.94)}38%{opacity:1;transform:scale(1.12)}55%{opacity:.5;transform:scale(.98)}72%{opacity:1;transform:scale(1.16)}}
+        @keyframes vera-demo-pulse{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(2.8);transform:scale(1.28)}}
+        @keyframes vera-demo-flash{0%{opacity:0}12%{opacity:1}35%{opacity:.94}100%{opacity:0}}
+        @keyframes vera-demo-black{0%{opacity:0}30%{opacity:1}100%{opacity:1}}
+        @keyframes vera-demo-reveal-in{from{opacity:0}to{opacity:1}}
+        @keyframes vera-demo-wave{0%{transform:scale(.2);opacity:0}15%{opacity:1}100%{transform:scale(13);opacity:0}}
+        @keyframes vera-demo-title{to{opacity:1;transform:translateY(0)}from{opacity:0;transform:translateY(12px)}}
+        @media(prefers-reduced-motion:reduce){.vera-page.gold-demo-unstable,.vera-demo-flash,.vera-demo-blackout,.vera-demo-reveal:before,.vera-demo-reveal:after,.vera-demo-reveal-core,.vera-demo-reveal-copy{animation:none!important}.vera-demo-reveal-copy{opacity:1}}
       `}</style>
+
+      {goldDemoPhase === "flash" && <div className="vera-demo-flash" aria-hidden="true" />}
+      {goldDemoPhase === "black" && <div className="vera-demo-blackout" aria-hidden="true" />}
+      {(goldDemoPhase === "reveal" || goldDemoPhase === "complete") && <div className="vera-demo-reveal" role="dialog" aria-modal="true" aria-label="Bienvenido a VERA GOLD">
+        <div className="vera-gold-sparks" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>
+        <div className="vera-demo-reveal-core"><span className="vera-core-visual is-gold" aria-hidden="true"><span className="vera-core-depth" /><span className="vera-core-inner" /><span className="vera-core-filament" /><span className="vera-core-glint" /><span className="vera-core-particle one" /><span className="vera-core-particle two" /></span></div>
+        <div className="vera-demo-reveal-copy"><small>UNA NUEVA ETAPA</small><h2>Bienvenido a VERA GOLD</h2><p>La misma VERA. Una nueva energía.</p><button className="vera-demo-continue" type="button" onClick={() => setGoldDemoPhase("dismissed")}>Continuar</button></div>
+      </div>}
 
       {showGoldWelcome && isGold && <div className="vera-gold-cinematic" role="dialog" aria-modal="true" aria-label="Bienvenida a VERA GOLD" onClick={() => setShowGoldWelcome(false)}>
         <button className="vera-gold-skip" type="button" onClick={() => setShowGoldWelcome(false)}>Omitir animación</button>
@@ -581,7 +635,7 @@ export default function VeraView() {
         </aside>
       </div>}
 
-      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
+      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold || ["reveal", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
 
         <section className="vera-chat" aria-label="Conversación con VERA">
           <div className="vera-gold-entry">
@@ -602,7 +656,7 @@ export default function VeraView() {
           <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
-                <span className={`vera-core-visual${sending ? " is-thinking" : ""}${isGold ? " is-gold" : ""}`} aria-hidden="true">
+                <span className={`vera-core-visual${sending ? " is-thinking" : ""}${isGold || ["reveal", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}${goldDemoPhase === "unstable" ? " is-demo-unstable" : ""}`} aria-hidden="true">
                   <span className="vera-core-depth" />
                   <span className="vera-core-inner" />
                   <span className="vera-core-filament" />
