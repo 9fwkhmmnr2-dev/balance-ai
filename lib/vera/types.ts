@@ -25,6 +25,16 @@ export type VeraFinancialContext = {
   netBalance: number;
   movementsCount: number;
   categoryTotals: Array<{ category: string; amount: number }>;
+  previousPeriod?: {
+    from: string;
+    to: string;
+    income: number;
+    expenses: number;
+    netBalance: number;
+    movementsCount: number;
+    categoryTotals: Array<{ category: string; amount: number }>;
+  };
+  experience?: "standard" | "gold";
 };
 
 export type VeraProviderResponse = {
