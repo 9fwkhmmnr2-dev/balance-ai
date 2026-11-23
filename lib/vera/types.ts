@@ -34,6 +34,17 @@ export type VeraFinancialContext = {
     movementsCount: number;
     categoryTotals: Array<{ category: string; amount: number }>;
   };
+  goals?: Array<{
+    title: string;
+    currency: string;
+    targetAmount: number;
+    savedAmount: number;
+    remainingAmount: number;
+    progressPercent: number;
+    targetDate: string | null;
+    status: "active" | "paused" | "completed";
+    contributionCount: number;
+  }>;
   experience?: "standard" | "gold";
 };
 
