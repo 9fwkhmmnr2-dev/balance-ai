@@ -26,7 +26,7 @@ function validCurrency(value: unknown): value is "ARS" | "USD" | "EUR" {
   return value === "ARS" || value === "USD" || value === "EUR";
 }
 
-function validAmount(value: unknown): value is number {
+function validDateKey(value: string): boolean {\n  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) return false;\n  const date = new Date(value + "T00:00:00.000Z");\n  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;\n}\n\nfunction validAmount(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 999999999999;
 }
 
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
 
       const note = typeof input.note === "string" ? input.note.trim().slice(0, 240) : "";
-      const contributedAt = typeof input.contributedAt === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.contributedAt)
+      const contributedAt = typeof input.contributedAt === "string" && validDateKey(input.contributedAt)
         ? input.contributedAt
         : new Date().toISOString().slice(0, 10);
       const { data, error } = await supabase
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     }
     const targetDate = input.targetDate === null || input.targetDate === "" || input.targetDate === undefined
       ? null
-      : typeof input.targetDate === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.targetDate)
+      : typeof input.targetDate === "string" && validDateKey(input.targetDate)
         ? input.targetDate
         : undefined;
     if (targetDate === undefined) return NextResponse.json({ error: "La fecha objetivo no es válida." }, { status: 400 });
