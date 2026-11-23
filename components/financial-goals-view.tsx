@@ -180,6 +180,17 @@ export default function FinancialGoalsView() {
     catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos actualizar el objetivo."); }
   }
 
+  async function updateRecurringMovement(goal: Goal, movement: Movement, status: "posted" | "cancelled") {
+    setNotice("");
+    try {
+      await request("PATCH", { action: "movement_status", goalId: goal.id, movementId: movement.id, status });
+      setNotice(status === "posted" ? "Movimiento recurrente confirmado y sumado al progreso." : "Movimiento recurrente cancelado.");
+      await loadGoals();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "No pudimos actualizar el movimiento.");
+    }
+  }
+
   async function deleteContribution(goal: Goal, movement: Movement) {
     if (movement.source !== "manual") return;
     if (!window.confirm("¿Eliminar este movimiento del historial del objetivo?")) return;
@@ -234,7 +245,7 @@ export default function FinancialGoalsView() {
                 <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progreso de ${goal.title}`}><span style={{ width: `${goal.progress_percent}%` }} /></div>
                 <div className="goal-progress-caption"><strong>{goal.progress_percent.toLocaleString("es-AR")}%</strong><span>{goal.movements.filter((entry) => entry.status === "posted").length} movimientos confirmados</span></div>
                 {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setNotice(""); }}>＋ Registrar ingreso o gasto</button>}
-                {goal.movements.length > 0 && <details className="goal-history"><summary>Ver historial de movimientos</summary>{goal.movements.map((entry) => <div className="goal-history-row" key={entry.id}><span>{new Date(entry.movement_date + "T12:00:00").toLocaleDateString("es-AR")} · {entry.category}{entry.description ? ` · ${entry.description}` : ""}{entry.status !== "posted" ? ` · ${entry.status === "pending" ? "Pendiente" : "Cancelado"}` : ""}{entry.source === "recurring" ? (entry.recurring_mode === "automatic" ? " · Automático no verificado" : " · Recurrente confirmado") : entry.source === "legacy" ? " · Histórico" : ""}</span><strong>{entry.type === "income" ? "+" : "−"} {money(Number(entry.amount), goal.currency)}</strong>{entry.source === "manual" && <button type="button" onClick={() => void deleteContribution(goal, entry)} aria-label="Eliminar movimiento">Eliminar</button>}</div>)}</details>}
+                {goal.movements.length > 0 && <details className="goal-history"><summary>Ver historial de movimientos</summary>{goal.movements.map((entry) => <div className="goal-history-row" key={entry.id}><span>{new Date(entry.movement_date + "T12:00:00").toLocaleDateString("es-AR")} · {entry.category}{entry.description ? ` · ${entry.description}` : ""}{entry.status !== "posted" ? ` · ${entry.status === "pending" ? "Pendiente" : "Cancelado"}` : ""}{entry.source === "recurring" ? (entry.recurring_mode === "automatic" ? " · Automático no verificado" : " · Recurrente confirmado") : entry.source === "legacy" ? " · Histórico" : ""}</span><strong>{entry.type === "income" ? "+" : "−"} {money(Number(entry.amount), goal.currency)}</strong>{entry.source === "manual" && <button type="button" onClick={() => void deleteContribution(goal, entry)} aria-label="Eliminar movimiento">Eliminar</button>}{entry.source === "recurring" && entry.status === "pending" && <span className="goal-pending-actions"><button type="button" onClick={() => void updateRecurringMovement(goal, entry, "posted")}>Confirmar</button><button type="button" onClick={() => void updateRecurringMovement(goal, entry, "cancelled")}>Cancelar</button></span>}</div>)}</details>}
                 <section className="goal-projection" aria-label="Proyección de cumplimiento"><h4>Proyección de cumplimiento</h4>
                   {goal.recurring_rules.some((rule) => rule.status === "active") ? (() => {
                     const factors: Record<string, number> = { daily: 30.4375, weekly: 4.348, every_15_days: 2.03, monthly: 1, every_2_months: 0.5, every_3_months: 1/3, every_6_months: 1/6, yearly: 1/12 };
