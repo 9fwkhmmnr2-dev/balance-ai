@@ -217,6 +217,7 @@ export default function VeraView() {
         .vera-core-panel strong{display:block;color:#eee8fa;font-size:12px}
         .vera-core-panel p{margin-top:4px;color:#aaa1b8;font-size:11px;line-height:1.45}
         .vera-core-panel button{flex:0 0 auto;border:1px solid rgba(196,181,253,.2);border-radius:9px;background:#211a2d;color:#d9cafa;padding:7px 9px;font-size:10px;cursor:pointer}
+        .vera-chat button:focus-visible,.vera-drawer button:focus-visible{outline:2px solid rgba(196,181,253,.9);outline-offset:3px}.vera-history-toggle:hover,.vera-new-chat:hover,.vera-core-panel button:hover,.vera-drawer-new:hover,.vera-drawer-tab:hover,.vera-history-action:hover,.vera-drawer-close:hover{transform:translateY(-1px);border-color:rgba(196,181,253,.58);filter:brightness(1.12)}.vera-history-toggle:active,.vera-new-chat:active,.vera-core-panel button:active,.vera-drawer-new:active,.vera-drawer-tab:active{transform:scale(.97)}
         .vera-period{background:#1c1728;border:1px solid rgba(196,181,253,.2);border-radius:9px;padding:8px;color:#ddd3f2;font-size:11px;max-width:150px}
         .vera-messages{display:flex;flex-direction:column;gap:13px;min-height:245px;max-height:470px;overflow-y:auto;padding:20px 17px}
                 .vera-bubble{max-width:84%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;animation:vera-message-in .34s cubic-bezier(.2,.8,.2,1) both}
