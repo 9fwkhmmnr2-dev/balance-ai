@@ -5,7 +5,8 @@ import MobileMenu from "./mobile-menu";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
-type Contribution = { id: string; goal_id: string; amount: number; note: string | null; contributed_at: string };
+type Movement = { id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null };
+type RecurringRule = { id: string; type: "income" | "expense"; amount: number; frequency: string; mode: "confirmation" | "automatic"; status: string; interval_days?: number | null };
 type Goal = {
   id: string;
   title: string;
@@ -16,7 +17,8 @@ type Goal = {
   saved_amount: number;
   remaining_amount: number;
   progress_percent: number;
-  contributions: Contribution[];
+  movements: Movement[];
+  recurring_rules: RecurringRule[];
 };
 
 const currencies = ["ARS", "USD", "EUR"] as const;
@@ -38,6 +40,9 @@ export default function FinancialGoalsView() {
   const [contributionGoal, setContributionGoal] = useState<Goal | null>(null);
   const [contributionAmount, setContributionAmount] = useState("");
   const [contributionNote, setContributionNote] = useState("");
+  const [movementType, setMovementType] = useState<"income" | "expense">("income");
+  const [movementCategory, setMovementCategory] = useState("Ahorro");
+  const [movementDate, setMovementDate] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }));
 
   const request = useCallback(async (method: "GET" | "POST" | "PATCH" | "DELETE", body?: Record<string, unknown>) => {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -89,9 +94,9 @@ export default function FinancialGoalsView() {
     if (amount === null || amount <= 0) { setNotice("Ingresá un importe válido para el aporte."); return; }
     setSaving(true); setNotice("");
     try {
-      await request("POST", { action: "contribute", goalId: contributionGoal.id, amount, note: contributionNote.trim() });
-      setContributionGoal(null); setContributionAmount(""); setContributionNote("");
-      setNotice("Aporte registrado. El progreso del objetivo fue actualizado.");
+      await request("POST", { action: "movement", goalId: contributionGoal.id, type: movementType, amount, category: movementCategory, description: contributionNote.trim(), movementDate });
+      setContributionGoal(null); setContributionAmount(""); setContributionNote(""); setMovementType("income"); setMovementCategory("Ahorro");
+      setNotice("Movimiento registrado. El progreso del objetivo fue actualizado.");
       await loadGoals();
     } catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos registrar el aporte."); }
     finally { setSaving(false); }
@@ -103,18 +108,19 @@ export default function FinancialGoalsView() {
     catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos actualizar el objetivo."); }
   }
 
-  async function deleteContribution(goal: Goal, contribution: Contribution) {
-    if (!window.confirm("¿Eliminar este aporte del historial del objetivo?")) return;
+  async function deleteContribution(goal: Goal, movement: Movement) {
+    if (movement.source !== "manual") return;
+    if (!window.confirm("¿Eliminar este movimiento del historial del objetivo?")) return;
     setNotice("");
     try {
-      await request("DELETE", { id: goal.id, contributionId: contribution.id });
-      setNotice("Aporte eliminado y progreso recalculado.");
+      await request("DELETE", { id: goal.id, movementId: movement.id });
+      setNotice("Movimiento eliminado y progreso recalculado.");
       await loadGoals();
     } catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos eliminar el aporte."); }
   }
 
   async function deleteGoal(goal: Goal) {
-    if (!window.confirm(`¿Eliminar “${goal.title}” y todo su historial de aportes? Esta acción no se puede deshacer.`)) return;
+    if (!window.confirm(`¿Eliminar “${goal.title}” y todo su historial de movimientos? Esta acción no se puede deshacer.`)) return;
     setNotice("");
     try { await request("DELETE", { id: goal.id }); setNotice("Objetivo eliminado."); await loadGoals(); }
     catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos eliminar el objetivo."); }
@@ -133,7 +139,7 @@ export default function FinancialGoalsView() {
         </header>
 
         <section className="goals-create-card">
-          <div><p className="goals-eyebrow">NUEVA META</p><h2>¿Qué querés alcanzar?</h2><p>El progreso se calcula únicamente con los aportes que registres.</p></div>
+          <div><p className="goals-eyebrow">NUEVA META</p><h2>¿Qué querés alcanzar?</h2><p>El progreso suma los ingresos confirmados y descuenta los gastos registrados.</p></div>
           <form onSubmit={createGoal} className="goals-form">
             <label>Nombre del objetivo<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Ej. Comprar una computadora" required /></label>
             <div className="goals-form-row">
@@ -154,9 +160,26 @@ export default function FinancialGoalsView() {
                 <div className="goal-card-top"><div><h3>{goal.title}</h3><p>{goal.target_date ? `Fecha objetivo: ${new Date(goal.target_date + "T12:00:00").toLocaleDateString("es-AR")}` : "Sin fecha límite"}</p></div><span className={`goal-status goal-status-${goal.status}`}>{goal.status === "active" ? "En curso" : goal.status === "paused" ? "En pausa" : "Completado"}</span></div>
                 <div className="goal-amounts"><div><small>Acumulado</small><strong>{money(goal.saved_amount, goal.currency)}</strong></div><div><small>Objetivo</small><strong>{money(goal.target_amount, goal.currency)}</strong></div><div><small>Falta</small><strong>{money(goal.remaining_amount, goal.currency)}</strong></div></div>
                 <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progreso de ${goal.title}`}><span style={{ width: `${goal.progress_percent}%` }} /></div>
-                <div className="goal-progress-caption"><strong>{goal.progress_percent.toLocaleString("es-AR")}%</strong><span>{goal.contributions.length} {goal.contributions.length === 1 ? "aporte registrado" : "aportes registrados"}</span></div>
-                {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setNotice(""); }}>＋ Registrar aporte</button>}
-                {goal.contributions.length > 0 && <details className="goal-history"><summary>Ver historial de aportes</summary>{goal.contributions.map((entry) => <div className="goal-history-row" key={entry.id}><span>{new Date(entry.contributed_at + "T12:00:00").toLocaleDateString("es-AR")}{entry.note ? ` · ${entry.note}` : ""}</span><strong>+ {money(Number(entry.amount), goal.currency)}</strong><button type="button" onClick={() => void deleteContribution(goal, entry)} aria-label="Eliminar aporte">Eliminar</button></div>)}</details>}
+                <div className="goal-progress-caption"><strong>{goal.progress_percent.toLocaleString("es-AR")}%</strong><span>{goal.movements.filter((entry) => entry.status === "posted").length} movimientos confirmados</span></div>
+                {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setNotice(""); }}>＋ Registrar ingreso o gasto</button>}
+                {goal.movements.length > 0 && <details className="goal-history"><summary>Ver historial de movimientos</summary>{goal.movements.map((entry) => <div className="goal-history-row" key={entry.id}><span>{new Date(entry.movement_date + "T12:00:00").toLocaleDateString("es-AR")} · {entry.category}{entry.description ? ` · ${entry.description}` : ""}{entry.status !== "posted" ? ` · ${entry.status === "pending" ? "Pendiente" : "Cancelado"}` : ""}{entry.source === "recurring" ? " · Recurrente" : entry.source === "legacy" ? " · Histórico" : ""}</span><strong>{entry.type === "income" ? "+" : "−"} {money(Number(entry.amount), goal.currency)}</strong>{entry.source === "manual" && <button type="button" onClick={() => void deleteContribution(goal, entry)} aria-label="Eliminar movimiento">Eliminar</button>}</div>)}</details>}
+                <section className="goal-projection" aria-label="Proyección de cumplimiento"><h4>Proyección de cumplimiento</h4>
+                  {goal.recurring_rules.some((rule) => rule.status === "active") ? (() => {
+                    const factors: Record<string, number> = { daily: 30.4375, weekly: 4.348, every_15_days: 2.03, monthly: 1, every_2_months: 0.5, every_3_months: 1/3, every_6_months: 1/6, yearly: 1/12 };
+                    const monthlyNet = goal.recurring_rules.filter((rule) => rule.status === "active").reduce((sum, rule) => {
+                      const factor = rule.frequency === "custom" ? (rule.interval_days ? 30.4375 / rule.interval_days : 0) : (factors[rule.frequency] ?? 0);
+                      return sum + (rule.type === "income" ? 1 : -1) * Number(rule.amount) * factor;
+                    }, 0);
+                    const estimate = (multiplier: number) => {
+                      const net = monthlyNet * multiplier;
+                      if (net <= 0 || goal.remaining_amount <= 0) return null;
+                      const months = Math.ceil(goal.remaining_amount / net);
+                      const date = new Date(); date.setDate(1); date.setMonth(date.getMonth() + months);
+                      return date.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+                    };
+                    return <><p>Flujo recurrente neto estimado: <strong>{money(monthlyNet, goal.currency)}/mes</strong></p><div className="goal-projection-grid"><span>Conservador<strong>{estimate(0.8) ?? "Sin fecha estimable"}</strong></span><span>Esperado<strong>{estimate(1) ?? "Sin fecha estimable"}</strong></span><span>Optimista<strong>{estimate(1.2) ?? "Sin fecha estimable"}</strong></span></div><small>Estimación orientativa basada en reglas recurrentes activas. No es una garantía y no cuenta movimientos pendientes.</small></>;
+                  })() : <p>Agregá ingresos y gastos recurrentes para que VERA pueda estimar una fecha de cumplimiento. Los movimientos aislados no se proyectan como ingresos futuros.</p>}
+                </section>
                 <div className="goal-actions">{goal.status === "active" ? <button onClick={() => void changeStatus(goal, "paused")}>Pausar</button> : goal.status === "paused" ? <button onClick={() => void changeStatus(goal, "active")}>Reanudar</button> : null}{goal.status !== "completed" && goal.saved_amount >= goal.target_amount && <button onClick={() => void changeStatus(goal, "completed")}>Marcar completado</button>}<button className="goal-delete" onClick={() => void deleteGoal(goal)}>Eliminar</button></div>
               </article>
             ))}
@@ -164,7 +187,7 @@ export default function FinancialGoalsView() {
         )}
       </main>
 
-      {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar aporte</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Importe aportado<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Nota <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Ej. Ahorro de noviembre" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar aporte"}</button></form><p className="goals-disclaimer">Este registro actualiza el progreso del objetivo, pero no mueve dinero ni modifica tus cuentas o movimientos.</p></section></div>}
+      {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">Este registro actualiza únicamente el objetivo. No mueve dinero ni modifica tus cuentas o movimientos generales.</p></section></div>}
     </div>
   );
 }
