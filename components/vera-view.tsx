@@ -559,7 +559,7 @@ export default function VeraView() {
         .vera-demo-flash,.vera-demo-blackout,.vera-demo-reveal{position:fixed;z-index:1200;inset:0;pointer-events:none}
         .vera-demo-flash{background:#fff;animation:vera-demo-flash .62s ease-out both}
         .vera-demo-blackout{background:#020203;animation:vera-demo-black .68s ease both}
-        .vera-demo-reveal{display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(184,137,55,.2),transparent 32%),#050505;color:#f7edda;animation:vera-demo-reveal-in 1s ease both}
+        .vera-demo-reveal{display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(184,137,55,.2),transparent 32%),#050505;color:#f7edda;animation:vera-demo-reveal-in 1s ease both}.vera-demo-reveal.is-complete{background:radial-gradient(circle at 50% 48%,rgba(200,169,107,.14),rgba(5,5,5,.78) 72%);backdrop-filter:blur(2px)}
         .vera-demo-reveal:before,.vera-demo-reveal:after{content:"";position:absolute;width:20vmin;height:20vmin;border:1px solid rgba(239,205,130,.85);border-radius:50%;box-shadow:0 0 30px rgba(200,169,107,.55),inset 0 0 25px rgba(200,169,107,.3);animation:vera-demo-wave 2.8s cubic-bezier(.12,.68,.18,1) both}
         .vera-demo-reveal:after{animation-delay:.28s}
         .vera-demo-reveal-core{position:relative;z-index:2;width:110px;height:110px;animation:vera-gold-core-arrive 1.8s cubic-bezier(.2,.8,.2,1) both}
@@ -615,7 +615,7 @@ export default function VeraView() {
       {goldDemoPhase === "flash" && <div className="vera-demo-flash" aria-hidden="true" />}
       {goldDemoPhase === "black" && <div className="vera-demo-blackout" aria-hidden="true" />}
       {goldDemoPhase === "transform" && <div className="vera-demo-transform" aria-hidden="true"><div className="vera-demo-transform-wave" /></div>}
-      {(goldDemoPhase === "reveal" || goldDemoPhase === "complete") && <div className="vera-demo-reveal" role="dialog" aria-modal="true" aria-label="Bienvenido a VERA GOLD">
+      {(goldDemoPhase === "reveal" || goldDemoPhase === "complete") && <div className={`vera-demo-reveal${goldDemoPhase === "complete" ? " is-complete" : ""}`} role="dialog aria-modal="true" aria-label="Bienvenido a VERA GOLD">
         <div className="vera-gold-sparks" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>
         <div className="vera-demo-reveal-core"><VeraCore3D variant="gold" label="Núcleo dorado de VERA GOLD" /></div>
         <div className="vera-demo-reveal-copy"><small>UNA NUEVA ETAPA</small><h2>Bienvenido a VERA GOLD</h2><p>La misma VERA. Una nueva energía.</p><button className="vera-demo-continue" type="button" onClick={() => setGoldDemoPhase("dismissed")}>Continuar</button></div>
