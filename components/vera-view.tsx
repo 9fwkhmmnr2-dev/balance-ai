@@ -58,6 +58,7 @@ function shouldShowFinancialSummary(message: string, previousMessages: ChatMessa
   // para consultas cuyo foco sea una categoría o un objetivo de ahorro.
   const categoryDetailIntent =
     /\b(en qué|dónde|cuál|cuáles|distribución|desglose|detalle)\b.*\b(categorías?|rubro|comida|transporte|servicios|suscripciones)\b/i.test(normalized) ||
+    /\b(cuánto|cuanto|qué|que|dónde|donde)\b.*\b(gasté|gaste|gasto|gastado|gastos?)\b.*\b(en|de)\s+(comida|transporte|servicios|suscripciones)\b/i.test(normalized) ||
     /\b(categorías?|rubro)\b/i.test(normalized);
   const savingsGoalIntent =
     /\b(objetivo|meta)\b.*\b(ahorro|ahorrar|comprar|juntar)\b/i.test(normalized) ||
