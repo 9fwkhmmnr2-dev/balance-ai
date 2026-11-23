@@ -2192,3 +2192,22 @@ body{background:#090A0D;color:#F2F0EB}
   .dashboard-chart-card .section-heading h3{font-size:14px}
   .dashboard-evolution-chart svg{height:105px}
 }
+
+
+/* Objetivos: historial de movimientos y proyecciones */
+.goal-projection {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(139, 167, 255, .22);
+  border-radius: 14px;
+  background: rgba(56, 103, 255, .055);
+}
+.goal-projection h4 { margin: 0 0 9px; font-size: 14px; }
+.goal-projection p { margin: 0 0 12px; color: var(--muted, #8b9bb5); font-size: 13px; }
+.goal-projection-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 12px 0; }
+.goal-projection-grid span { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,.045); color: var(--muted, #8b9bb5); font-size: 11px; }
+.goal-projection-grid strong { color: inherit; font-size: 13px; text-transform: capitalize; }
+.goal-projection small { display: block; color: var(--muted, #8b9bb5); font-size: 11px; line-height: 1.5; }
+@media (max-width: 520px) {
+  .goal-projection-grid { grid-template-columns: 1fr; }
+}
