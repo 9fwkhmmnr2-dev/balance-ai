@@ -269,6 +269,15 @@ export default function OnboardingGate({
   const progressWidth = ((step + 1) / steps.length) * 100;
   const currentCategories = step === 1 ? essentialCategories : otherCategories;
 
+  useEffect(() => {
+    if (step === 1 && !essentialCategories.some((item) => item.value === category)) {
+      setCategory("housing");
+    }
+    if (step === 2 && !otherCategories.some((item) => item.value === category)) {
+      setCategory("installment");
+    }
+  }, [step, category]);
+
   return (
     <main className="onboarding-page">
       <section className="onboarding-card" style={{ maxWidth: 620 }}>
@@ -286,7 +295,7 @@ export default function OnboardingGate({
 
         <div style={{ display: "flex", gap: 6, margin: "18px 0 24px" }}>
           {steps.map((item, index) => (
-            <button key={item.title} type="button" onClick={() => setStep(index)} aria-label={`Ir a etapa ${index + 1}: ${item.title}`} style={{ flex: 1, minWidth: 0, border: 0, borderRadius: 8, padding: "9px 4px", background: index === step ? "#30253F" : index < step ? "#29251D" : "#202229", color: index === step ? "#E9DDF7" : "#AAA7B0", fontSize: 10, cursor: "pointer" }}>{index + 1}. {item.title}</button>
+            <button key={item.title} type="button" disabled={index > step} onClick={() => setStep(index)} aria-label={`Ir a etapa ${index + 1}: ${item.title}`} style={{ flex: 1, minWidth: 0, border: 0, borderRadius: 8, padding: "9px 4px", background: index === step ? "#30253F" : index < step ? "#29251D" : "#202229", color: index === step ? "#E9DDF7" : "#AAA7B0", fontSize: 10, cursor: index > step ? "not-allowed" : "pointer", opacity: index > step ? 0.5 : 1 }}>{index + 1}. {item.title}</button>
           ))}
         </div>
 
