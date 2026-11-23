@@ -232,10 +232,52 @@ export async function POST(request: Request) {
       : [];
     const previousSummary = isGold ? summarizeMovements(previousMovements) : null;
 
+    let goalContext: NonNullable<VeraFinancialContext["goals"]> | undefined;
+    const { data: goalRows, error: goalRowsError } = await supabase
+      .from("financial_goals")
+      .select("id, title, target_amount, currency, target_date, status")
+      .eq("user_id", authData.user.id)
+      .neq("status", "archived")
+      .order("updated_at", { ascending: false })
+      .limit(20);
+
+    if (goalRowsError && !["42P01", "PGRST205"].includes(goalRowsError.code || "")) throw goalRowsError;
+    if (!goalRowsError) {
+      const goalIds = (goalRows ?? []).map((goal) => goal.id);
+      let contributionRows: Array<{ goal_id: string; amount: number | string }> = [];
+      if (goalIds.length) {
+        const { data, error } = await supabase
+          .from("financial_goal_contributions")
+          .select("goal_id, amount")
+          .eq("user_id", authData.user.id)
+          .in("goal_id", goalIds);
+        if (error && !["42P01", "PGRST205"].includes(error.code || "")) throw error;
+        if (!error) contributionRows = (data ?? []) as typeof contributionRows;
+      }
+
+      goalContext = (goalRows ?? []).map((goal) => {
+        const contributions = contributionRows.filter((entry) => entry.goal_id === goal.id);
+        const targetAmount = Number(goal.target_amount);
+        const savedAmount = contributions.reduce((sum, entry) => sum + Number(entry.amount), 0);
+        return {
+          title: goal.title,
+          currency: goal.currency,
+          targetAmount,
+          savedAmount,
+          remainingAmount: Math.max(0, targetAmount - savedAmount),
+          progressPercent: Math.min(100, Math.round((savedAmount / targetAmount) * 1000) / 10),
+          targetDate: goal.target_date,
+          status: goal.status as "active" | "paused" | "completed",
+          contributionCount: contributions.length,
+        };
+      });
+    }
+
     const financialContext: VeraFinancialContext = {
       currency,
       period: input.period,
       ...currentSummary,
+      ...(goalContext ? { goals: goalContext } : {}),
       experience: isGold ? "gold" : "standard",
       ...(previousSummary ? {
         previousPeriod: {
