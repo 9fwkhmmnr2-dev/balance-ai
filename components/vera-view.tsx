@@ -207,7 +207,7 @@ export default function VeraView() {
 
   useEffect(() => {
     if (!showGoldWelcome) return;
-    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timeout = window.setTimeout(() => setShowGoldWelcome(false), reducedMotion ? 350 : 5400);
     return () => window.clearTimeout(timeout);
   }, [showGoldWelcome]);
