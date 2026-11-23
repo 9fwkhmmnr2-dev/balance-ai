@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/financial-goals",
+      "schedule": "0 12 * * *"
+    }
+  ]
+}
