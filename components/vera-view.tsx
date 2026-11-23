@@ -31,6 +31,41 @@ function pickWelcomePhrase(previous?: string) {
 }
 const periodLabels: Record<Period, string> = { daily: "Hoy", weekly: "Últimos 7 días", monthly: "Este mes", yearly: "Este año" };
 
+function renderInlineMarkdown(text: string) {
+  return text.split(/(\\*\\*[^*]+\\*\\*|\\*[^*]+\\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*")) return <em key={index}>{part.slice(1, -1)}</em>;
+    if (part.startsWith("`") && part.endsWith("`")) return <code key={index}>{part.slice(1, -1)}</code>;
+    return <span key={index}>{part}</span>;
+  });
+}
+function renderModelContent(content: string) {
+  const lines = content.split(/\\r?\\n/);
+  const blocks: React.ReactNode[] = [];
+  for (let i = 0; i < lines.length;) {
+    const line = lines[i].trim();
+    if (!line) { i++; continue; }
+    const heading = line.match(/^#{1,3}\\s+(.+)$/);
+    if (heading) { blocks.push(<h3 key={i}>{renderInlineMarkdown(heading[1])}</h3>); i++; continue; }
+    if (/^[-*]\\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\\s*[-*]\\s+/.test(lines[i])) { items.push(lines[i].replace(/^\\s*[-*]\\s+/, "")); i++; }
+      blocks.push(<ul key={i}>{items.map((item, index) => <li key={index}>{renderInlineMarkdown(item)}</li>)}</ul>);
+      continue;
+    }
+    if (/^\\d+[.)]\\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\\s*\\d+[.)]\\s+/.test(lines[i])) { items.push(lines[i].replace(/^\\s*\\d+[.)]\\s+/, "")); i++; }
+      blocks.push(<ol key={i}>{items.map((item, index) => <li key={index}>{renderInlineMarkdown(item)}</li>)}</ol>);
+      continue;
+    }
+    const paragraph = [line]; i++;
+    while (i < lines.length && lines[i].trim() && !/^\\s*(#{1,3}\\s+|[-*]\\s+|\\d+[.)]\\s+)/.test(lines[i])) { paragraph.push(lines[i].trim()); i++; }
+    blocks.push(<p key={i}>{paragraph.map((part, index) => <span key={index}>{index > 0 ? " " : ""}{renderInlineMarkdown(part)}</span>)}</p>);
+  }
+  return <div className="vera-rich-content">{blocks}</div>;
+}
+
 export default function VeraView() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
@@ -291,6 +326,7 @@ export default function VeraView() {
         .vera-messages{display:flex;flex-direction:column;gap:13px;min-height:245px;max-height:470px;overflow-y:auto;padding:20px 17px}
                 .vera-bubble{max-width:84%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;animation:vera-message-in .34s cubic-bezier(.2,.8,.2,1) both}
         .vera-bubble.model{align-self:flex-start;background:#211a2d;border:1px solid rgba(196,181,253,.12);color:#eee9f6;border-top-left-radius:5px}
+        .vera-rich-content{display:flex;flex-direction:column;gap:9px}.vera-rich-content p{margin:0}.vera-rich-content strong{color:#fff;font-weight:650;text-shadow:0 0 16px rgba(180,154,255,.12)}.vera-rich-content h3{margin:3px 0 0;color:#d9c7ff;font-size:13px;line-height:1.45;font-weight:650;letter-spacing:.01em}.vera-rich-content ul,.vera-rich-content ol{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:5px}.vera-rich-content li{padding-left:2px}.vera-rich-content li::marker{color:#b49aff}.vera-rich-content code{padding:2px 5px;border-radius:5px;background:rgba(180,154,255,.12);color:#dfd1ff;font-size:.92em}.vera-bubble.model{white-space:normal}.vera-bubble.model .vera-rich-content{overflow-wrap:anywhere}
         .vera-bubble.user{align-self:flex-end;background:linear-gradient(135deg,#7040bd,#59319d);color:#fff;border-top-right-radius:5px}
         .vera-thinking{align-self:flex-start;display:flex;align-items:center;gap:8px;color:#c4b5fd;font-size:12px;padding:5px 10px;animation:vera-message-in .25s ease both}
         .vera-mini-coin{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#e1d5ff,#a879ff 42%,#5923a7 80%);box-shadow:0 0 12px rgba(167,139,250,.4);animation:vera-breathe 1.5s ease-in-out infinite}
@@ -405,7 +441,7 @@ export default function VeraView() {
             <p className="vera-welcome-phrase" key={welcomePhrase}>{welcomePhrase}</p>
           </header>}
           <div className="vera-messages" aria-live="polite">
-            {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.content}</div>)}
+            {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.role === "model" ? renderModelContent(message.content) : message.content}</div>)}
             {sending && <div className="vera-thinking" role="status"><span className="vera-mini-coin" aria-hidden="true" /><span>VERA está pensando</span><span className="vera-dots" aria-hidden="true"><i /><i /><i /></span></div>}
           </div>
           {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
