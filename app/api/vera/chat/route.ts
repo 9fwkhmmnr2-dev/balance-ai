@@ -244,31 +244,33 @@ export async function POST(request: Request) {
     if (goalRowsError && !["42P01", "PGRST205"].includes(goalRowsError.code || "")) throw goalRowsError;
     if (!goalRowsError) {
       const goalIds = (goalRows ?? []).map((goal) => goal.id);
-      let contributionRows: Array<{ goal_id: string; amount: number | string }> = [];
+      let goalMovementRows: Array<{ goal_id: string; type: "income" | "expense"; amount: number | string; status: "pending" | "posted" | "cancelled" }> = [];
       if (goalIds.length) {
         const { data, error } = await supabase
-          .from("financial_goal_contributions")
-          .select("goal_id, amount")
+          .from("financial_goal_movements")
+          .select("goal_id, type, amount, status")
           .eq("user_id", authData.user.id)
           .in("goal_id", goalIds);
         if (error && !["42P01", "PGRST205"].includes(error.code || "")) throw error;
-        if (!error) contributionRows = (data ?? []) as typeof contributionRows;
+        if (!error) goalMovementRows = (data ?? []) as typeof goalMovementRows;
       }
 
       goalContext = (goalRows ?? []).map((goal) => {
-        const contributions = contributionRows.filter((entry) => entry.goal_id === goal.id);
+        const movements = goalMovementRows.filter((entry) => entry.goal_id === goal.id);
+        const posted = movements.filter((entry) => entry.status === "posted");
         const targetAmount = Number(goal.target_amount);
-        const savedAmount = contributions.reduce((sum, entry) => sum + Number(entry.amount), 0);
+        const savedAmount = posted.reduce((sum, entry) =>
+          sum + (entry.type === "income" ? Number(entry.amount) : -Number(entry.amount)), 0);
         return {
           title: goal.title,
           currency: goal.currency,
           targetAmount,
-          savedAmount,
+          savedAmount: Math.max(0, savedAmount),
           remainingAmount: Math.max(0, targetAmount - savedAmount),
-          progressPercent: Math.min(100, Math.round((savedAmount / targetAmount) * 1000) / 10),
+          progressPercent: Math.min(100, Math.max(0, Math.round((savedAmount / targetAmount) * 1000) / 10)),
           targetDate: goal.target_date,
           status: goal.status as "active" | "paused" | "completed",
-          contributionCount: contributions.length,
+          contributionCount: posted.length,
         };
       });
     }
