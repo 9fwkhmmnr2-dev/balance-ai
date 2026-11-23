@@ -10,7 +10,6 @@ const navigation = [
   { label: "Transferencias", href: "/transferencias" },
   { label: "Conversor", href: "/conversor" },
   { label: "VERA", href: "/vera" },
-  { label: "VERA GOLD", href: "/vera/gold", gold: true },
   { label: "Perfil", href: "/perfil" }
 ];
 
