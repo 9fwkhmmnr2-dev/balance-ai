@@ -51,12 +51,45 @@ function getFinancialComparison(summary: FinancialSummary) {
   };
 }
 
-function shouldShowFinancialSummary(message: string) {
-  const financialIntent = /\b(finanzas?|gastos?|ingresos?|balance|saldo|movimientos?|categorías?|ahorro|cuánto gasté|cuánto ingresé|resumen financiero)\b/i.test(message);
-  const visualIntent = /\b(tarjetas? (?:gráficas?|visuales?)|gráfic[oa]s?|comparaci[oó]n visual|visualiz(?:á|a|ame|ar)|mostrame (?:una )?(?:tarjeta|gráfico|gráfica|comparación))\b/i.test(message);
-  return financialIntent || visualIntent;
-}
+function shouldShowFinancialSummary(message: string, previousMessages: ChatMessage[]) {
+  const normalized = message.toLocaleLowerCase("es-AR");
 
+  // Esta tarjeta resume ingresos, gastos y balance general. No debe aparecer
+  // para consultas cuyo foco sea una categoría o un objetivo de ahorro.
+  const categoryDetailIntent =
+    /\b(en qué|dónde|cuál|cuáles|distribución|desglose|detalle)\b.*\b(categorías?|rubro|comida|transporte|servicios|suscripciones)\b/i.test(normalized) ||
+    /\b(categorías?|rubro)\b/i.test(normalized);
+  const savingsGoalIntent =
+    /\b(objetivo|meta)\b.*\b(ahorro|ahorrar|comprar|juntar)\b/i.test(normalized) ||
+    /\b(cuánto me falta|progreso|voy avanzando)\b.*\b(ahorro|objetivo|meta|comprar)\b/i.test(normalized);
+  if (categoryDetailIntent || savingsGoalIntent) return false;
+
+  const overviewIntent =
+    /\b(resumen financiero|resumen de mis finanzas|panorama financiero|estado de mis finanzas|cómo vienen mis finanzas|como vienen mis finanzas|analizá mis finanzas|analiza mis finanzas)\b/i.test(normalized);
+  const totalsIntent =
+    /\b(cuánto|cuanto|total)\b.*\b(gasté|gaste|gastado|ingresé|ingrese|ingresado|gastos|ingresos)\b/i.test(normalized) ||
+    /\b(ingresos?|gastos?)\b.*\b(este mes|esta semana|hoy|este año|del período|del periodo)\b/i.test(normalized) ||
+    /\b(saldo neto|balance general|balance del período|balance del periodo)\b/i.test(normalized);
+  const comparisonIntent =
+    /\b(compará|compara|comparar|comparación|comparacion)\b.*\b(ingresos?|gastos?)\b/i.test(normalized) ||
+    /\b(ingresos?|gastos?)\b.*\b(vs\.?|versus)\b.*\b(ingresos?|gastos?)\b/i.test(normalized);
+  if (overviewIntent || totalsIntent || comparisonIntent) return true;
+
+  const visualIntent =
+    /\b(tarjetas? (?:gráficas?|visuales?)|gráfic[oa]s?|comparaci[oó]n visual|visualiz(?:á|a|ame|ar)|mostrame (?:una )?(?:tarjeta|gráfico|gráfica|comparación))\b/i.test(normalized);
+  const hasRecentFinancialContext = previousMessages.slice(-4).some((item) =>
+    item.role === "user" &&
+    /\b(finanzas?|gastos?|ingresos?|balance|saldo|movimientos?|resumen financiero)\b/i.test(item.content)
+  );
+  if (visualIntent && hasRecentFinancialContext) return true;
+
+  const hasPreviousSummaryCard = previousMessages.some(
+    (item) => item.role === "model" && Boolean(item.financialSummary)
+  );
+  const asksToRefreshPreviousCard =
+    /\b(actualizá|actualiza|actualizalo|actualizála|armá|arma|armalo|mostrá|mostra|mostrame|repetí|repeti|otra vez|de nuevo)\b/i.test(normalized);
+  return hasPreviousSummaryCard && asksToRefreshPreviousCard;
+}
 function renderInlineMarkdown(text: string) {
   return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
@@ -291,7 +324,7 @@ export default function VeraView() {
       });
       const payload = await response.json() as { reply?: string; error?: string; financialSummary?: FinancialSummary };
       if (!response.ok || !payload.reply) throw new Error(payload.error || "No pude recibir una respuesta de VERA.");
-      const financialSummary = payload.financialSummary && shouldShowFinancialSummary(text) ? payload.financialSummary : undefined;
+      const financialSummary = payload.financialSummary && shouldShowFinancialSummary(text, messages) ? payload.financialSummary : undefined;
       const completedMessages = [...nextMessages, { role: "model" as const, content: payload.reply, ...(financialSummary ? { financialSummary } : {}) }];
       setMessages(completedMessages);
       await saveConversation(completedMessages, conversationId);
