@@ -650,7 +650,7 @@ export default function VeraView() {
           <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
-                <VeraCore3D variant={isGold || ["nucleus-gold", "focus", "transform", "complete", "dismissed"].includes(goldDemoPhase) ? "gold" : "violet"} className={`${sending ? "is-thinking" : ""} ${goldDemoPhase === "unstable" ? "is-demo-unstable" : ""} ${goldDemoPhase === "nucleus-gold" || goldDemoPhase === "focus" ? "is-demo-gold" : ""}`} label="Núcleo 3D de VERA" />
+                <VeraCore3D variant={isGold || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? "gold" : "violet"} className={`${sending ? "is-thinking" : ""} ${goldDemoPhase === "unstable" ? "is-demo-unstable" : ""} ${goldDemoPhase === "nucleus-gold" || goldDemoPhase === "focus" ? "is-demo-gold" : ""}`} label="Núcleo 3D de VERA" />
               </button>
               {messages.length > 0 && <div className="vera-brand-copy"><strong>VERA</strong><small>Entendé tu dinero</small></div>}
             </div>
