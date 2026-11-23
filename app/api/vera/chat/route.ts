@@ -216,7 +216,17 @@ export async function POST(request: Request) {
       memories,
     });
 
-    return NextResponse.json({ reply: result.text });
+    return NextResponse.json({
+      reply: result.text,
+      financialSummary: {
+        currency: financialContext.currency,
+        period: financialContext.period,
+        income: financialContext.income,
+        expenses: financialContext.expenses,
+        netBalance: financialContext.netBalance,
+        movementsCount: financialContext.movementsCount,
+      },
+    });
   } catch (error) {
     const rawCode = error instanceof Error ? error.message : "";
     const providerHttpMatch = rawCode.match(/^VERA_PROVIDER_HTTP_(\d{3})$/);
