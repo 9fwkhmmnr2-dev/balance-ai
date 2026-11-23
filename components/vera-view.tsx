@@ -397,6 +397,7 @@ export default function VeraView() {
     if (!text || sending) return;
     setError("");
     setDraft("");
+    if (composeRef.current) composeRef.current.style.height = "46px";
     const nextMessages: ChatMessage[] = [...messages, { role: "user", content: text }];
     setMessages(nextMessages);
     setSending(true);
