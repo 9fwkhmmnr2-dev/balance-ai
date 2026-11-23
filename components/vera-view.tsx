@@ -200,19 +200,19 @@ export default function VeraView() {
         .vera-chat-head.is-welcome .vera-core-button{width:82px;height:82px}
         .vera-core-button:hover{transform:scale(1.05)}
         .vera-core-button:focus-visible{outline:2px solid #c4b5fd;outline-offset:5px}
-        .vera-core-visual{position:relative;display:block;width:36px;height:36px;isolation:isolate;filter:drop-shadow(0 0 12px rgba(139,92,246,.38));}
+        .vera-core-visual{position:relative;display:block;width:36px;height:36px;isolation:isolate;filter:drop-shadow(0 0 12px rgba(139,92,246,.38)) drop-shadow(0 0 25px rgba(91,33,182,.2));transform-style:preserve-3d;}
         .vera-chat-head.is-welcome .vera-core-visual{width:66px;height:66px;filter:drop-shadow(0 0 22px rgba(139,92,246,.45))}
-        .vera-core-visual:before{content:"";position:absolute;inset:5% 7% 7% 4%;border-radius:42% 58% 64% 36%/44% 38% 62% 56%;background:radial-gradient(ellipse at 30% 23%,#e8ddff 0%,#b49aff 18%,#8956e8 43%,#5c2caa 70%,#28133f 100%);box-shadow:inset 1px 2px 7px rgba(255,255,255,.4),inset -4px -6px 12px rgba(25,8,48,.48),0 0 22px rgba(139,92,246,.28);animation:vera-core-morph 8s ease-in-out infinite,vera-core-breathe 4.2s ease-in-out infinite;transform-origin:48% 52%}
+        .vera-core-visual:before{content:"";position:absolute;inset:5% 7% 7% 4%;border-radius:42% 58% 64% 36%/44% 38% 62% 56%;background:radial-gradient(ellipse at 29% 19%,rgba(255,255,255,.98) 0%,rgba(231,216,255,.94) 7%,rgba(180,154,255,.92) 19%,rgba(137,86,232,.96) 39%,rgba(92,44,170,.98) 66%,#170d29 100%);box-shadow:inset 2px 3px 8px rgba(255,255,255,.62),inset -7px -9px 15px rgba(17,5,35,.72),inset 3px -2px 9px rgba(196,181,253,.2),0 0 18px rgba(139,92,246,.42),0 0 38px rgba(91,33,182,.24);animation:vera-core-morph 8s ease-in-out infinite,vera-core-breathe 4.2s ease-in-out infinite;transform-origin:48% 52%;}
         .vera-core-visual:after{content:"";position:absolute;inset:-8%;border:1px solid rgba(196,181,253,.4);border-radius:58% 42% 38% 62%/46% 60% 40% 54%;transform:rotate(-18deg);animation:vera-core-wave 4.8s ease-out infinite}
-        .vera-core-inner{position:absolute;z-index:1;inset:22% 19% 25% 24%;border-radius:55% 45% 38% 62%/43% 38% 62% 57%;background:radial-gradient(ellipse at 35% 30%,rgba(255,255,255,.88),rgba(220,202,255,.5) 24%,rgba(161,115,255,.12) 68%,transparent 74%);filter:blur(1px);animation:vera-core-inner 5.5s ease-in-out infinite}
+        .vera-core-depth{position:absolute;z-index:1;inset:13% 12% 12% 15%;border-radius:48% 52% 39% 61%/42% 43% 57% 58%;background:radial-gradient(ellipse at 68% 72%,rgba(21,7,42,.88),rgba(67,28,117,.42) 32%,transparent 68%);filter:blur(2px);mix-blend-mode:multiply;animation:vera-core-depth 6.8s ease-in-out infinite;}.vera-core-inner{position:absolute;z-index:2;inset:22% 19% 25% 24%;border-radius:55% 45% 38% 62%/43% 38% 62% 57%;background:radial-gradient(ellipse at 35% 30%,rgba(255,255,255,.98),rgba(220,202,255,.72) 15%,rgba(161,115,255,.28) 42%,rgba(83,38,145,.08) 68%,transparent 74%);filter:blur(1px);box-shadow:0 0 13px rgba(222,207,255,.2);animation:vera-core-inner 5.5s ease-in-out infinite}.vera-core-filament{position:absolute;z-index:3;inset:18% 8% 26% 28%;border:1px solid rgba(238,228,255,.5);border-left-color:transparent;border-bottom-color:rgba(196,181,253,.12);border-radius:62% 38% 58% 42%/42% 61% 39% 58%;transform:rotate(-28deg);filter:blur(.35px);animation:vera-core-filament 7s ease-in-out infinite}.vera-core-glint{position:absolute;z-index:4;top:18%;left:25%;width:22%;height:13%;border-radius:50%;background:rgba(255,255,255,.82);filter:blur(3px);transform:rotate(-35deg);opacity:.7;animation:vera-core-glint 5s ease-in-out infinite}
         .vera-core-particle{position:absolute;z-index:2;width:3px;height:3px;border-radius:50%;background:#eee5ff;box-shadow:0 0 8px rgba(225,211,255,.9)}
         .vera-core-particle.one{top:8%;right:14%;animation:vera-core-drift 5s ease-in-out infinite}
         .vera-core-particle.two{bottom:13%;left:8%;width:2px;height:2px;animation:vera-core-drift 6s ease-in-out -2s infinite reverse}
-        .vera-core-visual.is-thinking:before{animation-duration:2.1s,1.5s;filter:brightness(1.13)}
+        .vera-core-visual.is-thinking:before{animation-duration:2.1s,1.5s;filter:brightness(1.2) saturate(1.12)}.vera-core-visual.is-thinking .vera-core-filament{animation-duration:2.2s}.vera-core-visual.is-thinking .vera-core-glint{opacity:1}
         .vera-core-visual.is-thinking:after{animation-duration:1.7s}
         .vera-head-actions{display:flex;align-items:center;gap:8px}
         .vera-chat-head.is-welcome .vera-head-actions{position:absolute;top:14px;right:16px}
-        .vera-history-toggle,.vera-new-chat{border:1px solid rgba(196,181,253,.2);background:#1c1728;color:#e7dcff;border-radius:10px;padding:8px 10px;font-size:11px;cursor:pointer}.vera-history-toggle{display:grid;place-items:center;width:36px;height:36px;padding:0;font-size:19px;line-height:1}
+        .vera-history-toggle,.vera-new-chat{border:1px solid rgba(196,181,253,.2);background:linear-gradient(145deg,rgba(42,31,59,.96),rgba(22,17,31,.98));color:#e7dcff;border-radius:10px;padding:8px 10px;font-size:11px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 5px 14px rgba(0,0,0,.16);transition:transform .2s ease,border-color .2s ease,background .2s ease,box-shadow .2s ease}.vera-history-toggle{display:grid;place-items:center;width:36px;height:36px;padding:0;font-size:19px;line-height:1}
         .vera-core-panel{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);background:linear-gradient(110deg,rgba(124,58,237,.16),rgba(20,18,28,.9))}
         .vera-core-panel strong{display:block;color:#eee8fa;font-size:12px}
         .vera-core-panel p{margin-top:4px;color:#aaa1b8;font-size:11px;line-height:1.45}
@@ -231,12 +231,12 @@ export default function VeraView() {
         .vera-starter:before{content:"✧";display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:9px;background:rgba(167,139,250,.15);color:#d8c4ff;font-size:17px;box-shadow:inset 0 0 0 1px rgba(196,181,253,.16)}
         .vera-starter:hover{border-color:rgba(196,181,253,.55);background:linear-gradient(145deg,rgba(124,58,237,.28),rgba(35,27,49,.96));transform:translateY(-2px);box-shadow:0 8px 24px rgba(76,29,149,.16)}
         .vera-starter:disabled{opacity:.5;cursor:default}
-        .vera-compose{padding:13px 15px 15px;border-top:1px solid var(--line);background:rgba(8,7,12,.45)}
+        .vera-compose{padding:13px 15px 15px;border-top:1px solid var(--line);background:rgba(8,7,12,.45);transition:background .25s ease,box-shadow .25s ease}.vera-compose:focus-within{background:linear-gradient(110deg,rgba(36,23,56,.72),rgba(10,8,15,.72));box-shadow:inset 0 1px 0 rgba(196,181,253,.12),0 -8px 28px rgba(91,33,182,.08)}
         .vera-compose form{display:flex;align-items:flex-end;gap:9px}
-        .vera-input{flex:1;min-width:0;resize:vertical;min-height:46px;max-height:120px;background:#171320;border:1px solid rgba(196,181,253,.2);border-radius:14px;padding:12px;color:#f5f3fa;font:inherit;font-size:13px;outline:none}
-        .vera-input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.1)}
-        .vera-send{width:46px;height:46px;flex-shrink:0;border:0;border-radius:14px;background:linear-gradient(145deg,#a78bfa,#7c3aed);color:white;font-size:20px;cursor:pointer}
-        .vera-send:disabled{opacity:.38;cursor:default}.vera-send.ready{background:linear-gradient(145deg,#c3a7ff,#8648e8);box-shadow:0 0 17px rgba(139,92,246,.25)}.vera-send-arrow{display:block;transition:transform .2s}.vera-send:not(:disabled):hover .vera-send-arrow{transform:translate(2px,-2px)}
+        .vera-input{flex:1;min-width:0;resize:vertical;min-height:46px;max-height:120px;background:linear-gradient(155deg,#1b1625,#13101a);border:1px solid rgba(196,181,253,.2);border-radius:14px;padding:12px;color:#f5f3fa;font:inherit;font-size:13px;outline:none;box-shadow:inset 0 2px 7px rgba(0,0,0,.22),0 1px 0 rgba(255,255,255,.025);transition:border-color .22s ease,box-shadow .22s ease,background .22s ease}
+        .vera-input:focus{border-color:rgba(196,181,253,.72);background:linear-gradient(155deg,#21192e,#17121f);box-shadow:0 0 0 3px rgba(167,139,250,.13),0 0 24px rgba(124,58,237,.12),inset 0 2px 7px rgba(0,0,0,.18)}
+        .vera-send{position:relative;overflow:hidden;width:46px;height:46px;flex-shrink:0;border:1px solid rgba(232,220,255,.22);border-radius:14px;background:linear-gradient(145deg,#9b76ed,#6330bd);color:white;font-size:20px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 17px rgba(91,33,182,.25);transition:transform .18s ease,filter .2s ease,box-shadow .2s ease,background .2s ease}
+        .vera-send:disabled{opacity:.38;cursor:default;box-shadow:none}.vera-send.ready{background:linear-gradient(145deg,#d4c0ff 0%,#a77af5 38%,#7439d2 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(196,181,253,.14),0 0 22px rgba(139,92,246,.32);animation:vera-send-ready 2.8s ease-in-out infinite}.vera-send-arrow{display:block;transition:transform .2s cubic-bezier(.2,.8,.2,1)}.vera-send:not(:disabled):hover{transform:translateY(-2px);filter:brightness(1.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 9px 23px rgba(91,33,182,.35)}.vera-send:not(:disabled):hover .vera-send-arrow{transform:translate(2px,-2px)}.vera-send:not(:disabled):active{transform:scale(.94)}
         .vera-error{padding:0 17px 13px;color:#f0b4c0;font-size:12px}
         .vera-privacy{margin:12px 3px 0;color:#898194;font-size:10px;line-height:1.6;text-align:center}
         .vera-drawer-backdrop{position:fixed;inset:0;z-index:80;background:rgba(4,3,8,.62);backdrop-filter:blur(5px);display:flex;justify-content:flex-start}
@@ -254,14 +254,14 @@ export default function VeraView() {
         @keyframes vera-dot-wave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-4px);opacity:1}}
         @keyframes vera-message-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
         @keyframes vera-pulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.2);opacity:0}}
-        @keyframes vera-core-morph{0%,100%{border-radius:42% 58% 64% 36%/44% 38% 62% 56%}35%{border-radius:58% 42% 45% 55%/52% 62% 38% 48%}68%{border-radius:48% 52% 59% 41%/37% 48% 52% 63%}}
+        @keyframes vera-core-depth{0%,100%{transform:translate(0,0) rotate(-8deg) scale(.96);opacity:.65}50%{transform:translate(-2px,2px) rotate(8deg) scale(1.08);opacity:1}}@keyframes vera-core-filament{0%,100%{transform:rotate(-28deg) scale(.94);opacity:.45}50%{transform:rotate(18deg) scale(1.08);opacity:.95}}@keyframes vera-core-glint{0%,100%{transform:translate(-2px,1px) rotate(-35deg);opacity:.45}50%{transform:translate(4px,-3px) rotate(-25deg);opacity:.95}}@keyframes vera-send-ready{0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)}}@keyframes vera-core-morph{0%,100%{border-radius:42% 58% 64% 36%/44% 38% 62% 56%}35%{border-radius:58% 42% 45% 55%/52% 62% 38% 48%}68%{border-radius:48% 52% 59% 41%/37% 48% 52% 63%}}
         @keyframes vera-core-breathe{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.14);transform:scale(1.045)}}
         @keyframes vera-core-wave{0%{transform:scale(.86) rotate(-18deg);opacity:.65}100%{transform:scale(1.24) rotate(8deg);opacity:0}}
         @keyframes vera-core-inner{0%,100%{transform:translate(0,0) scale(.94);opacity:.65}50%{transform:translate(3px,-2px) scale(1.12);opacity:1}}
         @keyframes vera-core-drift{0%,100%{transform:translate(0,0);opacity:.55}50%{transform:translate(3px,-5px);opacity:1}}
         @keyframes vera-drawer-in{from{transform:translateX(-18px);opacity:.6}to{transform:translateX(0);opacity:1}}
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{grid-template-columns:1fr;padding:0 12px 16px;gap:8px}.vera-starter{min-height:50px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
-        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
+        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
       `}</style>
 
       {showHistory && <div className="vera-drawer-backdrop" onClick={() => setShowHistory(false)}>
@@ -297,7 +297,10 @@ export default function VeraView() {
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
                 <span className={`vera-core-visual${sending ? " is-thinking" : ""}`} aria-hidden="true">
+                  <span className="vera-core-depth" />
                   <span className="vera-core-inner" />
+                  <span className="vera-core-filament" />
+                  <span className="vera-core-glint" />
                   <span className="vera-core-particle one" />
                   <span className="vera-core-particle two" />
                 </span>
