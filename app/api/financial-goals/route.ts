@@ -204,6 +204,27 @@ export async function PATCH(request: Request) {
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ error: "La solicitud no es válida." }, { status: 400 });
     const input = body as Record<string, unknown>;
+    if (input.action === "correct_automatic_movement") {
+      if (typeof input.goalId !== "string" || typeof input.movementId !== "string" ||
+          !validAmount(input.amount) || typeof input.category !== "string" ||
+          !input.category.trim() || typeof input.movementDate !== "string" || !validDateKey(input.movementDate)) {
+        return NextResponse.json({ error: "Revisá el importe, la categoría y la fecha corregidos." }, { status: 400 });
+      }
+      const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
+      const { data, error } = await supabase.from("financial_goal_movements")
+        .update({
+          amount: input.amount, category: input.category.trim().slice(0, 60),
+          description: description || null, movement_date: input.movementDate,
+          verification_status: "pending", verified_at: null,
+        })
+        .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
+        .eq("source", "recurring").eq("status", "posted").eq("verification_status", "pending")
+        .select("id, amount, category, description, movement_date, verification_status").maybeSingle();
+      if (error) throw error;
+      if (!data) return NextResponse.json({ error: "El movimiento ya fue comprobado o no existe." }, { status: 404 });
+      return NextResponse.json({ movement: data });
+    }
+
     if (input.action === "verify_automatic_movement") {
       if (typeof input.goalId !== "string" || typeof input.movementId !== "string") {
         return NextResponse.json({ error: "La comprobación del movimiento no es válida." }, { status: 400 });
