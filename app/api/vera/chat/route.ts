@@ -137,7 +137,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ reply: result.text });
   } catch (error) {
     const rawCode = error instanceof Error ? error.message : "";
-    const providerHttpMatch = rawCode.match(/^VERA_PROVIDER_HTTP_(\\d{3})$/);
+    const providerHttpMatch = rawCode.match(/^VERA_PROVIDER_HTTP_(\d{3})$/);
     const safeCode = [
       "VERA_AI_NOT_CONFIGURED",
       "VERA_PROVIDER_RATE_LIMIT",
