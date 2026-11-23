@@ -55,12 +55,12 @@ export async function GET(request: Request) {
     if (goalsError) throw goalsError;
 
     const ids = (goals ?? []).map((goal) => goal.id);
-    let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; created_at: string }> = [];
+    let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
     let rules: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
     if (ids.length) {
       const [movementResult, ruleResult] = await Promise.all([
         supabase.from("financial_goal_movements")
-          .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, created_at")
+          .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
           .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false }),
         supabase.from("financial_goal_recurring_rules")
           .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
@@ -189,6 +189,20 @@ export async function PATCH(request: Request) {
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ error: "La solicitud no es válida." }, { status: 400 });
     const input = body as Record<string, unknown>;
+    if (input.action === "verify_automatic_movement") {
+      if (typeof input.goalId !== "string" || typeof input.movementId !== "string") {
+        return NextResponse.json({ error: "La comprobación del movimiento no es válida." }, { status: 400 });
+      }
+      const { data, error } = await supabase.from("financial_goal_movements")
+        .update({ verification_status: "verified", verified_at: new Date().toISOString() })
+        .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
+        .eq("source", "recurring").eq("status", "posted").eq("verification_status", "pending")
+        .select("id, verification_status, verified_at").maybeSingle();
+      if (error) throw error;
+      if (!data) return NextResponse.json({ error: "El movimiento ya fue comprobado o no existe." }, { status: 404 });
+      return NextResponse.json({ movement: data });
+    }
+
     if (input.action === "movement_status") {
       if (typeof input.goalId !== "string" || typeof input.movementId !== "string" ||
           (input.status !== "posted" && input.status !== "cancelled")) {
