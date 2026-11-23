@@ -62,7 +62,7 @@ export class GeminiVeraProvider implements VeraProvider {
             role: message.role,
             parts: [{ text: message.content }],
           })),
-          generationConfig: { temperature: 0.65, maxOutputTokens: input.experience === "gold" ? 1500 : 900 },
+          generationConfig: { temperature: 0.65, maxOutputTokens: input.financialContext?.experience === "gold" ? 1500 : 900 },
         }),
         signal: AbortSignal.timeout(20000),
         cache: "no-store",
