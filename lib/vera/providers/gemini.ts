@@ -51,7 +51,7 @@ export class GeminiVeraProvider implements VeraProvider {
       buildContext(input),
     ].filter(Boolean).join("\n\n");
 
-    let response: Response;
+    let response: Response | undefined;
     const requestStartedAt = Date.now();
     try {
       const requestBody = JSON.stringify({
@@ -98,7 +98,9 @@ export class GeminiVeraProvider implements VeraProvider {
       throw new Error("VERA_PROVIDER_NETWORK_ERROR");
     }
 
-    if (!response!.ok) {
+    if (!response) throw new Error("VERA_EMPTY_RESPONSE");
+
+    if (!response.ok) {
       console.error("[VERA_GEMINI_DIAGNOSTIC]", {
         model,
         stage: "response",
