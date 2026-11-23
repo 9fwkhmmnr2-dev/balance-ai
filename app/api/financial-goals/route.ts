@@ -66,9 +66,24 @@ export async function GET(request: Request) {
           .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
           .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true }),
       ]);
-      if (movementResult.error) throw movementResult.error;
       if (ruleResult.error) throw ruleResult.error;
-      movements = (movementResult.data ?? []) as typeof movements;
+      if (movementResult.error) {
+        const missingVerificationColumns = movementResult.error.code === "42703" ||
+          movementResult.error.code === "PGRST204" ||
+          movementResult.error.message?.includes("verification_status") ||
+          movementResult.error.message?.includes("verified_at");
+        if (!missingVerificationColumns) throw movementResult.error;
+        // Preview puede seguir usando el esquema compartido anterior hasta aplicar la migración en una base aislada.
+        const fallbackResult = await supabase.from("financial_goal_movements")
+          .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, created_at")
+          .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false });
+        if (fallbackResult.error) throw fallbackResult.error;
+        movements = (fallbackResult.data ?? []).map((entry) => ({
+          ...entry, verification_status: "not_required" as const, verified_at: null,
+        })) as typeof movements;
+      } else {
+        movements = (movementResult.data ?? []) as typeof movements;
+      }
       rules = (ruleResult.data ?? []) as typeof rules;
     }
 
