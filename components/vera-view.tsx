@@ -32,7 +32,7 @@ function pickWelcomePhrase(previous?: string) {
 const periodLabels: Record<Period, string> = { daily: "Hoy", weekly: "Últimos 7 días", monthly: "Este mes", yearly: "Este año" };
 
 function renderInlineMarkdown(text: string) {
-  return text.split(/(\\*\\*[^*]+\\*\\*|\\*[^*]+\\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={index}>{part.slice(2, -2)}</strong>;
     if (part.startsWith("*") && part.endsWith("*")) return <em key={index}>{part.slice(1, -1)}</em>;
     if (part.startsWith("`") && part.endsWith("`")) return <code key={index}>{part.slice(1, -1)}</code>;
@@ -40,27 +40,27 @@ function renderInlineMarkdown(text: string) {
   });
 }
 function renderModelContent(content: string) {
-  const lines = content.split(/\\r?\\n/);
+  const lines = content.split(/\r?\n/);
   const blocks: React.ReactNode[] = [];
   for (let i = 0; i < lines.length;) {
     const line = lines[i].trim();
     if (!line) { i++; continue; }
-    const heading = line.match(/^#{1,3}\\s+(.+)$/);
+    const heading = line.match(/^#{1,3}\s+(.+)$/);
     if (heading) { blocks.push(<h3 key={i}>{renderInlineMarkdown(heading[1])}</h3>); i++; continue; }
-    if (/^[-*]\\s+/.test(line)) {
+    if (/^[-*]\s+/.test(line)) {
       const items: string[] = [];
-      while (i < lines.length && /^\\s*[-*]\\s+/.test(lines[i])) { items.push(lines[i].replace(/^\\s*[-*]\\s+/, "")); i++; }
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*[-*]\s+/, "")); i++; }
       blocks.push(<ul key={i}>{items.map((item, index) => <li key={index}>{renderInlineMarkdown(item)}</li>)}</ul>);
       continue;
     }
-    if (/^\\d+[.)]\\s+/.test(line)) {
+    if (/^\d+[.)]\s+/.test(line)) {
       const items: string[] = [];
-      while (i < lines.length && /^\\s*\\d+[.)]\\s+/.test(lines[i])) { items.push(lines[i].replace(/^\\s*\\d+[.)]\\s+/, "")); i++; }
+      while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) { items.push(lines[i].replace(/^\s*\d+[.)]\s+/, "")); i++; }
       blocks.push(<ol key={i}>{items.map((item, index) => <li key={index}>{renderInlineMarkdown(item)}</li>)}</ol>);
       continue;
     }
     const paragraph = [line]; i++;
-    while (i < lines.length && lines[i].trim() && !/^\\s*(#{1,3}\\s+|[-*]\\s+|\\d+[.)]\\s+)/.test(lines[i])) { paragraph.push(lines[i].trim()); i++; }
+    while (i < lines.length && lines[i].trim() && !/^\s*(#{1,3}\s+|[-*]\s+|\d+[.)]\s+)/.test(lines[i])) { paragraph.push(lines[i].trim()); i++; }
     blocks.push(<p key={i}>{paragraph.map((part, index) => <span key={index}>{index > 0 ? " " : ""}{renderInlineMarkdown(part)}</span>)}</p>);
   }
   return <div className="vera-rich-content">{blocks}</div>;
