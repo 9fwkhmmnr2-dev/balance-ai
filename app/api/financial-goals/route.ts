@@ -189,6 +189,21 @@ export async function PATCH(request: Request) {
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ error: "La solicitud no es válida." }, { status: 400 });
     const input = body as Record<string, unknown>;
+    if (input.action === "movement_status") {
+      if (typeof input.goalId !== "string" || typeof input.movementId !== "string" ||
+          (input.status !== "posted" && input.status !== "cancelled")) {
+        return NextResponse.json({ error: "La actualización del movimiento no es válida." }, { status: 400 });
+      }
+      const { data, error } = await supabase.from("financial_goal_movements")
+        .update({ status: input.status })
+        .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
+        .eq("source", "recurring").eq("status", "pending")
+        .select("id, status").maybeSingle();
+      if (error) throw error;
+      if (!data) return NextResponse.json({ error: "El movimiento ya fue procesado o no existe." }, { status: 404 });
+      return NextResponse.json({ movement: data });
+    }
+
     if (input.action === "recurring_rule") {
       if (typeof input.ruleId !== "string" || typeof input.goalId !== "string") {
         return NextResponse.json({ error: "La regla recurrente no es válida." }, { status: 400 });
