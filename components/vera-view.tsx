@@ -619,7 +619,7 @@ export default function VeraView() {
       {goldDemoPhase === "flash" && <div className="vera-demo-flash" aria-hidden="true" />}
       {goldDemoPhase === "black" && <div className="vera-demo-blackout" aria-hidden="true" />}
       {goldDemoPhase === "transform" && <div className="vera-demo-transform" aria-hidden="true"><div className="vera-demo-transform-wave" /></div>}
-      {(goldDemoPhase === "reveal" || goldDemoPhase === "complete") && <div className={`vera-demo-reveal${goldDemoPhase === "complete" ? " is-complete" : ""}`} role="dialog aria-modal="true" aria-label="Bienvenido a VERA GOLD">
+      {(goldDemoPhase === "reveal" || goldDemoPhase === "complete") && <div className={`vera-demo-reveal${goldDemoPhase === "complete" ? " is-complete" : ""}`} role="dialog" aria-modal="true" aria-label="Bienvenido a VERA GOLD">
         <div className="vera-gold-sparks" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>
         <div className="vera-demo-reveal-core"><VeraCore3D variant="gold" label="Núcleo dorado de VERA GOLD" /></div>
         <div className="vera-demo-reveal-copy"><small>UNA NUEVA ETAPA</small><h2>Bienvenido a VERA GOLD</h2><p>La misma VERA. Una nueva energía.</p><button className="vera-demo-continue" type="button" onClick={() => setGoldDemoPhase("dismissed")}>Continuar</button></div>
