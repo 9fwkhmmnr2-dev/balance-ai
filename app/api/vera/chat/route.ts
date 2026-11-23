@@ -56,7 +56,7 @@ function extractComputerAmount(message: string) {
   const isAmountOnly =
     /^(?:\$\s*)?\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?(?:\s*(?:ars|pesos?))?$/i.test(normalized) ||
     /^(?:\$\s*)?\d{6,}(?:,\d{1,2})?(?:\s*(?:ars|pesos?))?$/i.test(normalized);
-  const hasPriceCue = /\b(precio|presupuesto|sale|cuesta|vale|valor|es de)\b/i.test(normalized);
+  const hasPriceCue = /\b(una de|precio|presupuesto|sale|cuesta|vale|valor|es de)\b/i.test(normalized);
   if (!isAmountOnly && !hasPriceCue) return null;
 
   const match = normalized.match(/(?:\$\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{6,})(?:,\d{1,2})?/);
