@@ -1,8 +1,12 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { supabase } from "../lib/supabase";
-import VeraCore3D from "./vera-core-3d";
+const VeraCore3D = dynamic(() => import("./vera-core-3d"), {
+  ssr: false,
+  loading: () => <span className="vera-core-3d"><span className="vera-core-fallback" aria-hidden="true" /></span>,
+});
 
 type FinancialSummary = { currency: string; period: Period; income: number; expenses: number; netBalance: number; movementsCount: number };
 type ChatMessage = { role: "user" | "model"; content: string; financialSummary?: FinancialSummary };
