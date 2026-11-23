@@ -104,6 +104,16 @@ export default function FinancialGoalsView() {
     catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos actualizar el objetivo."); }
   }
 
+  async function deleteContribution(goal: Goal, contribution: Contribution) {
+    if (!window.confirm("¿Eliminar este aporte del historial del objetivo?")) return;
+    setNotice("");
+    try {
+      await request("DELETE", { id: goal.id, contributionId: contribution.id });
+      setNotice("Aporte eliminado y progreso recalculado.");
+      await loadGoals();
+    } catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos eliminar el aporte."); }
+  }
+
   async function deleteGoal(goal: Goal) {
     if (!window.confirm(`¿Eliminar “${goal.title}” y todo su historial de aportes? Esta acción no se puede deshacer.`)) return;
     setNotice("");
@@ -147,7 +157,7 @@ export default function FinancialGoalsView() {
                 <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progreso de ${goal.title}`}><span style={{ width: `${goal.progress_percent}%` }} /></div>
                 <div className="goal-progress-caption"><strong>{goal.progress_percent.toLocaleString("es-AR")}%</strong><span>{goal.contributions.length} {goal.contributions.length === 1 ? "aporte registrado" : "aportes registrados"}</span></div>
                 {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setNotice(""); }}>＋ Registrar aporte</button>}
-                {goal.contributions.length > 0 && <details className="goal-history"><summary>Ver historial de aportes</summary>{goal.contributions.map((entry) => <div className="goal-history-row" key={entry.id}><span>{new Date(entry.contributed_at + "T12:00:00").toLocaleDateString("es-AR")}{entry.note ? ` · ${entry.note}` : ""}</span><strong>+ {money(Number(entry.amount), goal.currency)}</strong></div>)}</details>}
+                {goal.contributions.length > 0 && <details className="goal-history"><summary>Ver historial de aportes</summary>{goal.contributions.map((entry) => <div className="goal-history-row" key={entry.id}><span>{new Date(entry.contributed_at + "T12:00:00").toLocaleDateString("es-AR")}{entry.note ? ` · ${entry.note}` : ""}</span><strong>+ {money(Number(entry.amount), goal.currency)}</strong><button type="button" onClick={() => void deleteContribution(goal, entry)} aria-label="Eliminar aporte">Eliminar</button></div>)}</details>}
                 <div className="goal-actions">{goal.status === "active" ? <button onClick={() => void changeStatus(goal, "paused")}>Pausar</button> : goal.status === "paused" ? <button onClick={() => void changeStatus(goal, "active")}>Reanudar</button> : null}{goal.status !== "completed" && goal.saved_amount >= goal.target_amount && <button onClick={() => void changeStatus(goal, "completed")}>Marcar completado</button>}<button className="goal-delete" onClick={() => void deleteGoal(goal)}>Eliminar</button></div>
               </article>
             ))}
