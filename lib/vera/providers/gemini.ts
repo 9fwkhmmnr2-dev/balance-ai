@@ -52,6 +52,7 @@ export class GeminiVeraProvider implements VeraProvider {
     ].filter(Boolean).join("\n\n");
 
     let response: Response;
+    const requestStartedAt = Date.now();
     try {
       response = await fetch(endpoint, {
         method: "POST",
@@ -69,13 +70,25 @@ export class GeminiVeraProvider implements VeraProvider {
         cache: "no-store",
       });
     } catch (error) {
-      if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
-        throw new Error("VERA_PROVIDER_TIMEOUT");
-      }
+      const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+      // Diagnostic only: never log prompts, financial data, API keys, or user identifiers.
+      console.error("[VERA_GEMINI_DIAGNOSTIC]", {
+        model,
+        stage: "request",
+        elapsedMs: Date.now() - requestStartedAt,
+        code: timedOut ? "TIMEOUT" : "NETWORK_ERROR",
+      });
+      if (timedOut) throw new Error("VERA_PROVIDER_TIMEOUT");
       throw new Error("VERA_PROVIDER_NETWORK_ERROR");
     }
 
     if (!response.ok) {
+      console.error("[VERA_GEMINI_DIAGNOSTIC]", {
+        model,
+        stage: "response",
+        elapsedMs: Date.now() - requestStartedAt,
+        status: response.status,
+      });
       if (response.status === 429) throw new Error("VERA_PROVIDER_RATE_LIMIT");
       throw new Error(`VERA_PROVIDER_HTTP_${response.status}`);
     }
