@@ -40,6 +40,12 @@ export default function FinancialGoalsView() {
   const [contributionGoal, setContributionGoal] = useState<Goal | null>(null);
   const [contributionAmount, setContributionAmount] = useState("");
   const [contributionNote, setContributionNote] = useState("");
+  const [correctionGoal, setCorrectionGoal] = useState<Goal | null>(null);
+  const [correctionMovement, setCorrectionMovement] = useState<Movement | null>(null);
+  const [correctionAmount, setCorrectionAmount] = useState("");
+  const [correctionCategory, setCorrectionCategory] = useState("");
+  const [correctionDescription, setCorrectionDescription] = useState("");
+  const [correctionDate, setCorrectionDate] = useState("");
   const [movementType, setMovementType] = useState<"income" | "expense">("income");
   const [movementCategory, setMovementCategory] = useState("Ahorro");
   const [movementDate, setMovementDate] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }));
@@ -191,6 +197,43 @@ export default function FinancialGoalsView() {
     }
   }
 
+  function openMovementCorrection(goal: Goal, movement: Movement) {
+    setCorrectionGoal(goal);
+    setCorrectionMovement(movement);
+    setCorrectionAmount(String(movement.amount));
+    setCorrectionCategory(movement.category);
+    setCorrectionDescription(movement.description ?? "");
+    setCorrectionDate(movement.movement_date);
+    setNotice("");
+  }
+
+  async function saveMovementCorrection(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!correctionGoal || !correctionMovement) return;
+    const amount = parseLocalizedAmount(correctionAmount);
+    if (amount === null || amount <= 0 || !correctionCategory.trim() || !correctionDate) {
+      setNotice("Revisá el importe, la categoría y la fecha.");
+      return;
+    }
+    setSaving(true);
+    setNotice("");
+    try {
+      await request("PATCH", {
+        action: "correct_automatic_movement", goalId: correctionGoal.id,
+        movementId: correctionMovement.id, amount, category: correctionCategory.trim(),
+        description: correctionDescription.trim(), movementDate: correctionDate,
+      });
+      setCorrectionGoal(null);
+      setCorrectionMovement(null);
+      setNotice("Movimiento corregido. Volvé a comprobarlo para confirmar que coincide con tu operación.");
+      await loadGoals();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "No pudimos corregir el movimiento.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function verifyAutomaticMovement(goal: Goal, movement: Movement) {
     setNotice("");
     try {
@@ -262,6 +305,7 @@ export default function FinancialGoalsView() {
                   {goal.movements.filter((entry) => entry.source === "recurring" && entry.status === "posted" && entry.verification_status === "pending").map((entry) => <div className="goal-verification-row" key={entry.id}>
                     <span>{new Date(entry.movement_date + "T12:00:00").toLocaleDateString("es-AR")} · {entry.category} · {entry.type === "income" ? "Ingreso" : "Gasto"}</span>
                     <strong>{money(Number(entry.amount), goal.currency)}</strong>
+                    <button type="button" onClick={() => openMovementCorrection(goal, entry)}>Corregir</button>
                     <button type="button" onClick={() => void verifyAutomaticMovement(goal, entry)}>Ya lo comprobé</button>
                   </div>)}
                 </section>}
@@ -326,6 +370,22 @@ export default function FinancialGoalsView() {
             <button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : editingRule ? "Guardar cambios" : "Crear regla recurrente"}</button>
           </form>
           <p className="goals-disclaimer">Las reglas organizan movimientos de este objetivo; no realizan transferencias ni modifican tus cuentas. Los registros automáticos se identificarán como no verificados.</p>
+        </section>
+      </div>}
+      {correctionGoal && correctionMovement && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) { setCorrectionGoal(null); setCorrectionMovement(null); } }}>
+        <section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-correction-title">
+          <button className="goals-modal-close" onClick={() => { setCorrectionGoal(null); setCorrectionMovement(null); }} disabled={saving} aria-label="Cerrar">×</button>
+          <p className="goals-eyebrow">REVISIÓN DE MOVIMIENTO</p>
+          <h2 id="goal-correction-title">Corregir registro automático</h2>
+          <p className="goals-modal-description">{correctionGoal.title}</p>
+          <form onSubmit={saveMovementCorrection} className="goals-form">
+            <label>Importe<input value={correctionAmount} onChange={(event) => setCorrectionAmount(event.target.value)} inputMode="decimal" required /></label>
+            <label>Categoría<input value={correctionCategory} onChange={(event) => setCorrectionCategory(event.target.value)} maxLength={60} required /></label>
+            <label>Descripción <span>(opcional)</span><input value={correctionDescription} onChange={(event) => setCorrectionDescription(event.target.value)} maxLength={240} /></label>
+            <label>Fecha<input type="date" value={correctionDate} onChange={(event) => setCorrectionDate(event.target.value)} required /></label>
+            <button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar corrección"}</button>
+          </form>
+          <p className="goals-disclaimer">La corrección recalcula el progreso y deja el movimiento pendiente de comprobación.</p>
         </section>
       </div>}
       {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">Este registro actualiza únicamente el objetivo. No mueve dinero ni modifica tus cuentas o movimientos generales.</p></section></div>}
