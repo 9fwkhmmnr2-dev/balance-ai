@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import MobileMenu from "./mobile-menu";
-import "./financial-goals.module.css";
+import "./financial-goals.css";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
