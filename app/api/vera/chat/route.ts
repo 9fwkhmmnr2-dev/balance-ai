@@ -5,6 +5,7 @@ import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/t
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 35;
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 type MovementRow = {
