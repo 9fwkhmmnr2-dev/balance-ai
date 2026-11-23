@@ -80,7 +80,10 @@ export async function GET(request: Request) {
         net_amount: saved,
         remaining_amount: Math.max(0, target - saved),
         progress_percent: Math.min(100, Math.max(0, Math.round((saved / target) * 1000) / 10)),
-        movements: goalMovements,
+        movements: goalMovements.map((movement) => ({
+          ...movement,
+          recurring_mode: rules.find((rule) => rule.id === movement.recurring_rule_id)?.mode ?? null,
+        })),
         recurring_rules: rules.filter((rule) => rule.goal_id === goal.id),
       };
     });
