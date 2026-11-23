@@ -142,6 +142,9 @@ export default function VeraView() {
   const [showCorePanel, setShowCorePanel] = useState(false);
   const [showTools, setShowTools] = useState(false);
   const [listening, setListening] = useState(false);
+  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -289,6 +292,29 @@ export default function VeraView() {
       setError(cause instanceof Error ? cause.message : "No pude actualizar la conversación.");
     }
   }
+ 
+  async function renameConversation(id: string) {
+    const title = editingTitle.replace(/\\s+/g, " ").trim();
+    if (!title || title.length > 64 || savingTitle) return;
+    setSavingTitle(true);
+    try {
+      const token = await getToken();
+      const response = await fetch("/api/vera/conversations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, action: "rename", title }),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "No pude cambiar el título.");
+      setEditingConversationId(null);
+      setEditingTitle("");
+      await loadHistory();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No pude cambiar el título.");
+    } finally {
+      setSavingTitle(false);
+    }
+  }
 
   async function deleteConversation(id: string) {
     if (!window.confirm("¿Eliminar definitivamente esta conversación?")) return;
@@ -427,6 +453,7 @@ export default function VeraView() {
         .vera-history-item{padding:10px;border:1px solid transparent;border-radius:11px;margin-bottom:6px;background:rgba(255,255,255,.025)}.vera-history-item.selected{border-color:rgba(167,139,250,.28);background:rgba(124,58,237,.12)}
         .vera-history-open{display:block;width:100%;text-align:left;background:transparent;border:0;color:#eee8f7;cursor:pointer;padding:0;font-size:12px;line-height:1.4}.vera-history-date{display:block;color:#8e849d;font-size:10px;margin-top:4px}
         .vera-history-actions{display:flex;gap:12px;margin-top:8px}.vera-history-action{border:0;background:transparent;color:#bba5e9;font-size:10px;padding:0;cursor:pointer}.vera-history-action.delete{color:#d99ba9}
+        .vera-history-edit{display:flex;gap:6px;margin-top:8px}.vera-history-edit input{flex:1;min-width:0;border:1px solid rgba(196,181,253,.28);border-radius:8px;background:#100d17;color:#f5f3fa;padding:8px;font:inherit;font-size:11px;outline:none}.vera-history-edit input:focus{border-color:#a78bfa;box-shadow:0 0 0 2px rgba(167,139,250,.13)}.vera-history-edit button{border:1px solid rgba(196,181,253,.2);border-radius:7px;background:rgba(124,58,237,.2);color:#e9ddff;padding:6px 8px;font-size:10px;cursor:pointer}.vera-history-edit button:disabled{opacity:.4;cursor:default}
         .vera-history-empty{padding:24px 10px;text-align:center;color:#968ba5;font-size:12px;line-height:1.6}
         @keyframes vera-tools-in{from{opacity:0;transform:translateY(7px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes vera-mic-pulse{0%,100%{box-shadow:0 0 0 3px rgba(139,92,246,.1),0 0 14px rgba(139,92,246,.2)}50%{box-shadow:0 0 0 6px rgba(139,92,246,.06),0 0 24px rgba(139,92,246,.38)}}@keyframes vera-phrase-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}\n        @keyframes vera-aurora{0%{transform:translate3d(-2%,0,0) rotate(-4deg) scale(1)}50%{transform:translate3d(3%,2%,0) rotate(3deg) scale(1.06)}100%{transform:translate3d(-1%,4%,0) rotate(-2deg) scale(1.02)}}
         @keyframes vera-breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.1)}}
@@ -458,13 +485,24 @@ export default function VeraView() {
           </select>
           {historyLoading ? <div className="vera-history-empty">Cargando conversaciones…</div> : visibleConversations.length === 0 ? <div className="vera-history-empty">{showArchived ? "Todavía no hay conversaciones archivadas." : "Tus conversaciones aparecerán acá cuando charles con VERA."}</div> : visibleConversations.map((conversation) => (
             <div className={`vera-history-item${conversationId === conversation.id ? " selected" : ""}`} key={conversation.id}>
-              <button className="vera-history-open" type="button" onClick={() => void openConversation(conversation.id)}>
-                {conversation.title}<span className="vera-history-date">{new Date(conversation.last_message_at).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}</span>
-              </button>
-              <div className="vera-history-actions">
-                <button className="vera-history-action" type="button" onClick={() => void changeArchive(conversation.id, showArchived ? "restore" : "archive")}>{showArchived ? "Restaurar" : "Archivar"}</button>
-                <button className="vera-history-action delete" type="button" onClick={() => void deleteConversation(conversation.id)}>Eliminar</button>
-              </div>
+              {editingConversationId === conversation.id ? (
+                <form className="vera-history-edit" onSubmit={(event) => { event.preventDefault(); void renameConversation(conversation.id); }}>
+                  <input value={editingTitle} onChange={(event) => setEditingTitle(event.target.value)} maxLength={64} aria-label="Nuevo título de la conversación" autoFocus />
+                  <button type="submit" disabled={!editingTitle.trim() || savingTitle}>Guardar</button>
+                  <button type="button" onClick={() => { setEditingConversationId(null); setEditingTitle(""); }}>Cancelar</button>
+                </form>
+              ) : (
+                <>
+                  <button className="vera-history-open" type="button" onClick={() => void openConversation(conversation.id)}>
+                    {conversation.title}<span className="vera-history-date">{new Date(conversation.last_message_at).toLocaleDateString("es-AR", { day: "numeric", month: "short" })}</span>
+                  </button>
+                  <div className="vera-history-actions">
+                    <button className="vera-history-action" type="button" onClick={() => { setEditingConversationId(conversation.id); setEditingTitle(conversation.title); }}>Editar título</button>
+                    <button className="vera-history-action" type="button" onClick={() => void changeArchive(conversation.id, showArchived ? "restore" : "archive")}>{showArchived ? "Restaurar" : "Archivar"}</button>
+                    <button className="vera-history-action delete" type="button" onClick={() => void deleteConversation(conversation.id)}>Eliminar</button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </aside>
