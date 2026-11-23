@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+import VeraCore3D from "./vera-core-3d";
 
 type FinancialSummary = { currency: string; period: Period; income: number; expenses: number; netBalance: number; movementsCount: number };
 type ChatMessage = { role: "user" | "model"; content: string; financialSummary?: FinancialSummary };
@@ -143,7 +144,7 @@ export default function VeraView() {
   const [showGoldPanel, setShowGoldPanel] = useState(false);
   const [isGold, setIsGold] = useState(false);
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
-  const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "flash" | "black" | "reveal" | "complete" | "dismissed">("idle");
+  const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "flash" | "black" | "reveal" | "transform" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -219,7 +220,8 @@ export default function VeraView() {
         window.setTimeout(() => setGoldDemoPhase("flash"), 2300),
         window.setTimeout(() => setGoldDemoPhase("black"), 2580),
         window.setTimeout(() => setGoldDemoPhase("reveal"), 3250),
-        window.setTimeout(() => setGoldDemoPhase("complete"), 5700),
+        window.setTimeout(() => setGoldDemoPhase("transform"), 4350),
+        window.setTimeout(() => setGoldDemoPhase("complete"), 7200),
       ];
       return () => timers.forEach(window.clearTimeout);
     }
@@ -577,13 +579,40 @@ export default function VeraView() {
         @keyframes vera-demo-wave{0%{transform:scale(.2);opacity:0}15%{opacity:1}100%{transform:scale(13);opacity:0}}
         @keyframes vera-demo-title{to{opacity:1;transform:translateY(0)}from{opacity:0;transform:translateY(12px)}}
         @media(prefers-reduced-motion:reduce){.vera-page.gold-demo-unstable,.vera-demo-flash,.vera-demo-blackout,.vera-demo-reveal:before,.vera-demo-reveal:after,.vera-demo-reveal-core,.vera-demo-reveal-copy{animation:none!important}.vera-demo-reveal-copy{opacity:1}}
+
+        .vera-core-3d{position:relative;display:block;width:100%;height:100%;overflow:visible;isolation:isolate;filter:drop-shadow(0 0 13px rgba(139,92,246,.46)) drop-shadow(0 0 28px rgba(91,33,182,.3))}
+        .vera-core-3d canvas{display:block;width:100%;height:100%;overflow:visible}
+        .vera-core-fallback{position:absolute;inset:12%;border-radius:45% 55% 62% 38%/43% 38% 62% 57%;background:radial-gradient(ellipse at 30% 20%,#fff 0%,#c9adff 18%,#8050d5 48%,#24103d 100%);box-shadow:0 0 25px rgba(139,92,246,.65)}
+        .vera-core-3d.is-gold{filter:drop-shadow(0 0 16px rgba(218,181,102,.58)) drop-shadow(0 0 36px rgba(155,115,45,.36))}
+        .vera-core-3d.is-thinking{filter:brightness(1.18) drop-shadow(0 0 22px rgba(185,150,255,.72))}
+        .vera-core-button .vera-core-3d{width:36px;height:36px}
+        .vera-chat-head.is-welcome .vera-core-button .vera-core-3d{width:66px;height:66px}
+        .vera-demo-reveal-core .vera-core-3d{width:110px;height:110px}
+        .vera-core-3d.is-demo-unstable{animation:vera-demo-core-flicker .34s steps(2,end) infinite}
+        .vera-core-3d.is-demo-unstable canvas{filter:brightness(1.7)}
+        .vera-shell.is-gold,.vera-shell.is-gold *{transition:border-color 1.9s ease,color 1.9s ease,background-color 1.9s ease,box-shadow 1.9s ease}
+        .vera-shell.is-gold .vera-chat-head,.vera-shell.is-gold .vera-compose form,.vera-shell.is-gold .vera-messages{border-color:rgba(200,169,107,.28)}
+        .vera-shell.is-gold .vera-bubble.model{border-color:rgba(200,169,107,.32);background:linear-gradient(145deg,rgba(42,34,22,.96),rgba(20,17,13,.98))}
+        .vera-shell.is-gold .vera-financial-card,.vera-shell.is-gold .vera-financial-comparison{border-color:rgba(200,169,107,.35);background:linear-gradient(145deg,rgba(42,34,22,.96),rgba(17,15,12,.98))}
+        .vera-shell.is-gold .vera-financial-card-title,.vera-shell.is-gold .vera-rich-content h3,.vera-shell.is-gold .vera-financial-metric.net strong{color:#e3c98e}
+        .vera-shell.is-gold .vera-rich-content li::marker{color:#d4ad63}
+        .vera-shell.is-gold .vera-starter,.vera-shell.is-gold .vera-history-toggle,.vera-shell.is-gold .vera-new-chat,.vera-shell.is-gold .vera-tool-trigger,.vera-shell.is-gold .vera-mic,.vera-shell.is-gold .vera-send{border-color:rgba(200,169,107,.42);box-shadow:0 0 18px rgba(200,169,107,.08)}
+        .vera-shell.is-gold .vera-starter{color:#e8d7ae;background:rgba(200,169,107,.055)}
+        .vera-shell.is-gold .vera-input{caret-color:#d9b86e}
+        .vera-page.gold-demo-transform .vera-shell{border-color:rgba(220,184,105,.78);box-shadow:0 0 55px rgba(200,169,107,.23),0 22px 65px rgba(0,0,0,.3)}
+        .vera-demo-transform{position:fixed;z-index:1200;inset:0;pointer-events:none;overflow:hidden;background:radial-gradient(circle at 50% 48%,rgba(218,174,82,.13),transparent 24%);animation:vera-demo-transform-light 2.8s ease-out both}
+        .vera-demo-transform-wave{position:absolute;left:50%;top:48%;width:14vmin;height:14vmin;border:1px solid rgba(255,226,163,.95);border-radius:50%;box-shadow:0 0 24px rgba(255,218,143,.8),inset 0 0 24px rgba(200,169,107,.42);transform:translate(-50%,-50%);animation:vera-demo-wave 2.8s cubic-bezier(.12,.68,.18,1) both}
+        .vera-demo-transform:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 48%,rgba(255,224,160,.2),transparent 58%);mix-blend-mode:screen}
+        @keyframes vera-demo-transform-light{0%{opacity:0}14%{opacity:1}55%{opacity:.78}100%{opacity:0}}
+        @media(prefers-reduced-motion:reduce){.vera-core-3d,.vera-demo-transform-wave{animation:none!important}}
       `}</style>
 
       {goldDemoPhase === "flash" && <div className="vera-demo-flash" aria-hidden="true" />}
       {goldDemoPhase === "black" && <div className="vera-demo-blackout" aria-hidden="true" />}
+      {goldDemoPhase === "transform" && <div className="vera-demo-transform" aria-hidden="true"><div className="vera-demo-transform-wave" /></div>}
       {(goldDemoPhase === "reveal" || goldDemoPhase === "complete") && <div className="vera-demo-reveal" role="dialog" aria-modal="true" aria-label="Bienvenido a VERA GOLD">
         <div className="vera-gold-sparks" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>
-        <div className="vera-demo-reveal-core"><span className="vera-core-visual is-gold" aria-hidden="true"><span className="vera-core-depth" /><span className="vera-core-inner" /><span className="vera-core-filament" /><span className="vera-core-glint" /><span className="vera-core-particle one" /><span className="vera-core-particle two" /></span></div>
+        <div className="vera-demo-reveal-core"><VeraCore3D variant="gold" label="Núcleo dorado de VERA GOLD" /></div>
         <div className="vera-demo-reveal-copy"><small>UNA NUEVA ETAPA</small><h2>Bienvenido a VERA GOLD</h2><p>La misma VERA. Una nueva energía.</p><button className="vera-demo-continue" type="button" onClick={() => setGoldDemoPhase("dismissed")}>Continuar</button></div>
       </div>}
 
@@ -635,7 +664,7 @@ export default function VeraView() {
         </aside>
       </div>}
 
-      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold || ["reveal", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
+      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold || ["reveal", "transform", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
 
         <section className="vera-chat" aria-label="Conversación con VERA">
           <div className="vera-gold-entry">
@@ -656,14 +685,7 @@ export default function VeraView() {
           <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
-                <span className={`vera-core-visual${sending ? " is-thinking" : ""}${isGold || ["reveal", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}${goldDemoPhase === "unstable" ? " is-demo-unstable" : ""}`} aria-hidden="true">
-                  <span className="vera-core-depth" />
-                  <span className="vera-core-inner" />
-                  <span className="vera-core-filament" />
-                  <span className="vera-core-glint" />
-                  <span className="vera-core-particle one" />
-                  <span className="vera-core-particle two" />
-                </span>
+                <VeraCore3D variant={isGold || ["reveal", "transform", "complete", "dismissed"].includes(goldDemoPhase) ? "gold" : "violet"} className={`${sending ? "is-thinking" : ""} ${goldDemoPhase === "unstable" ? "is-demo-unstable" : ""}`} label="Núcleo 3D de VERA" />
               </button>
               {messages.length > 0 && <div className="vera-brand-copy"><strong>VERA</strong><small>Entendé tu dinero</small></div>}
             </div>
