@@ -582,6 +582,7 @@ export default function VeraView() {
 
         .vera-core-3d{position:relative;display:block;width:100%;height:100%;overflow:visible;isolation:isolate;filter:drop-shadow(0 0 13px rgba(139,92,246,.46)) drop-shadow(0 0 28px rgba(91,33,182,.3))}
         .vera-core-3d canvas{display:block;width:100%;height:100%;overflow:visible}
+        .vera-core-3d.has-webgl .vera-core-fallback{display:none}
         .vera-core-fallback{position:absolute;inset:12%;border-radius:45% 55% 62% 38%/43% 38% 62% 57%;background:radial-gradient(ellipse at 30% 20%,#fff 0%,#c9adff 18%,#8050d5 48%,#24103d 100%);box-shadow:0 0 25px rgba(139,92,246,.65)}
         .vera-core-3d.is-gold{filter:drop-shadow(0 0 16px rgba(218,181,102,.58)) drop-shadow(0 0 36px rgba(155,115,45,.36))}
         .vera-core-3d.is-thinking{filter:brightness(1.18) drop-shadow(0 0 22px rgba(185,150,255,.72))}
@@ -590,7 +591,11 @@ export default function VeraView() {
         .vera-demo-reveal-core .vera-core-3d{width:110px;height:110px}
         .vera-core-3d.is-demo-unstable{animation:vera-demo-core-flicker .34s steps(2,end) infinite}
         .vera-core-3d.is-demo-unstable canvas{filter:brightness(1.7)}
-        .vera-shell.is-gold,.vera-shell.is-gold *{transition:border-color 1.9s ease,color 1.9s ease,background-color 1.9s ease,box-shadow 1.9s ease}
+        .vera-shell.is-gold,.vera-shell.is-gold *{transition:border-color 1.9s ease,color 1.9s ease,background 1.9s ease,background-color 1.9s ease,box-shadow 1.9s ease}
+        .vera-shell.is-gold .vera-chat-head{transition-delay:.12s}
+        .vera-shell.is-gold .vera-compose form{transition-delay:.42s}
+        .vera-shell.is-gold .vera-bubble.model,.vera-shell.is-gold .vera-financial-card{transition-delay:.68s}
+        .vera-shell.is-gold .vera-starter,.vera-shell.is-gold .vera-history-toggle,.vera-shell.is-gold .vera-new-chat,.vera-shell.is-gold .vera-tool-trigger,.vera-shell.is-gold .vera-mic,.vera-shell.is-gold .vera-send{transition-delay:.92s}
         .vera-shell.is-gold .vera-chat-head,.vera-shell.is-gold .vera-compose form,.vera-shell.is-gold .vera-messages{border-color:rgba(200,169,107,.28)}
         .vera-shell.is-gold .vera-bubble.model{border-color:rgba(200,169,107,.32);background:linear-gradient(145deg,rgba(42,34,22,.96),rgba(20,17,13,.98))}
         .vera-shell.is-gold .vera-financial-card,.vera-shell.is-gold .vera-financial-comparison{border-color:rgba(200,169,107,.35);background:linear-gradient(145deg,rgba(42,34,22,.96),rgba(17,15,12,.98))}
@@ -664,7 +669,7 @@ export default function VeraView() {
         </aside>
       </div>}
 
-      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold || ["reveal", "transform", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
+      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
 
         <section className="vera-chat" aria-label="Conversación con VERA">
           <div className="vera-gold-entry">
