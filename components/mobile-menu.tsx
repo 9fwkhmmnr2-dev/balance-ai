@@ -41,12 +41,12 @@ export default function MobileMenu() {
             return (
               <a
                 key={item.href}
-                className={`mobile-nav-item ${active ? "active" : ""} ${item.gold ? "mobile-nav-gold" : ""}`}
+                className={`mobile-nav-item ${active ? "active" : ""} ${item.gold ? "mobile-nav-gold" : ""}`} style={item.gold ? { color: "#C8A96B" } : undefined}
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
                 onClick={() => setOpen(false)}
               >
-                {item.label}{item.gold && <span className="mobile-nav-gold-tag">GOLD</span>}
+                {item.label}{item.gold && <span className="mobile-nav-gold-tag" style={{ marginLeft: 8, padding: "2px 6px", border: "1px solid rgba(200,169,107,.35)", borderRadius: 4, color: "#C8A96B", fontSize: 9, letterSpacing: ".12em" }}>GOLD</span>}
               </a>
             );
           })}
