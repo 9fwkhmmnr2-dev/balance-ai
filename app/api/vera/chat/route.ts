@@ -111,6 +111,22 @@ export async function POST(request: Request) {
     // El resto de los recuerdos se incorporará mediante controles explícitos de memoria.
     const detectedGoal = extractComputerGoal(input.messages);
     if (detectedGoal) {
+      const { data: existingMemory, error: existingMemoryError } = await supabase
+        .from("vera_memories")
+        .select("details")
+        .eq("user_id", authData.user.id)
+        .eq("memory_key", detectedGoal.memoryKey)
+        .maybeSingle();
+      if (existingMemoryError) throw existingMemoryError;
+
+      const existingDetails =
+        existingMemory?.details &&
+        typeof existingMemory.details === "object" &&
+        !Array.isArray(existingMemory.details)
+          ? existingMemory.details as Record<string, unknown>
+          : {};
+      const mergedDetails = { ...existingDetails, ...detectedGoal.details };
+
       const { error: memoryWriteError } = await supabase
         .from("vera_memories")
         .upsert({
@@ -118,7 +134,7 @@ export async function POST(request: Request) {
           memory_key: detectedGoal.memoryKey,
           category: detectedGoal.category,
           content: detectedGoal.content,
-          details: detectedGoal.details,
+          details: mergedDetails,
           updated_at: new Date().toISOString(),
         }, { onConflict: "user_id,memory_key" });
       if (memoryWriteError) throw memoryWriteError;
