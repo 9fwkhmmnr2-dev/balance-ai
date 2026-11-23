@@ -6,6 +6,8 @@ const features = [
   ["Consultas financieras habituales", true, true],
   ["Resumen y análisis de gastos", true, true],
   ["Comparación básica de períodos", true, true],
+  ["Objetivos con aportes manuales", true, true],
+  ["Progreso automático desde una cuenta vinculada", false, "Exclusivo GOLD · En preparación"],
   ["Mayor capacidad para conversar", false, true],
   ["Análisis financieros más profundos", false, true],
   ["Análisis avanzado de documentos", false, "En preparación"],
