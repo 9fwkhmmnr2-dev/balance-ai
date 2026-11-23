@@ -50,7 +50,7 @@ const fragmentShader = `
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 2.4);
     float n = noise(normal * 5.5 + vec3(0.0, uTime * .12, uTime * .08));
     float flow = sin((vUv.x * 8.0 + vUv.y * 5.0 + n * 2.5) * 3.14159 + uTime * .85) * .5 + .5;
-    float core = smoothstep(.82, .12, distance(vUv, vec2(.34,.29)));
+    float core = 1.0 - smoothstep(.12, .82, distance(vUv, vec2(.34,.29)));
     vec3 color = mix(uColorA, uColorB, clamp(n * .68 + flow * .25, 0.0, 1.0));
     color = mix(color, uColorC, fresnel * .82);
     color += uColorC * core * .34;
@@ -87,6 +87,7 @@ export default function VeraCore3D({ variant = "violet", className = "", label =
     renderer.toneMappingExposure = 1.25;
     renderer.domElement.setAttribute("aria-hidden", "true");
     host.appendChild(renderer.domElement);
+    host.classList.add("has-webgl");
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, width / height, .1, 30);
@@ -150,7 +151,6 @@ export default function VeraCore3D({ variant = "violet", className = "", label =
     scene.add(particles);
 
     const clock = new THREE.Clock();
-    let frame = 0;
     let raf = 0;
     let disposed = false;
     const render = () => {
@@ -203,5 +203,5 @@ export default function VeraCore3D({ variant = "violet", className = "", label =
     };
   }, [variant]);
 
-  return <div ref={hostRef} className={`vera-core-3d ${className}`} role="img" aria-label={label}><span className="vera-core-fallback" aria-hidden="true" /></div>;
+  return <div ref={hostRef} className={`vera-core-3d ${variant === "gold" ? "is-gold" : ""} ${className}`} role="img" aria-label={label}><span className="vera-core-fallback" aria-hidden="true" /></div>;
 }
