@@ -5,9 +5,16 @@ export type VeraMessage = {
   content: string;
 };
 
+export type VeraMemory = {
+  category: "goal" | "preference" | "important_detail";
+  content: string;
+  details: Record<string, string | number | boolean | null>;
+};
+
 export type VeraConversationInput = {
   messages: VeraMessage[];
   financialContext?: VeraFinancialContext;
+  memories?: VeraMemory[];
 };
 
 export type VeraFinancialContext = {
