@@ -43,8 +43,8 @@ export default function VeraGoldContextPromo({ plan }: Props) {
         Con GOLD estamos preparando análisis más profundos que podrán relacionar
         tus gastos, comparar períodos y sumar tus compromisos y objetivos a la lectura.
       </p>
-      <a href="/vera/gold" className={styles.link}>Conocer VERA GOLD <span aria-hidden="true">→</span></a>
-      <small>Tu informe actual sigue disponible. GOLD todavía está en preparación.</small>
+      <a href="/vera/gold" className={styles.link}>Mejorar a GOLD <span aria-hidden="true">→</span></a>
+      <small>Tu informe actual sigue disponible. Compará los planes y consultá el precio en una sola pantalla.</small>
     </aside>
   );
 }
