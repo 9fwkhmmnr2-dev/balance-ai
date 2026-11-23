@@ -54,21 +54,37 @@ export class GeminiVeraProvider implements VeraProvider {
     let response: Response;
     const requestStartedAt = Date.now();
     try {
-      response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          contents: input.messages.map((message) => ({
-            role: message.role,
-            parts: [{ text: message.content }],
-          })),
-          generationConfig: { temperature: 0.65, maxOutputTokens: input.financialContext?.experience === "gold" ? 1500 : 900 },
-        }),
-        // Permit slower cold starts while keeping a bounded request duration.
-        signal: AbortSignal.timeout(30000),
-        cache: "no-store",
+      const requestBody = JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents: input.messages.map((message) => ({
+          role: message.role,
+          parts: [{ text: message.content }],
+        })),
+        generationConfig: { temperature: 0.65, maxOutputTokens: input.financialContext?.experience === "gold" ? 1500 : 900 },
       });
+
+      // Retry exactly once on Gemini 503. Do not retry other HTTP errors or network timeouts.
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+          body: requestBody,
+          // Permit slower responses while keeping each attempt bounded.
+          signal: AbortSignal.timeout(30000),
+          cache: "no-store",
+        });
+
+        if (response.status !== 503 || attempt === 1) break;
+
+        console.warn("[VERA_GEMINI_DIAGNOSTIC]", {
+          model,
+          stage: "retry",
+          elapsedMs: Date.now() - requestStartedAt,
+          status: 503,
+          attempt: 1,
+        });
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       // Diagnostic only: never log prompts, financial data, API keys, or user identifiers.
@@ -82,7 +98,7 @@ export class GeminiVeraProvider implements VeraProvider {
       throw new Error("VERA_PROVIDER_NETWORK_ERROR");
     }
 
-    if (!response.ok) {
+    if (!response!.ok) {
       console.error("[VERA_GEMINI_DIAGNOSTIC]", {
         model,
         stage: "response",
