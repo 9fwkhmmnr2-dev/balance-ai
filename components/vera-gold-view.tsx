@@ -2,55 +2,6 @@
 
 import styles from "./vera-gold.module.css";
 
-const benefits = [
-  {
-    number: "01",
-    title: "Análisis más profundos",
-    description: "Informes con más contexto, explicaciones detalladas y relaciones entre tus ingresos, gastos, compromisos y objetivos.",
-    detail: "Más que ver los números: entender qué significan."
-  },
-  {
-    number: "02",
-    title: "Más capacidad para conversar",
-    description: "Más margen para hacer preguntas, profundizar un tema y continuar análisis extensos sin perder el hilo.",
-    detail: "Una conversación financiera con más recorrido."
-  },
-  {
-    number: "03",
-    title: "Documentos financieros",
-    description: "Análisis de extractos, resúmenes, contratos y planillas compatibles, con extracción y explicación de la información.",
-    detail: "La información importante, explicada con claridad."
-  },
-  {
-    number: "04",
-    title: "Memoria y contexto ampliados",
-    description: "Más contexto sobre tus preferencias, objetivos y decisiones para que VERA pueda dar continuidad a tus planes.",
-    detail: "Menos repeticiones. Más continuidad."
-  },
-  {
-    number: "05",
-    title: "Planificación avanzada",
-    description: "Escenarios, simulaciones y seguimiento más detallado para evaluar alternativas antes de tomar decisiones.",
-    detail: "Explorá posibilidades sin promesas ni resultados garantizados."
-  },
-  {
-    number: "06",
-    title: "Seguimiento inteligente",
-    description: "Análisis más completos de hábitos, compromisos y posibles irregularidades para ayudarte a detectar qué merece atención.",
-    detail: "Señales claras, siempre con sus fuentes y contexto."
-  }
-];
-
-const comparison = [
-  ["Gestión de cuentas y movimientos", "Incluido", "Incluido"],
-  ["Consultas financieras con VERA", "Uso estándar", "Mayor capacidad"],
-  ["Resúmenes y análisis básicos", "Incluido", "Incluido"],
-  ["Informes extensos y análisis profundo", "—", "Ampliado"],
-  ["Análisis de documentos", "—", "Incluido"],
-  ["Memoria y contexto", "Básico", "Ampliado"],
-  ["Simulaciones y planificación avanzada", "—", "Ampliado"]
-];
-
 export default function VeraGoldView() {
   return (
     <div className={styles.page}>
@@ -61,91 +12,53 @@ export default function VeraGoldView() {
 
       <main className={styles.main}>
         <section className={styles.hero}>
-          <div className={styles.heroGlow} aria-hidden="true" />
-          <div className={styles.eyebrow}><span /> UNA EXPERIENCIA MÁS PROFUNDA</div>
-          <div className={styles.wordmark}>VERA <span>GOLD</span></div>
-          <h1>Tu dinero tiene más para contarte.</h1>
-          <p className={styles.heroText}>
-            La misma VERA que ya conocés, con más capacidad para analizar,
-            conectar información y acompañar tus decisiones financieras.
-          </p>
-          <a className={styles.primaryButton} href="#beneficios">Explorar GOLD <span>↓</span></a>
-          <a className={styles.secondaryButton} href="/vera/gold/demo">Probar experiencia de GOLD <span>→</span></a>
-          <p className={styles.heroNote}>Una sola VERA. Más profundidad cuando la necesitás.</p>
-          <div className={styles.heroOrb} aria-hidden="true">
-            <div className={styles.orbRing} />
-            <div className={styles.orbCore}>V</div>
-            <div className={styles.orbShine} />
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>✦ UNA EXPERIENCIA MÁS PROFUNDA</p>
+            <div className={styles.wordmark}>VERA <span>GOLD</span></div>
+            <h1>Entendé más. Decidí con más claridad.</h1>
+            <p className={styles.heroText}>La misma VERA, con mayor capacidad para sostener conversaciones, profundizar análisis y trabajar con información financiera compleja.</p>
+            <div className={styles.benefits}>
+              <div><strong>Análisis más profundos</strong><span>Informes extensos y comparaciones con más contexto.</span></div>
+              <div><strong>Más capacidad para conversar</strong><span>Más margen para preguntar y continuar un análisis.</span></div>
+              <div><strong>Documentos y planificación</strong><span>Herramientas avanzadas a medida que estén disponibles.</span></div>
+            </div>
           </div>
+          <div className={styles.orb} aria-hidden="true"><div className={styles.orbRing}/><div className={styles.orbCore}>V</div></div>
         </section>
 
-        <section className={styles.intro} id="beneficios">
-          <p className={styles.sectionEyebrow}>MÁS CAPACIDAD. MISMA CLARIDAD.</p>
-          <h2>De entender tus finanzas a <span>explorarlas en profundidad.</span></h2>
-          <p>
-            GOLD amplía las herramientas de VERA para quienes necesitan análisis
-            más completos, conversaciones más extensas y una visión conectada de
-            su información financiera.
-          </p>
-        </section>
-
-        <section className={styles.benefitGrid} aria-label="Beneficios de VERA GOLD">
-          {benefits.map((benefit) => (
-            <article className={styles.benefit} key={benefit.number}>
-              <span className={styles.benefitNumber}>{benefit.number}</span>
-              <h3>{benefit.title}</h3>
-              <p>{benefit.description}</p>
-              <span className={styles.benefitDetail}>{benefit.detail}</span>
+        <section className={styles.offer} aria-label="Precio y formas de pago de VERA GOLD">
+          <div className={styles.offerIntro}>
+            <p className={styles.eyebrow}>PLAN PREMIUM</p>
+            <h2>VERA GOLD</h2>
+            <p>Una propuesta simple, sin bloquear las funciones esenciales de VERA Free.</p>
+          </div>
+          <div className={styles.priceGrid}>
+            <article className={styles.priceCard}>
+              <span>Mensual · propuesta</span>
+              <strong>USD 3,99<small>/mes</small></strong>
+              <p>Flexibilidad mes a mes.</p>
             </article>
-          ))}
-        </section>
-
-        <section className={styles.comparisonSection}>
-          <div className={styles.comparisonHeading}>
-            <p className={styles.sectionEyebrow}>DOS PLANES. UNA MISMA BASE.</p>
-            <h2>Elegí cuánto querés profundizar.</h2>
-            <p>El plan gratuito seguirá siendo útil para organizar tus finanzas y resolver consultas cotidianas.</p>
+            <article className={styles.priceCard}>
+              <span>Anual · propuesta</span>
+              <strong>USD 39,99<small>/año</small></strong>
+              <p>Equivale a USD 3,33 por mes.</p>
+            </article>
           </div>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr><th>Función</th><th>VERA Free</th><th className={styles.goldColumn}>VERA GOLD</th></tr>
-              </thead>
-              <tbody>
-                {comparison.map(([feature, free, gold]) => (
-                  <tr key={feature}>
-                    <td>{feature}</td><td>{free}</td><td className={styles.goldColumn}>{gold}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className={styles.paymentInfo}>
+            <strong>Medios de pago previstos</strong>
+            <span>Tarjeta y PayPal, sujetos a habilitación y verificación.</span>
           </div>
-          <p className={styles.tableNote}>Las funciones GOLD se habilitarán cuando estén implementadas y disponibles. La comparación no representa funciones activas todavía.</p>
-        </section>
-
-        <section className={styles.promoExample}>
-          <div className={styles.promoLabel}>ASÍ APARECERÁ GOLD EN FINANCETRACK</div>
-          <div className={styles.promoCard}>
-            <span className={styles.promoMark}>VERA <b>GOLD</b></span>
-            <h3>¿Querés profundizar este informe?</h3>
-            <p>Con GOLD, VERA podrá ampliar este análisis, conectar patrones entre períodos y desarrollar conclusiones con más contexto.</p>
-            <span className={styles.promoLink}>Conocer VERA GOLD <span>→</span></span>
+          <div className={styles.reference}>
+            <span>Referencia de mercado</span>
+            <p>ChatGPT Plus cuesta USD 20 al mes. Es una referencia de precio, no una equivalencia de funciones o servicios.</p>
           </div>
-          <p className={styles.promoFoot}>Promociones contextuales y discretas. Sin ventanas invasivas ni interrupciones.</p>
+          <button className={styles.primaryButton} type="button" disabled>Comprar VERA GOLD · Próximamente</button>
+          <p className={styles.disclaimer}>Precios y medios de pago orientativos. No se realiza ningún cobro ni se activa una suscripción desde esta pantalla. Las funciones avanzadas se habilitarán cuando estén listas.</p>
         </section>
 
-        <section className={styles.comingSoon}>
-          <div className={styles.comingLine} />
-          <p className={styles.sectionEyebrow}>PRÓXIMAMENTE</p>
-          <h2>Una nueva profundidad para tus finanzas.</h2>
-          <p>Estamos preparando VERA GOLD. La disponibilidad, el precio y las condiciones se comunicarán antes de habilitar cualquier suscripción.</p>
-          <a href="/vera" className={styles.secondaryButton}>Seguir usando VERA</a>
+        <section className={styles.demo}>
+          <a className={styles.demoLink} href="/vera/gold/demo">Ver cómo se transforma VERA al activar GOLD →</a>
         </section>
-
-        <footer className={styles.footer}>
-          <span>FINANCETRACK</span>
-          <span>Your money. Your vision.</span>
-        </footer>
       </main>
     </div>
   );
