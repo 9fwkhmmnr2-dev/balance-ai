@@ -470,7 +470,7 @@ export default function VeraView() {
         @keyframes vera-core-drift{0%,100%{transform:translate(0,0);opacity:.55}50%{transform:translate(3px,-5px);opacity:1}}
         @keyframes vera-drawer-in{from{transform:translateX(-18px);opacity:.6}to{transform:translateX(0);opacity:1}}
         @media(max-width:650px){.vera-page{padding-top:2px}.vera-hero{padding:23px 17px 17px;border-radius:0}.vera-chat{border-radius:0}.vera-messages{min-height:220px;padding:16px 12px}.vera-bubble{max-width:92%}.vera-chat-head{padding:11px;align-items:flex-start}.vera-chat-head small{max-width:145px}.vera-head-actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}.vera-history-toggle,.vera-new-chat{padding:8px}.vera-starters{grid-template-columns:1fr;padding:0 12px 16px;gap:8px}.vera-starter{min-height:50px}.vera-compose{padding:11px}.vera-period{max-width:112px}}
-        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-mic.is-listening,.vera-tools-menu,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
+        @media(prefers-reduced-motion:reduce){.vera-shell:before,.vera-shell:after,.vera-core-visual:before,.vera-core-visual:after,.vera-core-inner,.vera-core-depth,.vera-core-filament,.vera-core-glint,.vera-core-particle,.vera-mini-coin,.vera-dots i,.vera-mic.is-listening,.vera-tools-menu,.vera-gold-panel,.vera-bubble,.vera-thinking,.vera-drawer,.vera-welcome-phrase{animation:none!important}}
       `}</style>
 
       {showHistory && <div className="vera-drawer-backdrop" onClick={() => setShowHistory(false)}>
