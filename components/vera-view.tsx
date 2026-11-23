@@ -428,7 +428,7 @@ export default function VeraView() {
   const visibleConversations = showArchived ? archived : conversations;
 
   return (
-    <div className={`vera-page${goldDemoPhase !== "idle" ? ` gold-demo-${goldDemoPhase}` : ""}`}>
+    <div className={`vera-page${isGold ? " is-gold-active" : ""}${goldDemoPhase !== "idle" ? ` gold-demo-${goldDemoPhase}` : ""}`}>
       <style>{`
         .vera-page{--v:#a78bfa;--v2:#7c3aed;--ink:#09090d;--panel:#14121c;--line:rgba(196,181,253,.15);color:#f5f3fa;max-width:1000px;margin:0 auto;padding:12px 0 48px}
         .vera-shell{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
@@ -567,6 +567,26 @@ export default function VeraView() {
         .vera-shell.is-gold .vera-financial-fill.income,.vera-shell.is-gold .vera-financial-fill.expenses{background:linear-gradient(90deg,#987238,#e3c47c);box-shadow:0 0 12px rgba(200,169,107,.2)}
         .vera-shell.is-gold .vera-gold-trigger,.vera-shell.is-gold .vera-gold-status{border-color:rgba(200,169,107,.5)}
         .vera-shell.is-gold .vera-core-button:focus-visible{outline-color:#d7b66e}
+        .vera-shell.is-gold .vera-period,.vera-shell.is-gold .vera-tools-period{border-color:rgba(200,169,107,.28);background:#211b11;color:#f0e5ce}
+        .vera-shell.is-gold .vera-tools-menu{border-color:rgba(200,169,107,.25);background:linear-gradient(155deg,rgba(42,33,19,.98),rgba(14,12,9,.98))}
+        .vera-shell.is-gold .vera-tools-title,.vera-shell.is-gold .vera-tools-label{color:#d8bf83}
+        .vera-shell.is-gold .vera-tools-action{color:#eee3cb}
+        .vera-shell.is-gold .vera-tools-action:hover{background:rgba(200,169,107,.12);border-color:rgba(200,169,107,.2)}
+        .vera-shell.is-gold .vera-core-panel{border-color:rgba(200,169,107,.2);background:linear-gradient(110deg,rgba(200,169,107,.13),rgba(20,18,14,.9))}
+        .vera-shell.is-gold .vera-core-panel strong,.vera-shell.is-gold .vera-core-panel button{color:#ead7aa}
+        .vera-shell.is-gold .vera-core-panel button{border-color:rgba(200,169,107,.24);background:#2b2214}
+        .vera-shell.is-gold .vera-error{color:#e9b8a9}
+        .vera-page.is-gold-active .vera-drawer{background:linear-gradient(165deg,#211b11,#0d0b08 70%);border-color:rgba(200,169,107,.25)}
+        .vera-page.is-gold-active .vera-drawer-top strong{color:#f0e5ce}
+        .vera-page.is-gold-active .vera-drawer-close,.vera-page.is-gold-active .vera-history-action{color:#d8bf83}
+        .vera-page.is-gold-active .vera-drawer-new,.vera-page.is-gold-active .vera-drawer-tab.active{border-color:rgba(200,169,107,.3);background:linear-gradient(120deg,rgba(200,169,107,.2),rgba(76,57,25,.18));color:#f0e5ce}
+        .vera-page.is-gold-active .vera-drawer-tab{border-color:rgba(200,169,107,.16);background:#17130d;color:#b9ad93}
+        .vera-page.is-gold-active .vera-history-item.selected{border-color:rgba(200,169,107,.3);background:rgba(200,169,107,.1)}
+        .vera-page.is-gold-active .vera-history-open{color:#eee3cb}
+        .vera-page.is-gold-active .vera-history-date,.vera-page.is-gold-active .vera-history-empty{color:#a99d83}
+        .vera-page.is-gold-active .vera-history-edit input{border-color:rgba(200,169,107,.25);background:#100e09;color:#f5f3fa}
+        .vera-page.is-gold-active .vera-history-edit button{border-color:rgba(200,169,107,.22);background:rgba(200,169,107,.15);color:#ead7aa}
+
         .vera-shell.is-gold .vera-compose:focus-within{background:linear-gradient(110deg,rgba(57,43,20,.55),rgba(10,9,7,.72));box-shadow:inset 0 1px 0 rgba(200,169,107,.12),0 -8px 28px rgba(155,115,45,.08)}
         @media(max-width:520px){.vera-gold-panel-price{align-items:stretch;flex-direction:column}.vera-gold-buy{text-align:center}}
         .vera-gold-cinematic{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 48%,rgba(83,59,23,.24),transparent 42%),#050505;color:#f5edda;animation:vera-gold-screen-in .9s ease both}
