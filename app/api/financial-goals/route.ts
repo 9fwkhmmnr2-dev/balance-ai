@@ -152,7 +152,29 @@ export async function PATCH(request: Request) {
     if (typeof input.id !== "string") return NextResponse.json({ error: "El objetivo no es válido." }, { status: 400 });
 
     const updates: Record<string, unknown> = {};
-    if (typeof input.status === "string" && ["active", "paused", "completed"].includes(input.status)) updates.status = input.status;
+    if (typeof input.status === "string" && ["active", "paused", "completed"].includes(input.status)) {
+      if (input.status === "completed") {
+        const { data: goal, error: goalError } = await supabase
+          .from("financial_goals")
+          .select("id, target_amount")
+          .eq("id", input.id)
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (goalError) throw goalError;
+        if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
+        const { data: entries, error: entriesError } = await supabase
+          .from("financial_goal_contributions")
+          .select("amount")
+          .eq("goal_id", input.id)
+          .eq("user_id", userId);
+        if (entriesError) throw entriesError;
+        const saved = (entries ?? []).reduce((sum, entry) => sum + Number(entry.amount), 0);
+        if (saved < Number(goal.target_amount)) {
+          return NextResponse.json({ error: "Solo podés completar un objetivo cuando los aportes registrados alcanzan el importe objetivo." }, { status: 400 });
+        }
+      }
+      updates.status = input.status;
+    }
     if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.title = input.title.trim();
     if (input.targetDate === null || input.targetDate === "") updates.target_date = null;
     else if (typeof input.targetDate === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.targetDate)) updates.target_date = input.targetDate;
