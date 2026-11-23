@@ -24,12 +24,14 @@ declare
   month_last_day integer;
 begin
   for rule_row in
-    select *
-    from public.financial_goal_recurring_rules
-    where status = 'active'
-      and next_run_date <= today_argentina
-    order by next_run_date, id
-    for update skip locked
+    select r.*
+    from public.financial_goal_recurring_rules r
+    join public.financial_goals g on g.id = r.goal_id and g.user_id = r.user_id
+    where r.status = 'active'
+      and g.status = 'active'
+      and r.next_run_date <= today_argentina
+    order by r.next_run_date, r.id
+    for update of r skip locked
   loop
     run_date := rule_row.next_run_date;
     iteration_count := 0;
