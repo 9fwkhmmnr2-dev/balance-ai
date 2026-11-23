@@ -11,6 +11,8 @@ type Profile = {
   next_pay_date: string | null;
   income_sources: string[];
   expense_categories: string[];
+  protected_reserve_amount: number | null;
+  protected_reserve_currency: string | null;
 };
 
 type Movement = {
@@ -235,6 +237,26 @@ export default function ProfileView() {
         </p>
         <p style={{ marginTop: 8, fontSize: 14 }}>
           {profile?.expense_categories?.join(", ") || "Sin información"}
+        </p>
+      </section>
+
+      <section className="card" style={{ marginBottom: 20 }}>
+        <h2 className="section-title">Reserva protegida</h2>
+        <p className="card-label">
+          Importe que querés mantener reservado
+        </p>
+        <h2 className="card-value" style={{ marginTop: 8 }}>
+          {profile?.protected_reserve_amount !== null &&
+          profile?.protected_reserve_amount !== undefined
+            ? new Intl.NumberFormat("es-AR", {
+                style: "currency",
+                currency: profile.protected_reserve_currency || profile.currency || "ARS",
+                maximumFractionDigits: 2
+              }).format(Number(profile.protected_reserve_amount))
+            : "Sin configurar"}
+        </h2>
+        <p className="card-note" style={{ marginTop: 10 }}>
+          VERA tendrá en cuenta esta reserva al ayudarte a organizar objetivos y planes de ahorro.
         </p>
       </section>
 
