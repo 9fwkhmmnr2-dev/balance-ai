@@ -48,7 +48,7 @@ function isMessages(value: unknown): value is VeraMessage[] {
   ) && value[0].role === "user" && value[value.length - 1].role === "user";
 }
 
-function extractComputerAmount(message: string) {
+function extractComputerAmount(message: string, allowUnlabeledAmount = false) {
   const normalized = message.trim();
   if (!normalized) return null;
 
@@ -57,7 +57,7 @@ function extractComputerAmount(message: string) {
     /^(?:\$\s*)?\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?(?:\s*(?:ars|pesos?))?$/i.test(normalized) ||
     /^(?:\$\s*)?\d{6,}(?:,\d{1,2})?(?:\s*(?:ars|pesos?))?$/i.test(normalized);
   const hasPriceCue = /\b(una de|precio|presupuesto|sale|cuesta|vale|valor|es de)\b/i.test(normalized);
-  if (!isAmountOnly && !hasPriceCue) return null;
+  if (!isAmountOnly && !hasPriceCue && !allowUnlabeledAmount) return null;
 
   const match = normalized.match(/(?:\$\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{6,})(?:,\d{1,2})?/);
   const digits = match?.[1].replace(/\D/g, "");
@@ -77,7 +77,7 @@ function extractComputerGoal(messages: VeraMessage[], hasExistingGoal: boolean) 
   // Si el objetivo ya existe, asociamos un precio enviado en un mensaje separado.
   const latestUserMessage = userMessages[userMessages.length - 1] ?? "";
   const amount = explicitlyMentionsGoal
-    ? userMessages.map(extractComputerAmount).find((value) => value !== null) ?? null
+    ? userMessages.map((message) => extractComputerAmount(message, true)).find((value) => value !== null) ?? null
     : extractComputerAmount(latestUserMessage);
 
   return {
