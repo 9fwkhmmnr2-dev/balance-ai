@@ -31,6 +31,10 @@ function validDateKey(value: string): boolean {
 function validAmount(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 999999999999;
 }
+const recurringFrequencies = ["daily", "weekly", "every_15_days", "monthly", "every_2_months", "every_3_months", "every_6_months", "yearly", "custom"] as const;
+function validRecurringFrequency(value: unknown): value is typeof recurringFrequencies[number] { return typeof value === "string" && recurringFrequencies.includes(value as typeof recurringFrequencies[number]); }
+function validRuleMode(value: unknown): value is "confirmation" | "automatic" { return value === "confirmation" || value === "automatic"; }
+
 function netAmount(entries: Array<{ type: string; amount: number | string; status: string }>) {
   return entries.reduce((sum, entry) => {
     if (entry.status !== "posted") return sum;
@@ -102,6 +106,41 @@ export async function POST(request: Request) {
     if (!body || typeof body !== "object") return NextResponse.json({ error: "La solicitud no es válida." }, { status: 400 });
     const input = body as Record<string, unknown>;
 
+    if (input.action === "recurring_rule") {
+      if (typeof input.goalId !== "string" || (input.type !== "income" && input.type !== "expense") ||
+          !validAmount(input.amount) || !validRecurringFrequency(input.frequency) || !validRuleMode(input.mode)) {
+        return NextResponse.json({ error: "Revisá los datos de la regla recurrente." }, { status: 400 });
+      }
+      const startDate = typeof input.startDate === "string" && validDateKey(input.startDate) ? input.startDate : "";
+      const endDate = input.endDate === null || input.endDate === "" || input.endDate === undefined
+        ? null : typeof input.endDate === "string" && validDateKey(input.endDate) ? input.endDate : undefined;
+      if (!startDate || endDate === undefined || (endDate && endDate < startDate)) {
+        return NextResponse.json({ error: "Revisá las fechas de inicio y finalización." }, { status: 400 });
+      }
+      const intervalDays = input.frequency === "custom" && Number.isInteger(input.intervalDays) && Number(input.intervalDays) >= 1 && Number(input.intervalDays) <= 365
+        ? Number(input.intervalDays) : null;
+      if (input.frequency === "custom" && intervalDays === null) {
+        return NextResponse.json({ error: "El intervalo personalizado debe estar entre 1 y 365 días." }, { status: 400 });
+      }
+      const scheduleDay = input.frequency === "monthly" && Number.isInteger(input.scheduleDay) && Number(input.scheduleDay) >= 1 && Number(input.scheduleDay) <= 31
+        ? Number(input.scheduleDay) : null;
+      const { data: goal, error: goalError } = await supabase.from("financial_goals")
+        .select("id, status").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
+      if (goalError) throw goalError;
+      if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
+      const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
+      if (!category) return NextResponse.json({ error: "Elegí una categoría." }, { status: 400 });
+      const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
+      const { data, error } = await supabase.from("financial_goal_recurring_rules").insert({
+        goal_id: input.goalId, user_id: userId, type: input.type, amount: input.amount,
+        category, description: description || null, frequency: input.frequency,
+        interval_days: intervalDays, schedule_day: scheduleDay, start_date: startDate,
+        end_date: endDate, next_run_date: startDate, mode: input.mode, status: "active",
+      }).select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
+      if (error) throw error;
+      return NextResponse.json({ rule: data }, { status: 201 });
+    }
+
     if (input.action === "movement") {
       if (typeof input.goalId !== "string" || !validAmount(input.amount) ||
           (input.type !== "income" && input.type !== "expense")) {
@@ -150,6 +189,46 @@ export async function PATCH(request: Request) {
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") return NextResponse.json({ error: "La solicitud no es válida." }, { status: 400 });
     const input = body as Record<string, unknown>;
+    if (input.action === "recurring_rule") {
+      if (typeof input.ruleId !== "string" || typeof input.goalId !== "string") {
+        return NextResponse.json({ error: "La regla recurrente no es válida." }, { status: 400 });
+      }
+      const updates: Record<string, unknown> = {};
+      if (typeof input.status === "string") {
+        if (!["active", "paused", "completed"].includes(input.status)) return NextResponse.json({ error: "Estado no válido." }, { status: 400 });
+        updates.status = input.status;
+      }
+      const editing = ["type", "amount", "category", "description", "frequency", "intervalDays", "scheduleDay", "startDate", "endDate", "mode"].some((key) => key in input);
+      if (editing) {
+        if ((input.type !== "income" && input.type !== "expense") || !validAmount(input.amount) ||
+            !validRecurringFrequency(input.frequency) || !validRuleMode(input.mode)) {
+          return NextResponse.json({ error: "Revisá los datos de la regla recurrente." }, { status: 400 });
+        }
+        const startDate = typeof input.startDate === "string" && validDateKey(input.startDate) ? input.startDate : "";
+        const endDate = input.endDate === null || input.endDate === "" ? null :
+          typeof input.endDate === "string" && validDateKey(input.endDate) ? input.endDate : undefined;
+        if (!startDate || endDate === undefined || (endDate && endDate < startDate)) {
+          return NextResponse.json({ error: "Revisá las fechas de la regla." }, { status: 400 });
+        }
+        const intervalDays = input.frequency === "custom" && Number.isInteger(input.intervalDays) && Number(input.intervalDays) >= 1 && Number(input.intervalDays) <= 365 ? Number(input.intervalDays) : null;
+        if (input.frequency === "custom" && intervalDays === null) return NextResponse.json({ error: "El intervalo debe estar entre 1 y 365 días." }, { status: 400 });
+        const scheduleDay = input.frequency === "monthly" && Number.isInteger(input.scheduleDay) && Number(input.scheduleDay) >= 1 && Number(input.scheduleDay) <= 31 ? Number(input.scheduleDay) : null;
+        const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
+        if (!category) return NextResponse.json({ error: "Elegí una categoría." }, { status: 400 });
+        updates.type = input.type; updates.amount = input.amount; updates.category = category;
+        updates.description = typeof input.description === "string" && input.description.trim() ? input.description.trim().slice(0, 240) : null;
+        updates.frequency = input.frequency; updates.interval_days = intervalDays; updates.schedule_day = scheduleDay;
+        updates.start_date = startDate; updates.end_date = endDate; updates.next_run_date = startDate; updates.mode = input.mode;
+      }
+      if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
+      const { data, error } = await supabase.from("financial_goal_recurring_rules").update(updates)
+        .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
+        .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
+      if (error) throw error;
+      if (!data) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
+      return NextResponse.json({ rule: data });
+    }
+
     if (typeof input.id !== "string") return NextResponse.json({ error: "El objetivo no es válido." }, { status: 400 });
 
     const updates: Record<string, unknown> = {};
