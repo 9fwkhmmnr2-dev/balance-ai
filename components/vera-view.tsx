@@ -192,7 +192,7 @@ export default function VeraView() {
         .vera-sub{max-width:520px;margin:0 auto;color:#b8b2c5;font-size:13px;line-height:1.65}\n        .vera-welcome-phrase{margin:15px auto 0;color:#c4b5fd;font-size:13px;font-style:italic;letter-spacing:.1px;line-height:1.6;animation:vera-phrase-in .9s ease both;text-shadow:0 0 18px rgba(167,139,250,.18)}
                 .vera-chat{margin-top:0;border:0;border-top:1px solid var(--line);border-radius:0;overflow:hidden;background:rgba(10,8,15,.22)}
         .vera-chat-head{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);min-height:70px}
-        .vera-chat-head.is-welcome{justify-content:center;min-height:126px;padding:18px}
+        .vera-chat-head.is-welcome{align-items:center;justify-content:center;min-height:126px;padding:18px}
         .vera-brand{display:flex;align-items:center;gap:11px;min-width:0}
         .vera-brand-copy strong{display:block;font-size:14px;letter-spacing:.3px}
         .vera-brand-copy small{display:block;color:#a99dbb;font-size:10px;margin-top:3px}
@@ -254,7 +254,7 @@ export default function VeraView() {
         @keyframes vera-dot-wave{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-4px);opacity:1}}
         @keyframes vera-message-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
         @keyframes vera-pulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.2);opacity:0}}
-        @keyframes vera-core-morph{0%,100%{border-radius:42% 58% 64% 36%/44% 38% 62% 56%;transform:rotate(-8deg) scale(1)}35%{border-radius:58% 42% 45% 55%/52% 62% 38% 48%;transform:rotate(5deg) scale(1.04)}68%{border-radius:48% 52% 59% 41%/37% 48% 52% 63%;transform:rotate(12deg) scale(.98)}}
+        @keyframes vera-core-morph{0%,100%{border-radius:42% 58% 64% 36%/44% 38% 62% 56%}35%{border-radius:58% 42% 45% 55%/52% 62% 38% 48%}68%{border-radius:48% 52% 59% 41%/37% 48% 52% 63%}}
         @keyframes vera-core-breathe{0%,100%{filter:brightness(1);transform:scale(1)}50%{filter:brightness(1.14);transform:scale(1.045)}}
         @keyframes vera-core-wave{0%{transform:scale(.86) rotate(-18deg);opacity:.65}100%{transform:scale(1.24) rotate(8deg);opacity:0}}
         @keyframes vera-core-inner{0%,100%{transform:translate(0,0) scale(.94);opacity:.65}50%{transform:translate(3px,-2px) scale(1.12);opacity:1}}
