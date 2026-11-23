@@ -200,6 +200,7 @@ export default function VeraCore3D({ variant = "violet", className = "", label =
       particleMaterial.dispose();
       renderer.dispose();
       renderer.domElement.remove();
+      host.classList.remove("has-webgl");
     };
   }, [variant]);
 
