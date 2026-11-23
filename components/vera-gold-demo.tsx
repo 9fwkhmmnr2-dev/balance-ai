@@ -69,7 +69,7 @@ export default function VeraGoldDemo() {
             <div><span>Medio de pago</span><strong>Pago de prueba (sin conexión)</strong></div>
           </div>
           <div className={styles.secureNote}><span>◇</span><p>Este checkout es exclusivamente visual. No solicita datos de pago, no se conecta a PayPal y no envía información.</p></div>
-          <button className={styles.primary} onClick={() => setStage("welcome")}>Simular pago exitoso <span>→</span></button>
+          <button className={styles.primary} onClick={() => { window.location.assign("/vera?goldDemo=1"); }}>Simular pago exitoso <span>→</span></button>
           <button className={styles.secondary} onClick={() => setStage("plan")}>Cancelar demostración</button>
         </section>
       )}
