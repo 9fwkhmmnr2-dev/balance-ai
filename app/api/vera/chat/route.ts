@@ -48,30 +48,43 @@ function isMessages(value: unknown): value is VeraMessage[] {
   ) && value[0].role === "user" && value[value.length - 1].role === "user";
 }
 
-function extractComputerGoal(messages: VeraMessage[]) {
+function extractComputerAmount(message: string) {
+  const normalized = message.trim();
+  if (!normalized) return null;
+
+  // Aceptamos una cifra sola porque VERA puede haber pedido el precio en otro chat.
+  const isAmountOnly =
+    /^(?:\$\s*)?\d{1,3}(?:[.,]\d{3})+(?:,\d{1,2})?(?:\s*(?:ars|pesos?))?$/i.test(normalized) ||
+    /^(?:\$\s*)?\d{6,}(?:,\d{1,2})?(?:\s*(?:ars|pesos?))?$/i.test(normalized);
+  const hasPriceCue = /\b(precio|presupuesto|sale|cuesta|vale|valor|es de)\b/i.test(normalized);
+  if (!isAmountOnly && !hasPriceCue) return null;
+
+  const match = normalized.match(/(?:\$\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{6,})(?:,\d{1,2})?/);
+  const digits = match?.[1].replace(/\D/g, "");
+  const amount = digits ? Number(digits) : null;
+  return amount && Number.isSafeInteger(amount) && amount > 0 ? amount : null;
+}
+
+function extractComputerGoal(messages: VeraMessage[], hasExistingGoal: boolean) {
   const userMessages = messages.filter((message) => message.role === "user").map((message) => message.content);
   const combined = userMessages.join("\n").toLocaleLowerCase("es");
-  const hasComputerGoal =
+  const explicitlyMentionsGoal =
     /\b(computadora|pc|ordenador|notebook|laptop)\b/.test(combined) &&
-    /\b(ahorrar|ahorro|comprar|comp(r|r)arme|quiero una|quiero comprar|objetivo)\b/.test(combined);
+    /\b(ahorrar|ahorro|comprar|comprarme|quiero una|quiero comprar|objetivo)\b/.test(combined);
 
-  if (!hasComputerGoal) return null;
+  if (!explicitlyMentionsGoal && !hasExistingGoal) return null;
 
-  const amountMessage = userMessages.find((message) =>
-    /\b(una de|sale|cuesta|precio|presupuesto|vale|valor)\b/i.test(message) &&
-    /\d[\d.,]*/.test(message)
-  );
-  const amountMatch = amountMessage?.match(/(?:\$\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{6,})(?:,\d{1,2})?/);
-  const amountDigits = amountMatch?.[1].replace(/\D/g, "");
-  const amount = amountDigits ? Number(amountDigits) : null;
+  // Si el objetivo ya existe, asociamos un precio enviado en un mensaje separado.
+  const latestUserMessage = userMessages[userMessages.length - 1] ?? "";
+  const amount = explicitlyMentionsGoal
+    ? userMessages.map(extractComputerAmount).find((value) => value !== null) ?? null
+    : extractComputerAmount(latestUserMessage);
 
   return {
     memoryKey: "goal:computer_purchase",
     category: "goal" as const,
     content: "Ahorrar para comprar una computadora",
-    details: amount && Number.isSafeInteger(amount) && amount > 0
-      ? { target_amount: amount, currency: "ARS" }
-      : {},
+    details: amount !== null ? { target_amount: amount, currency: "ARS" } : {},
   };
 }
 
@@ -107,23 +120,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "La conversación no tiene un formato válido." }, { status: 400 });
     }
 
-    // Guardamos únicamente este objetivo cuando el usuario expresa claramente que quiere ahorrar/comprar una computadora.
-    // El resto de los recuerdos se incorporará mediante controles explícitos de memoria.
-    const detectedGoal = extractComputerGoal(input.messages);
-    if (detectedGoal) {
-      const { data: existingMemory, error: existingMemoryError } = await supabase
-        .from("vera_memories")
-        .select("details")
-        .eq("user_id", authData.user.id)
-        .eq("memory_key", detectedGoal.memoryKey)
-        .maybeSingle();
-      if (existingMemoryError) throw existingMemoryError;
+    // Recuperamos el objetivo existente antes de detectar nuevos datos.
+    const { data: existingGoal, error: existingGoalError } = await supabase
+      .from("vera_memories")
+      .select("details")
+      .eq("user_id", authData.user.id)
+      .eq("memory_key", "goal:computer_purchase")
+      .maybeSingle();
+    if (existingGoalError) throw existingGoalError;
 
+    // Guardamos el objetivo si se menciona explícitamente o si se aporta
+    // un precio separado y ya existe ese objetivo para este usuario.
+    const detectedGoal = extractComputerGoal(input.messages, Boolean(existingGoal));
+    if (detectedGoal) {
       const existingDetails =
-        existingMemory?.details &&
-        typeof existingMemory.details === "object" &&
-        !Array.isArray(existingMemory.details)
-          ? existingMemory.details as Record<string, unknown>
+        existingGoal?.details &&
+        typeof existingGoal.details === "object" &&
+        !Array.isArray(existingGoal.details)
+          ? existingGoal.details as Record<string, unknown>
           : {};
       const mergedDetails = { ...existingDetails, ...detectedGoal.details };
 
