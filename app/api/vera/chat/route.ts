@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getVeraProvider } from "@/lib/vera/provider";
-import type { VeraMessage, VeraFinancialContext } from "@/lib/vera/types";
+import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,9 +29,7 @@ function startDate(period: Period, today: string) {
   const date = new Date(Date.UTC(year, month - 1, day));
   if (period === "weekly") date.setUTCDate(date.getUTCDate() - 6);
   if (period === "monthly") date.setUTCDate(1);
-  if (period === "yearly") {
-    date.setUTCMonth(0, 1);
-  }
+  if (period === "yearly") date.setUTCMonth(0, 1);
   return date.toISOString().slice(0, 10);
 }
 
@@ -48,6 +46,33 @@ function isMessages(value: unknown): value is VeraMessage[] {
     item.content.trim().length > 0 &&
     item.content.length <= 3000
   ) && value[0].role === "user" && value[value.length - 1].role === "user";
+}
+
+function extractComputerGoal(messages: VeraMessage[]) {
+  const userMessages = messages.filter((message) => message.role === "user").map((message) => message.content);
+  const combined = userMessages.join("\n").toLocaleLowerCase("es");
+  const hasComputerGoal =
+    /\b(computadora|pc|ordenador|notebook|laptop)\b/.test(combined) &&
+    /\b(ahorrar|ahorro|comprar|comp(r|r)arme|quiero una|quiero comprar|objetivo)\b/.test(combined);
+
+  if (!hasComputerGoal) return null;
+
+  const amountMessage = userMessages.find((message) =>
+    /\b(una de|sale|cuesta|precio|presupuesto|vale|valor)\b/i.test(message) &&
+    /\d[\d.,]*/.test(message)
+  );
+  const amountMatch = amountMessage?.match(/(?:\$\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{6,})(?:,\d{1,2})?/);
+  const amountDigits = amountMatch?.[1].replace(/\D/g, "");
+  const amount = amountDigits ? Number(amountDigits) : null;
+
+  return {
+    memoryKey: "goal:computer_purchase",
+    category: "goal" as const,
+    content: "Ahorrar para comprar una computadora",
+    details: amount && Number.isSafeInteger(amount) && amount > 0
+      ? { target_amount: amount, currency: "ARS" }
+      : {},
+  };
 }
 
 export async function POST(request: Request) {
@@ -81,6 +106,32 @@ export async function POST(request: Request) {
     if (!isMessages(input.messages) || !isPeriod(input.period)) {
       return NextResponse.json({ error: "La conversación no tiene un formato válido." }, { status: 400 });
     }
+
+    // Guardamos únicamente este objetivo cuando el usuario expresa claramente que quiere ahorrar/comprar una computadora.
+    // El resto de los recuerdos se incorporará mediante controles explícitos de memoria.
+    const detectedGoal = extractComputerGoal(input.messages);
+    if (detectedGoal) {
+      const { error: memoryWriteError } = await supabase
+        .from("vera_memories")
+        .upsert({
+          user_id: authData.user.id,
+          memory_key: detectedGoal.memoryKey,
+          category: detectedGoal.category,
+          content: detectedGoal.content,
+          details: detectedGoal.details,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id,memory_key" });
+      if (memoryWriteError) throw memoryWriteError;
+    }
+
+    const { data: memoryRows, error: memoriesError } = await supabase
+      .from("vera_memories")
+      .select("category, content, details")
+      .eq("user_id", authData.user.id)
+      .order("updated_at", { ascending: false })
+      .limit(20);
+    if (memoriesError) throw memoriesError;
+    const memories = (memoryRows ?? []) as VeraMemory[];
 
     const { data: profile, error: profileError } = await supabase
       .from("financial_profiles")
@@ -132,6 +183,7 @@ export async function POST(request: Request) {
     const result = await provider.generate({
       messages: input.messages,
       financialContext,
+      memories,
     });
 
     return NextResponse.json({ reply: result.text });
