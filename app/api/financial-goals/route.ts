@@ -177,7 +177,7 @@ export async function PATCH(request: Request) {
     }
     if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.title = input.title.trim();
     if (input.targetDate === null || input.targetDate === "") updates.target_date = null;
-    else if (typeof input.targetDate === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.targetDate)) updates.target_date = input.targetDate;
+    else if (typeof input.targetDate === "string" && validDateKey(input.targetDate)) updates.target_date = input.targetDate;
     if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
     updates.updated_at = new Date().toISOString();
 
