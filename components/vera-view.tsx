@@ -3,7 +3,8 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type ChatMessage = { role: "user" | "model"; content: string };
+type FinancialSummary = { currency: string; period: Period; income: number; expenses: number; netBalance: number; movementsCount: number };
+type ChatMessage = { role: "user" | "model"; content: string; financialSummary?: FinancialSummary };
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 type Conversation = { id: string; title: string; last_message_at: string; archived_at: string | null; created_at?: string };
 type SpeechRecognitionLike = {
@@ -30,6 +31,18 @@ function pickWelcomePhrase(previous?: string) {
   return choices[Math.floor(Math.random() * choices.length)] ?? welcomePhrases[0];
 }
 const periodLabels: Record<Period, string> = { daily: "Hoy", weekly: "Últimos 7 días", monthly: "Este mes", yearly: "Este año" };
+
+function formatFinancialAmount(amount: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("es-AR", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount);
+  } catch {
+    return `${currency} ${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 }).format(amount)}`;
+  }
+}
+
+function shouldShowFinancialSummary(message: string) {
+  return /\b(finanzas?|gastos?|ingresos?|balance|saldo|movimientos?|categorías?|ahorro|cuánto gasté|cuánto ingresé|resumen financiero)\b/i.test(message);
+}
 
 function renderInlineMarkdown(text: string) {
   return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g).filter(Boolean).map((part, index) => {
@@ -261,11 +274,12 @@ export default function VeraView() {
       const response = await fetch("/api/vera/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ messages: nextMessages.slice(-11).filter((message, index) => index > 0 || message.role === "user"), period }),
+        body: JSON.stringify({ messages: nextMessages.slice(-11).filter((message, index) => index > 0 || message.role === "user").map(({ role, content }) => ({ role, content })), period }),
       });
-      const payload = await response.json() as { reply?: string; error?: string };
+      const payload = await response.json() as { reply?: string; error?: string; financialSummary?: FinancialSummary };
       if (!response.ok || !payload.reply) throw new Error(payload.error || "No pude recibir una respuesta de VERA.");
-      const completedMessages = [...nextMessages, { role: "model" as const, content: payload.reply }];
+      const financialSummary = payload.financialSummary && shouldShowFinancialSummary(text) ? payload.financialSummary : undefined;
+      const completedMessages = [...nextMessages, { role: "model" as const, content: payload.reply, ...(financialSummary ? { financialSummary } : {}) }];
       setMessages(completedMessages);
       await saveConversation(completedMessages, conversationId);
     } catch (cause) {
@@ -327,6 +341,7 @@ export default function VeraView() {
                 .vera-bubble{max-width:84%;padding:12px 14px;border-radius:16px;font-size:13px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;animation:vera-message-in .34s cubic-bezier(.2,.8,.2,1) both}
         .vera-bubble.model{align-self:flex-start;background:#211a2d;border:1px solid rgba(196,181,253,.12);color:#eee9f6;border-top-left-radius:5px}
         .vera-rich-content{display:flex;flex-direction:column;gap:9px}.vera-rich-content p{margin:0}.vera-rich-content strong{color:#fff;font-weight:650;text-shadow:0 0 16px rgba(180,154,255,.12)}.vera-rich-content h3{margin:3px 0 0;color:#d9c7ff;font-size:13px;line-height:1.45;font-weight:650;letter-spacing:.01em}.vera-rich-content ul,.vera-rich-content ol{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:5px}.vera-rich-content li{padding-left:2px}.vera-rich-content li::marker{color:#b49aff}.vera-rich-content code{padding:2px 5px;border-radius:5px;background:rgba(180,154,255,.12);color:#dfd1ff;font-size:.92em}.vera-bubble.model{white-space:normal}.vera-bubble.model .vera-rich-content{overflow-wrap:anywhere}
+        .vera-financial-card{margin-top:13px;padding:13px;border:1px solid rgba(180,154,255,.22);border-radius:14px;background:linear-gradient(145deg,rgba(38,29,54,.94),rgba(19,15,27,.96));box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 10px 24px rgba(0,0,0,.12);animation:vera-message-in .42s ease both}.vera-financial-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}.vera-financial-card-title{font-size:9px;letter-spacing:1.25px;text-transform:uppercase;color:#c4b5fd;font-weight:700}.vera-financial-card-period{font-size:10px;color:#aaa0ba}.vera-financial-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.vera-financial-metric{min-width:0;padding:9px 8px;border-radius:10px;background:rgba(255,255,255,.025);border:1px solid rgba(196,181,253,.08)}.vera-financial-metric span{display:block;color:#aaa2b7;font-size:10px;margin-bottom:5px}.vera-financial-metric strong{display:block;color:#f4efff;font-size:clamp(11px,2vw,14px);font-weight:650;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}.vera-financial-metric.net strong{color:#cbb8ff}.vera-financial-foot{margin-top:10px;color:#91889f;font-size:10px}.vera-bubble.model:has(.vera-financial-card){max-width:min(94%,620px)}@media(max-width:520px){.vera-financial-grid{gap:5px}.vera-financial-metric{padding:8px 6px}.vera-financial-metric span{font-size:9px}.vera-financial-card{padding:11px}}
         .vera-bubble.user{align-self:flex-end;background:linear-gradient(135deg,#7040bd,#59319d);color:#fff;border-top-right-radius:5px}
         .vera-thinking{align-self:flex-start;display:flex;align-items:center;gap:8px;color:#c4b5fd;font-size:12px;padding:5px 10px;animation:vera-message-in .25s ease both}
         .vera-mini-coin{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#e1d5ff,#a879ff 42%,#5923a7 80%);box-shadow:0 0 12px rgba(167,139,250,.4);animation:vera-breathe 1.5s ease-in-out infinite}
@@ -441,7 +456,7 @@ export default function VeraView() {
             <p className="vera-welcome-phrase" key={welcomePhrase}>{welcomePhrase}</p>
           </header>}
           <div className="vera-messages" aria-live="polite">
-            {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.role === "model" ? renderModelContent(message.content) : message.content}</div>)}
+            {messages.length > 0 && messages.map((message, index) => <div className={`vera-bubble ${message.role === "user" ? "user" : "model"}`} key={index}>{message.role === "model" ? <>{renderModelContent(message.content)}{message.financialSummary && <div className="vera-financial-card" aria-label="Resumen financiero del período"><div className="vera-financial-card-head"><span className="vera-financial-card-title">Resumen financiero</span><span className="vera-financial-card-period">{periodLabels[message.financialSummary.period]}</span></div><div className="vera-financial-grid"><div className="vera-financial-metric"><span>Ingresos</span><strong>{formatFinancialAmount(message.financialSummary.income, message.financialSummary.currency)}</strong></div><div className="vera-financial-metric"><span>Gastos</span><strong>{formatFinancialAmount(message.financialSummary.expenses, message.financialSummary.currency)}</strong></div><div className="vera-financial-metric net"><span>Balance neto</span><strong>{formatFinancialAmount(message.financialSummary.netBalance, message.financialSummary.currency)}</strong></div></div><div className="vera-financial-foot">{message.financialSummary.movementsCount} movimientos registrados · {message.financialSummary.currency}</div></div>}</> : message.content}</div>)}
             {sending && <div className="vera-thinking" role="status"><span className="vera-mini-coin" aria-hidden="true" /><span>VERA está pensando</span><span className="vera-dots" aria-hidden="true"><i /><i /><i /></span></div>}
           </div>
           {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
