@@ -48,12 +48,13 @@ begin
 
       insert into public.financial_goal_movements (
         goal_id, user_id, type, amount, category, description,
-        movement_date, status, source, recurring_rule_id, scheduled_for_date
+        movement_date, status, source, recurring_rule_id, scheduled_for_date, verification_status
       ) values (
         rule_row.goal_id, rule_row.user_id, rule_row.type, rule_row.amount,
         rule_row.category, rule_row.description, run_date,
         case when rule_row.mode = 'confirmation' then 'pending' else 'posted' end,
-        'recurring', rule_row.id, run_date
+        'recurring', rule_row.id, run_date,
+        case when rule_row.mode = 'automatic' then 'pending' else 'not_required' end
       )
       on conflict (recurring_rule_id, scheduled_for_date)
         where recurring_rule_id is not null and scheduled_for_date is not null
