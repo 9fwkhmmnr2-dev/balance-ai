@@ -31,3 +31,17 @@
 .goals-modal-backdrop{background:rgba(13,13,13,.52)}
 .goal-actions .goal-delete,.goal-history-row button{color:#A44F3F}
 @media(prefers-reduced-motion:reduce){.goals-primary,.goal-progress-track span{transition:none}}
+
+
+/* FINANCETRACK · Gestión de reglas recurrentes */
+.goal-recurring-add{display:inline-flex;align-items:center;margin-top:12px;min-height:38px;padding:8px 12px;text-decoration:none}
+.goal-recurring-list{margin-top:14px;padding-top:13px;border-top:1px solid var(--border,#E3DFD5)}
+.goal-recurring-list>summary{font-size:12px;font-weight:700;color:var(--cyan-dark,#E89B01);cursor:pointer}
+.goal-recurring-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:13px 0;border-bottom:1px solid var(--border,#E3DFD5)}
+.goal-recurring-info{display:grid;gap:4px;min-width:0}
+.goal-recurring-info strong{font-size:12px;color:var(--graphite,#0D0D0D)}
+.goal-recurring-info span,.goal-recurring-info small{font-size:10px;line-height:1.45;color:var(--muted,#8F897E)}
+.goal-recurring-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;flex:none}
+.goal-recurring-actions button{border:0;background:transparent;color:var(--cyan-dark,#E89B01);font-size:10px;font-weight:700;padding:3px 0}
+.goal-recurring-actions button:last-child{color:#A44F3F}
+@media(max-width:520px){.goal-recurring-row{flex-direction:column;gap:8px}.goal-recurring-actions{justify-content:flex-start}.goal-recurring-actions button{margin-right:10px}}
