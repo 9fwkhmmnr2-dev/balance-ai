@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
 
       const note = typeof input.note === "string" ? input.note.trim().slice(0, 240) : "";
-      const contributedAt = typeof input.contributedAt === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(input.contributedAt)
+      const contributedAt = typeof input.contributedAt === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.contributedAt)
         ? input.contributedAt
         : new Date().toISOString().slice(0, 10);
       const { data, error } = await supabase
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     }
     const targetDate = input.targetDate === null || input.targetDate === "" || input.targetDate === undefined
       ? null
-      : typeof input.targetDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(input.targetDate)
+      : typeof input.targetDate === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.targetDate)
         ? input.targetDate
         : undefined;
     if (targetDate === undefined) return NextResponse.json({ error: "La fecha objetivo no es válida." }, { status: 400 });
@@ -149,7 +149,7 @@ export async function PATCH(request: Request) {
     if (typeof input.status === "string" && ["active", "paused", "completed"].includes(input.status)) updates.status = input.status;
     if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.title = input.title.trim();
     if (input.targetDate === null || input.targetDate === "") updates.target_date = null;
-    else if (typeof input.targetDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(input.targetDate)) updates.target_date = input.targetDate;
+    else if (typeof input.targetDate === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(input.targetDate)) updates.target_date = input.targetDate;
     if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
     updates.updated_at = new Date().toISOString();
 
