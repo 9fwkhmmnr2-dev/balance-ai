@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
 type Movement = { id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; recurring_mode?: "confirmation" | "automatic" | null };
-type RecurringRule = { id: string; type: "income" | "expense"; amount: number; frequency: string; mode: "confirmation" | "automatic"; status: string; interval_days?: number | null };
+type RecurringRule = { id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; mode: "confirmation" | "automatic"; status: "active" | "paused" | "completed"; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string };
 type Goal = {
   id: string;
   title: string;
@@ -43,6 +43,18 @@ export default function FinancialGoalsView() {
   const [movementType, setMovementType] = useState<"income" | "expense">("income");
   const [movementCategory, setMovementCategory] = useState("Ahorro");
   const [movementDate, setMovementDate] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }));
+  const [recurringGoal, setRecurringGoal] = useState<Goal | null>(null);
+  const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
+  const [ruleType, setRuleType] = useState<"income" | "expense">("income");
+  const [ruleAmount, setRuleAmount] = useState("");
+  const [ruleCategory, setRuleCategory] = useState("Ahorro");
+  const [ruleDescription, setRuleDescription] = useState("");
+  const [ruleFrequency, setRuleFrequency] = useState("monthly");
+  const [ruleMode, setRuleMode] = useState<"confirmation" | "automatic">("confirmation");
+  const [ruleStartDate, setRuleStartDate] = useState(new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }));
+  const [ruleEndDate, setRuleEndDate] = useState("");
+  const [ruleScheduleDay, setRuleScheduleDay] = useState(String(new Date().getDate()));
+  const [ruleIntervalDays, setRuleIntervalDays] = useState("30");
 
   const request = useCallback(async (method: "GET" | "POST" | "PATCH" | "DELETE", body?: Record<string, unknown>) => {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -100,6 +112,66 @@ export default function FinancialGoalsView() {
       await loadGoals();
     } catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos registrar el aporte."); }
     finally { setSaving(false); }
+  }
+
+  function openRecurringRule(goal: Goal, rule?: RecurringRule) {
+    setRecurringGoal(goal);
+    setEditingRule(rule ?? null);
+    setRuleType(rule?.type ?? "income");
+    setRuleAmount(rule ? String(rule.amount) : "");
+    setRuleCategory(rule?.category ?? "Ahorro");
+    setRuleDescription(rule?.description ?? "");
+    setRuleFrequency(rule?.frequency ?? "monthly");
+    setRuleMode(rule?.mode ?? "confirmation");
+    setRuleStartDate(rule?.start_date ?? new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }));
+    setRuleEndDate(rule?.end_date ?? "");
+    setRuleScheduleDay(String(rule?.schedule_day ?? new Date().getDate()));
+    setRuleIntervalDays(String(rule?.interval_days ?? 30));
+    setNotice("");
+  }
+
+  async function saveRecurringRule(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!recurringGoal) return;
+    const amount = parseLocalizedAmount(ruleAmount);
+    const intervalDays = Number(ruleIntervalDays);
+    const scheduleDay = Number(ruleScheduleDay);
+    if (amount === null || amount <= 0 || !ruleCategory.trim()) {
+      setNotice("Revisá el importe y la categoría de la regla.");
+      return;
+    }
+    if (ruleFrequency === "custom" && (!Number.isInteger(intervalDays) || intervalDays < 1 || intervalDays > 365)) {
+      setNotice("El intervalo personalizado debe estar entre 1 y 365 días.");
+      return;
+    }
+    setSaving(true); setNotice("");
+    const payload = {
+      action: "recurring_rule", goalId: recurringGoal.id, type: ruleType, amount,
+      category: ruleCategory.trim(), description: ruleDescription.trim(),
+      frequency: ruleFrequency, mode: ruleMode, startDate: ruleStartDate,
+      endDate: ruleEndDate || null, scheduleDay: ruleFrequency === "monthly" ? scheduleDay : null,
+      intervalDays: ruleFrequency === "custom" ? intervalDays : null,
+    };
+    try {
+      if (editingRule) await request("PATCH", { ...payload, ruleId: editingRule.id });
+      else await request("POST", payload);
+      setRecurringGoal(null); setEditingRule(null);
+      setNotice(editingRule ? "Regla recurrente actualizada." : "Regla recurrente creada.");
+      await loadGoals();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "No pudimos guardar la regla recurrente.");
+    } finally { setSaving(false); }
+  }
+
+  async function changeRecurringStatus(goal: Goal, rule: RecurringRule, status: "active" | "paused" | "completed") {
+    setNotice("");
+    try {
+      await request("PATCH", { action: "recurring_rule", goalId: goal.id, ruleId: rule.id, status });
+      setNotice(status === "paused" ? "Regla pausada." : status === "active" ? "Regla reanudada." : "Regla finalizada.");
+      await loadGoals();
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "No pudimos actualizar la regla.");
+    }
   }
 
   async function changeStatus(goal: Goal, status: "active" | "paused" | "completed") {
@@ -180,6 +252,20 @@ export default function FinancialGoalsView() {
                     return <><p>Flujo recurrente neto estimado: <strong>{money(monthlyNet, goal.currency)}/mes</strong></p><div className="goal-projection-grid"><span>Conservador<strong>{estimate(0.8) ?? "Sin fecha estimable"}</strong></span><span>Esperado<strong>{estimate(1) ?? "Sin fecha estimable"}</strong></span><span>Optimista<strong>{estimate(1.2) ?? "Sin fecha estimable"}</strong></span></div><small>Estimación orientativa basada en reglas recurrentes activas. No es una garantía y no cuenta movimientos pendientes.</small></>;
                   })() : <p>Agregá ingresos y gastos recurrentes para que VERA pueda estimar una fecha de cumplimiento. Los movimientos aislados no se proyectan como ingresos futuros.</p>}
                 </section>
+                {goal.status === "active" && <button className="goals-secondary goal-recurring-add" onClick={() => openRecurringRule(goal)}>＋ Agregar ingreso o gasto recurrente</button>}
+                {goal.recurring_rules.length > 0 && <details className="goal-recurring-list"><summary>Reglas recurrentes ({goal.recurring_rules.length})</summary>
+                  {goal.recurring_rules.map((rule) => <div className="goal-recurring-row" key={rule.id}>
+                    <div className="goal-recurring-info"><strong>{rule.type === "income" ? "Ingreso" : "Gasto"} · {money(Number(rule.amount), goal.currency)}</strong>
+                      <span>{rule.category} · {({ daily: "Diario", weekly: "Semanal", every_15_days: "Cada 15 días", monthly: "Mensual", every_2_months: "Cada 2 meses", every_3_months: "Cada 3 meses", every_6_months: "Cada 6 meses", yearly: "Anual", custom: "Personalizado" } as Record<string, string>)[rule.frequency] ?? rule.frequency} · {rule.mode === "confirmation" ? "Requiere confirmación" : "Automático no verificado"}</span>
+                      <small>Próxima fecha: {new Date(rule.next_run_date + "T12:00:00").toLocaleDateString("es-AR")} · {rule.status === "active" ? "Activa" : rule.status === "paused" ? "En pausa" : "Finalizada"}</small>
+                    </div>
+                    {rule.status !== "completed" && <div className="goal-recurring-actions">
+                      <button type="button" onClick={() => openRecurringRule(goal, rule)}>Editar</button>
+                      {rule.status === "active" ? <button type="button" onClick={() => void changeRecurringStatus(goal, rule, "paused")}>Pausar</button> : <button type="button" onClick={() => void changeRecurringStatus(goal, rule, "active")}>Reanudar</button>}
+                      <button type="button" onClick={() => void changeRecurringStatus(goal, rule, "completed")}>Finalizar</button>
+                    </div>}
+                  </div>)}
+                </details>}
                 <div className="goal-actions">{goal.status === "active" ? <button onClick={() => void changeStatus(goal, "paused")}>Pausar</button> : goal.status === "paused" ? <button onClick={() => void changeStatus(goal, "active")}>Reanudar</button> : null}{goal.status !== "completed" && goal.saved_amount >= goal.target_amount && <button onClick={() => void changeStatus(goal, "completed")}>Marcar completado</button>}<button className="goal-delete" onClick={() => void deleteGoal(goal)}>Eliminar</button></div>
               </article>
             ))}
@@ -187,6 +273,30 @@ export default function FinancialGoalsView() {
         )}
       </main>
 
+      {recurringGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setRecurringGoal(null); }}>
+        <section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-recurring-title">
+          <button className="goals-modal-close" onClick={() => setRecurringGoal(null)} disabled={saving} aria-label="Cerrar">×</button>
+          <p className="goals-eyebrow">PLANIFICACIÓN AUTOMÁTICA</p>
+          <h2 id="goal-recurring-title">{editingRule ? "Editar regla recurrente" : "Nueva regla recurrente"}</h2>
+          <p className="goals-modal-description">{recurringGoal.title}</p>
+          <form onSubmit={saveRecurringRule} className="goals-form">
+            <label>Tipo<select value={ruleType} onChange={(event) => { setRuleType(event.target.value as "income" | "expense"); setRuleCategory(event.target.value === "income" ? "Ahorro" : "Servicios"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label>
+            <label>Importe<input value={ruleAmount} onChange={(event) => setRuleAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 50.000" required /></label>
+            <label>Categoría<input value={ruleCategory} onChange={(event) => setRuleCategory(event.target.value)} maxLength={60} required /></label>
+            <label>Descripción <span>(opcional)</span><input value={ruleDescription} onChange={(event) => setRuleDescription(event.target.value)} maxLength={240} placeholder="Detalle de la regla" /></label>
+            <label>Frecuencia<select value={ruleFrequency} onChange={(event) => setRuleFrequency(event.target.value)}>
+              <option value="daily">Diaria</option><option value="weekly">Semanal</option><option value="every_15_days">Cada 15 días</option><option value="monthly">Mensual</option><option value="every_2_months">Cada 2 meses</option><option value="every_3_months">Cada 3 meses</option><option value="every_6_months">Cada 6 meses</option><option value="yearly">Anual</option><option value="custom">Personalizada</option>
+            </select></label>
+            {ruleFrequency === "monthly" && <label>Día del mes<input type="number" min="1" max="31" value={ruleScheduleDay} onChange={(event) => setRuleScheduleDay(event.target.value)} required /></label>}
+            {ruleFrequency === "custom" && <label>Repetir cada (días)<input type="number" min="1" max="365" value={ruleIntervalDays} onChange={(event) => setRuleIntervalDays(event.target.value)} required /></label>}
+            <label>Modalidad<select value={ruleMode} onChange={(event) => setRuleMode(event.target.value as "confirmation" | "automatic")}><option value="confirmation">Pedir confirmación antes de registrar</option><option value="automatic">Registro automático no verificado</option></select></label>
+            <label>Fecha de inicio<input type="date" value={ruleStartDate} onChange={(event) => setRuleStartDate(event.target.value)} required /></label>
+            <label>Fecha de finalización <span>(opcional)</span><input type="date" value={ruleEndDate} min={ruleStartDate} onChange={(event) => setRuleEndDate(event.target.value)} /></label>
+            <button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : editingRule ? "Guardar cambios" : "Crear regla recurrente"}</button>
+          </form>
+          <p className="goals-disclaimer">Las reglas organizan movimientos de este objetivo; no realizan transferencias ni modifican tus cuentas. Los registros automáticos se identificarán como no verificados.</p>
+        </section>
+      </div>}
       {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">Este registro actualiza únicamente el objetivo. No mueve dinero ni modifica tus cuentas o movimientos generales.</p></section></div>}
     </div>
   );
