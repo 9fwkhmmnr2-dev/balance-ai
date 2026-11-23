@@ -26,7 +26,13 @@ function validCurrency(value: unknown): value is "ARS" | "USD" | "EUR" {
   return value === "ARS" || value === "USD" || value === "EUR";
 }
 
-function validDateKey(value: string): boolean {\n  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) return false;\n  const date = new Date(value + "T00:00:00.000Z");\n  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;\n}\n\nfunction validAmount(value: unknown): value is number {
+function validDateKey(value: string): boolean {
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) return false;
+  const date = new Date(value + "T00:00:00.000Z");
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function validAmount(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 999999999999;
 }
 
