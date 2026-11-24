@@ -3,11 +3,16 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import CurrencyPicker from "./currency-picker";
 
 type Profile = {
   pay_frequency: string;
   typical_income: number | null;
   currency: string;
+  country_code?: string | null;
+  nationality_code?: string | null;
+  default_currency?: string | null;
+  favorite_currencies?: string[] | null;
   next_pay_date: string | null;
   income_sources: string[];
   expense_categories: string[];
@@ -38,6 +43,7 @@ export default function ProfileView() {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [currency, setCurrency] = useState("ARS");
   const [currencies, setCurrencies] = useState<string[]>(["ARS"]);
+  const [countryNames, setCountryNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
