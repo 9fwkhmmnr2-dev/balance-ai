@@ -141,7 +141,7 @@ export default function TransfersView() {
               </label>
               <label>Importe
                 <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 25.000" required />
-                {fromAccount && <small>{currencyNames[fromAccount.currency] ?? fromAccount.currency}</small>}
+                {fromAccount && <small>{fromAccount.currency}</small>}
               </label>
               {matchingDestinations.length === 0 && <p className="transfers-error">No hay otra cuenta activa en la misma moneda.</p>}
               {error && <p className="transfers-error" role="alert">{error}</p>}
