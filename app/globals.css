@@ -2222,3 +2222,24 @@ body{background:#090A0D;color:#F2F0EB}
 .goal-currency-breakdown small{font-size:10px;color:var(--muted,#8b9bb5)}
 
 .goal-currency-rate-note{display:block;margin:4px 2px 12px;color:var(--muted,#8b9bb5);font-size:10px;line-height:1.45}
+
+
+/* Evita el zoom automático de Safari iOS al enfocar campos de formularios.
+   Se conserva el zoom manual del usuario. */
+@media (max-width: 700px) {
+  input,
+  select,
+  textarea,
+  .goals-form input,
+  .goals-form select,
+  .movements-filters input,
+  .movements-filters select,
+  .movement-edit-modal input,
+  .movement-edit-modal select,
+  .quick-modal-form input,
+  .quick-modal-form select,
+  .card form input,
+  .card form select {
+    font-size: 16px !important;
+  }
+}
