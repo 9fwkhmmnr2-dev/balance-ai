@@ -1,0 +1,27 @@
+alter table public.financial_profiles
+  add column if not exists nationality_code text,
+  add column if not exists favorite_currencies text[] not null default array['ARS']::text[];
+
+alter table public.financial_profiles
+  drop constraint if exists financial_profiles_nationality_code_format;
+
+alter table public.financial_profiles
+  add constraint financial_profiles_nationality_code_format
+  check (nationality_code is null or nationality_code ~ '^[A-Z]{2}$');
+
+alter table public.financial_profiles
+  drop constraint if exists financial_profiles_favorite_currencies_format;
+
+alter table public.financial_profiles
+  add constraint financial_profiles_favorite_currencies_format
+  check (
+    cardinality(favorite_currencies) between 1 and 20
+    and favorite_currencies <@ array[
+      'AED','AFN','ALL','AMD','ANG','AOA','ARS','AUD','AWG','AZN','BAM','BBD','BDT','BGN','BHD','BIF','BMD','BND','BOB','BRL','BSD','BTN','BWP','BYN','BZD',
+      'CAD','CDF','CHF','CLP','CNY','COP','CRC','CUP','CVE','CZK','DJF','DKK','DOP','DZD','EGP','ERN','ETB','EUR','FJD','FKP','GBP','GEL','GHS','GIP','GMD','GNF','GTQ','GYD',
+      'HKD','HNL','HTG','HUF','IDR','ILS','INR','IQD','IRR','ISK','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT','LAK','LBP','LKR','LRD','LSL','LYD',
+      'MAD','MDL','MGA','MKD','MMK','MNT','MOP','MRU','MUR','MVR','MWK','MXN','MYR','MZN','NAD','NGN','NIO','NOK','NPR','NZD','OMR','PAB','PEN','PGK','PHP','PKR','PLN','PYG',
+      'QAR','RON','RSD','RUB','RWF','SAR','SBD','SCR','SDG','SEK','SGD','SHP','SLE','SOS','SRD','SSP','STN','SYP','SZL','THB','TJS','TMT','TND','TOP','TRY','TTD','TWD','TZS',
+      'UAH','UGX','USD','UYU','UZS','VES','VND','VUV','WST','XAF','XCD','XOF','XPF','YER','ZAR','ZMW','ZWL'
+    ]::text[]
+  );
