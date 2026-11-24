@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import CurrencyPicker from "./currency-picker";
 
 type Profile = {
   pay_frequency: string;
