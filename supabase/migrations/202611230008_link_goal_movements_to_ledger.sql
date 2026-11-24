@@ -233,7 +233,7 @@ returns uuid
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $
+as $function$
 declare
   goal_movement public.financial_goal_movements%rowtype;
 begin
@@ -275,7 +275,7 @@ begin
 
   return p_goal_movement_id;
 end;
-$;
+$function$;
 
 create or replace function public.delete_linked_manual_goal_movement(
   p_goal_movement_id uuid,
@@ -285,7 +285,7 @@ returns boolean
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $
+as $function$
 declare
   goal_movement public.financial_goal_movements%rowtype;
 begin
@@ -311,7 +311,7 @@ begin
 
   return true;
 end;
-$;
+$function$;
 
 create or replace function public.process_financial_goal_recurring_rules()
 returns integer
