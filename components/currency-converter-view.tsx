@@ -196,6 +196,9 @@ export default function CurrencyConverterView() {
     );
   }
 
+  const activeSourceLoading = isStandardCurrencyPair ? loading : globalLoading;
+  const activeSourceError = isStandardCurrencyPair ? error : globalError;
+
   const advancedRows = selectedSources
     .map((id) => {
       const quote = getQuote(id);
@@ -247,7 +250,7 @@ export default function CurrencyConverterView() {
           <section className="converter-card" aria-label="Conversión rápida">
             <div className="converter-card-heading">
               <div><p className="eyebrow">CONVERSIÓN DIRECTA</p><h2>¿Cuánto querés convertir?</h2></div>
-              <span className={"converter-live-label " + (loading ? "pending" : error ? "failed" : "connected")}><i /> {loading ? "Actualizando" : error ? "Sin conexión" : "Fuente conectada"}</span>
+              <span className={"converter-live-label " + (activeSourceLoading ? "pending" : activeSourceError ? "failed" : "connected")}><i /> {activeSourceLoading ? "Actualizando" : activeSourceError ? "Sin conexión" : "Fuente conectada"}</span>
             </div>
 
             <label className="converter-amount-field">
@@ -287,6 +290,7 @@ export default function CurrencyConverterView() {
                 globalLoading ? <strong>Consultando cotización internacional…</strong> :
                 globalError ? <strong>{globalError}</strong> :
                 parsedAmount === null ? <strong>Ingresá un importe válido</strong> :
+                from === to ? <strong>{formatMoney(parsedAmount, to)}</strong> :
                 globalConversion?.stale ? <strong>Cotización desactualizada · no disponible para calcular</strong> :
                 globalConversion ? <strong>{formatMoney(globalConversion.value, to)}</strong> :
                 <strong>Esperando datos</strong>
@@ -303,7 +307,7 @@ export default function CurrencyConverterView() {
                     : "Cotización internacional de referencia. No representa necesariamente el precio de compra o venta de una entidad financiera.")}
               </p>
             </div>
-            {error && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar conexión</button>}
+            {isStandardCurrencyPair && error && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar conexión</button>}
             {!isStandardCurrencyPair && globalError && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar cotización</button>}
             {!isStandardCurrencyPair && globalConversion && (
               <div className="converter-source-note">
@@ -311,7 +315,7 @@ export default function CurrencyConverterView() {
                 <span>Fuente: ExchangeRate.dev · 1 {from} = {globalConversion.rate.toLocaleString("es-AR", { maximumFractionDigits: 8 })} {to}. Observación: {globalConversion.updatedAt ? formatDate(globalConversion.updatedAt) : "fecha no informada"}. Fuente de referencia: {globalConversion.source}. Datos indicativos, no aptos para liquidación.</span>
               </div>
             )}
-            {!loading && !error && usdQuote && euroQuote && (
+            {isStandardCurrencyPair && !loading && !error && usdQuote && euroQuote && (
               <div className="converter-source-note">
                 <span aria-hidden="true">ⓘ</span>
                 <span>Fuente: MonedAPI · USD {usdQuote.name}: compra {formatMoney(usdQuote.buy, "ARS")} / venta {formatMoney(usdQuote.sell, "ARS")}. Valor desde {usdQuote.updatedAt ? formatDate(usdQuote.updatedAt) : "fecha no informada"}; confirmado {formatDate(usdQuote.lastScrapedAt)}. Euro oficial: compra {formatMoney(euroQuote.buy, "ARS")} / venta {formatMoney(euroQuote.sell, "ARS")}. Valor desde {euroQuote.updatedAt ? formatDate(euroQuote.updatedAt) : "fecha no informada"}; confirmado {formatDate(euroQuote.lastScrapedAt)}{euroQuote.marketClosed ? " · mercado cerrado" : ""}.</span>

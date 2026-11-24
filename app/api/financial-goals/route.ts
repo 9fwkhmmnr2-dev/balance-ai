@@ -61,14 +61,6 @@ async function getReferenceRates(base: string, symbols: string[]): Promise<Excha
   }
 }
 
-function netAmount(entries: Array<{ type: string; amount: number | string; status: string }>) {
-  return entries.reduce((sum, entry) => {
-    if (entry.status !== "posted") return sum;
-    const amount = Number(entry.amount);
-    return sum + (entry.type === "income" ? amount : entry.type === "expense" ? -amount : 0);
-  }, 0);
-}
-
 export async function GET(request: Request) {
   let diagnosticStage = "authentication";
   try {
@@ -187,7 +179,7 @@ export async function GET(request: Request) {
         currency_breakdown: currencyBreakdown,
         unconverted_movements_count: unconvertedMovementsCount,
         currency_rates_updated_at: rateData?.data_updated_at ?? null,
-        currency_rates_source: rateData?.source ?? null,
+        currency_rates_source: rateData ? `ExchangeRate.dev (${rateData.source ?? "reference"})` : null,
         movements: goalMovements.map((movement) => ({
           ...movement,
           recurring_mode: rules.find((rule) => rule.id === movement.recurring_rule_id)?.mode ?? null,
