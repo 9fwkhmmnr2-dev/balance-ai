@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
     const ids = (goals ?? []).map((goal) => goal.id);
     let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
-    let rules: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
+    let rules: Array<{ id: string; goal_id: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
     if (ids.length) {
       const [movementResult, ruleResult] = await Promise.all([
         supabase.from("financial_goal_movements")
