@@ -135,7 +135,7 @@ export default function MovementsManager() {
           required
         />
 
-        <CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del movimiento" />
+        <CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del movimiento" variant="light" />
 
         <select
           value={category}
