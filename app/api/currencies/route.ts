@@ -31,21 +31,19 @@ function localizedName(code: string, fallback: string): string {
 
 function getDecimals(code: string): number {
   try {
-    return (
-      new Intl.NumberFormat("es-AR", {
-        style: "currency",
-        currency: code,
-      }).resolvedOptions().maximumFractionDigits ?? 2
-    );
+    return new Intl.NumberFormat("es-AR", {
+      style: "currency",
+      currency: code,
+    }).resolvedOptions().maximumFractionDigits ?? 2;
   } catch {
     return 2;
   }
 }
 
-function getIntlFallback(): CurrencyOption[] {
+// Intl is the local safety net: the selector never depends exclusively on a remote API.
+function getIntlCatalog(): CurrencyOption[] {
   try {
-    const codes = Intl.supportedValuesOf("currency");
-    return codes
+    return Intl.supportedValuesOf("currency")
       .filter((code) => /^[A-Z]{3}$/.test(code) && !NON_FIAT_CODES.has(code))
       .map((code) => {
         const parts = new Intl.NumberFormat("es-AR", {
@@ -54,16 +52,14 @@ function getIntlFallback(): CurrencyOption[] {
           currencyDisplay: "narrowSymbol",
         }).formatToParts(1);
         const symbol = parts.find((part) => part.type === "currency")?.value ?? code;
-        const name = localizedName(code, code);
         return {
           code,
-          name,
+          name: localizedName(code, code),
           symbol,
           numericCode: null,
           decimals: getDecimals(code),
         };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+      });
   } catch {
     return [];
   }
@@ -71,8 +67,7 @@ function getIntlFallback(): CurrencyOption[] {
 
 function normalizeProviderCurrencies(payload: unknown): CurrencyOption[] {
   if (!Array.isArray(payload)) return [];
-
-  const currencies = (payload as ProviderCurrency[])
+  return (payload as ProviderCurrency[])
     .filter((item) => {
       const code = typeof item.code === "string" ? item.code.toUpperCase() : "";
       return /^[A-Z]{3}$/.test(code) && !NON_FIAT_CODES.has(code);
@@ -84,44 +79,48 @@ function normalizeProviderCurrencies(payload: unknown): CurrencyOption[] {
         code,
         name: localizedName(code, fallbackName),
         symbol: typeof item.symbol === "string" && item.symbol.trim() ? item.symbol : code,
-        numericCode:
-          typeof item.numeric === "string" && /^\d{3}$/.test(item.numeric)
-            ? item.numeric
-            : null,
+        numericCode: typeof item.numeric === "string" && /^\d{3}$/.test(item.numeric) ? item.numeric : null,
         decimals: getDecimals(code),
       };
     });
-
-  return Array.from(new Map(currencies.map((currency) => [currency.code, currency])).values())
-    .sort((a, b) => a.name.localeCompare(b.name, "es"));
 }
 
 export async function GET() {
+  const localCatalog = getIntlCatalog();
+  let providerCatalog: CurrencyOption[] = [];
+  let providerAvailable = false;
+
   try {
     const response = await fetch(CURRENCY_CATALOG_URL, {
       headers: { Accept: "application/json" },
       next: { revalidate },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(5000),
     });
-
-    if (!response.ok) throw new Error("Currency catalog provider unavailable");
-
-    const payload: unknown = await response.json();
-    const currencies = normalizeProviderCurrencies(payload);
-    if (currencies.length === 0) throw new Error("Currency catalog response was invalid");
-
-    return NextResponse.json({
-      source: "CurrencyCore / ISO 4217",
-      fetchedAt: new Date().toISOString(),
-      currencies,
-    });
+    if (response.ok) {
+      providerCatalog = normalizeProviderCurrencies(await response.json());
+      providerAvailable = providerCatalog.length > 0;
+    }
   } catch {
-    const currencies = getIntlFallback();
-    return NextResponse.json({
-      source: "Intl fallback",
-      fetchedAt: new Date().toISOString(),
-      currencies,
-      fallback: true,
+    // Keep the local ISO/Intl catalog available when the provider is offline.
+  }
+
+  const merged = new Map<string, CurrencyOption>();
+  for (const currency of localCatalog) merged.set(currency.code, currency);
+  for (const currency of providerCatalog) {
+    const local = merged.get(currency.code);
+    merged.set(currency.code, {
+      ...local,
+      ...currency,
+      name: local?.name && local.name !== currency.code ? local.name : currency.name,
+      symbol: currency.symbol || local?.symbol || currency.code,
     });
   }
+
+  const currencies = Array.from(merged.values()).sort((a, b) => a.name.localeCompare(b.name, "es"));
+  return NextResponse.json({
+    source: providerAvailable ? "ISO 4217 + Intl" : "Intl local fallback",
+    fetchedAt: new Date().toISOString(),
+    currencies,
+    fallback: !providerAvailable,
+  });
 }
