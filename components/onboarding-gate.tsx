@@ -71,6 +71,9 @@ export default function OnboardingGate({
   const [frequency, setFrequency] = useState<Frequency | "">("");
   const [income, setIncome] = useState("");
   const [currency, setCurrency] = useState("ARS");
+  const [countryCode, setCountryCode] = useState("AR");
+  const [defaultCurrency, setDefaultCurrency] = useState("ARS");
+  const [countries, setCountries] = useState<{ code: string; name: string; currencies: { code: string; name: string }[] }[]>([]);
   const [nextPayDate, setNextPayDate] = useState("");
   const [incomeSources, setIncomeSources] = useState<string[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
@@ -97,6 +100,13 @@ export default function OnboardingGate({
       }
       if (!active) return;
       setUserId(auth.user.id);
+      try {
+        const response = await fetch("/api/countries");
+        if (response.ok) {
+          const payload = await response.json();
+          setCountries(Array.isArray(payload.countries) ? payload.countries : []);
+        }
+      } catch { /* La selección manual sigue disponible si falla el catálogo. */ }
 
       const [{ data: profile, error: profileError }, { data: savedCommitments, error: commitmentsError }] = await Promise.all([
         supabase.from("financial_profiles").select("*").eq("user_id", auth.user.id).maybeSingle(),
@@ -117,6 +127,8 @@ export default function OnboardingGate({
         if (profile.pay_frequency && profile.pay_frequency !== "not_set") setFrequency(profile.pay_frequency);
         setIncome(profile.typical_income?.toString() ?? "");
         setCurrency(profile.currency ?? "ARS");
+        setCountryCode(profile.country_code ?? "AR");
+        setDefaultCurrency(profile.default_currency ?? profile.currency ?? "ARS");
         setNextPayDate(profile.next_pay_date ?? "");
         setIncomeSources(profile.income_sources ?? []);
         setExpenseCategories(profile.expense_categories ?? []);
@@ -156,11 +168,15 @@ export default function OnboardingGate({
   }
 
   async function saveIncome() {
+    if (!countryCode) throw new Error("Seleccioná tu país de residencia.");
+    if (!defaultCurrency) throw new Error("Seleccioná tu moneda predeterminada.");
     if (!frequency) throw new Error("Seleccioná la frecuencia de tus ingresos o indicá que actualmente no tenés ingresos.");
     const parsed = income ? parseLocalizedAmount(income) : null;
     if (income && (parsed === null || parsed < 0)) throw new Error("Ingresá un importe válido.");
     const { error: saveError } = await supabase.from("financial_profiles").upsert({
       user_id: userId,
+      country_code: countryCode,
+      default_currency: defaultCurrency,
       pay_frequency: frequency,
       typical_income: parsed,
       currency,
@@ -277,7 +293,8 @@ export default function OnboardingGate({
       setIncomeSources([]);
       setSaving(true);
       const { error: saveError } = await supabase.from("financial_profiles").upsert({
-        user_id: userId, pay_frequency: "none", typical_income: null,
+        user_id: userId, country_code: countryCode, default_currency: defaultCurrency,
+        pay_frequency: "none", typical_income: null,
         currency, next_pay_date: null, income_sources: [],
         expense_categories: expenseCategories, updated_at: new Date().toISOString()
       }, { onConflict: "user_id" });
@@ -327,6 +344,30 @@ export default function OnboardingGate({
         {step === 0 && (
           <>
             <div className="onboarding-field">
+              <label style={labelStyle} htmlFor="profile-country">País de residencia</label>
+              <select id="profile-country" required style={fieldStyle} value={countryCode} onChange={(e) => {
+                const selected = countries.find((item) => item.code === e.target.value);
+                setCountryCode(e.target.value);
+                if (selected?.currencies.length) {
+                  const preferred = selected.currencies.find((item) => item.code === "USD") ?? selected.currencies[0];
+                  setDefaultCurrency(preferred.code);
+                  setCurrency(preferred.code);
+                  setCommitmentCurrency(preferred.code);
+                  setReserveCurrency(preferred.code);
+                }
+              }}>
+                <option value="">Seleccionar país</option>
+                {countries.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
+              </select>
+            </div>
+            <div className="onboarding-field">
+              <label style={labelStyle} htmlFor="profile-default-currency">Moneda predeterminada</label>
+              <select id="profile-default-currency" required style={fieldStyle} value={defaultCurrency} onChange={(e) => setDefaultCurrency(e.target.value)}>
+                {Array.from(new Set([defaultCurrency, ...countries.flatMap((item) => item.currencies.map((currency) => currency.code))])).sort().map((code) => <option key={code} value={code}>{code}</option>)}
+              </select>
+              <p style={{ color: "#92909A", fontSize: 11, marginTop: 6 }}>Se propone según tu país, pero podés elegir otra moneda.</p>
+            </div>
+            <div className="onboarding-field">
               <label style={labelStyle} htmlFor="profile-frequency">¿Cada cuánto recibís ingresos?</label>
               <select id="profile-frequency" style={fieldStyle} value={frequency} onChange={(e) => setFrequency(e.target.value as Frequency | "")}>
                 <option value="">Seleccionar frecuencia</option><option value="monthly">Mensualmente</option><option value="biweekly">Quincenalmente</option><option value="weekly">Semanalmente</option><option value="daily">Por día o trabajo</option><option value="variable">Varía cada mes</option><option value="none">Actualmente no tengo ingresos</option>
@@ -368,7 +409,7 @@ export default function OnboardingGate({
 
         {step === 4 && (
           <div style={{ display: "grid", gap: 12 }}>
-            {[["Frecuencia de ingresos", frequency ? ({monthly:"Mensual",biweekly:"Quincenal",weekly:"Semanal",daily:"Por día o trabajo",variable:"Variable",none:"Sin ingresos actualmente"} as Record<string,string>)[frequency] : "Pendiente"],["Ingreso habitual", income ? currency + " " + income : "No informado"],["Compromisos registrados", String(commitments.length)],["Categorías de gasto", String(expenseCategories.length)],["Reserva protegida", reserveAmount ? reserveCurrency + " " + reserveAmount : "Sin configurar"]].map(([label,value]) => <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #30323A" }}><span style={{ color: "#AAA7B0", fontSize: 13 }}>{label}</span><strong style={{ color: "#F2F0EB", fontSize: 13, textAlign: "right" }}>{value}</strong></div>)}
+            {[["País de residencia", countries.find((item) => item.code === countryCode)?.name ?? countryCode], ["Moneda predeterminada", defaultCurrency], ["Frecuencia de ingresos", frequency ? ({monthly:"Mensual",biweekly:"Quincenal",weekly:"Semanal",daily:"Por día o trabajo",variable:"Variable",none:"Sin ingresos actualmente"} as Record<string,string>)[frequency] : "Pendiente"],["Ingreso habitual", income ? currency + " " + income : "No informado"],["Compromisos registrados", String(commitments.length)],["Categorías de gasto", String(expenseCategories.length)],["Reserva protegida", reserveAmount ? reserveCurrency + " " + reserveAmount : "Sin configurar"]].map(([label,value]) => <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #30323A" }}><span style={{ color: "#AAA7B0", fontSize: 13 }}>{label}</span><strong style={{ color: "#F2F0EB", fontSize: 13, textAlign: "right" }}>{value}</strong></div>)}
             <p style={{ color: "#92909A", fontSize: 11, lineHeight: 1.5 }}>Podés volver a cualquier etapa para corregir los datos. La información también se puede editar más adelante desde Mi perfil.</p>
           </div>
         )}
