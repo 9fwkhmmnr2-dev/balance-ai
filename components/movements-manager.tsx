@@ -4,6 +4,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
+import CurrencyPicker from "./currency-picker";
 
 type Movement = {
   id: string;
@@ -131,14 +132,7 @@ export default function MovementsManager() {
           required
         />
 
-        <select
-          value={currency}
-          onChange={(event) => setCurrency(event.target.value)}
-        >
-          <option value="ARS">Peso argentino (ARS)</option>
-          <option value="USD">Dólar estadounidense (USD)</option>
-          <option value="EUR">Euro (EUR)</option>
-        </select>
+        <CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del movimiento" />
 
         <select
           value={category}
