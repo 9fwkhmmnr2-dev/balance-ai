@@ -51,8 +51,13 @@ export async function GET(request: Request) {
     const { data: goals, error: goalsError } = await supabase
       .from("financial_goals")
       .select("id, name, target_amount, currency, deadline, status, is_archived, created_at, updated_at")
-      .eq("user_id", userId).neq("status", "archived").order("created_at", { ascending: false });
+      .eq("user_id", userId).eq("is_archived", false).neq("status", "archived").order("created_at", { ascending: false });
     if (goalsError) throw goalsError;
+    const { data: accounts, error: accountsError } = await supabase
+      .from("financial_accounts")
+      .select("id, name, currency, is_archived")
+      .eq("user_id", userId).eq("is_archived", false).order("created_at", { ascending: true });
+    if (accountsError) throw accountsError;
 
     const ids = (goals ?? []).map((goal) => goal.id);
     let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
@@ -108,7 +113,7 @@ export async function GET(request: Request) {
         recurring_rules: rules.filter((rule) => rule.goal_id === goal.id),
       };
     });
-    return NextResponse.json({ goals: result });
+    return NextResponse.json({ goals: result, accounts: accounts ?? [] });
   } catch {
     return NextResponse.json({ error: "No pude cargar tus objetivos. Revisá que las tablas de movimientos y reglas estén disponibles." }, { status: 500 });
   }
