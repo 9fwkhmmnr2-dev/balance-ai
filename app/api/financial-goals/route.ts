@@ -478,7 +478,7 @@ export async function PATCH(request: Request) {
       let updatedRule = await supabase.from("financial_goal_recurring_rules").update(updates)
         .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
         .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
-      if (updatedRule.error && (updatedRule.error.code === "42703" || updatedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
+      if (updatedRule.error && (updatedRule.error.code === "42703" || updatedRule.error.code === "PGRST204") && (updates.currency === undefined || (recurringGoalCurrency !== null && updates.currency === recurringGoalCurrency))) {
         const legacyUpdates = { ...updates };
         delete legacyUpdates.currency;
         delete legacyUpdates.account_id;
