@@ -148,11 +148,11 @@ begin
   insert into public.financial_goal_movements (
     goal_id, user_id, type, amount, category, description, movement_date,
     status, source, recurring_rule_id, scheduled_for_date,
-    verification_status, movement_id
+    verification_status, movement_id, created_at, updated_at
   ) values (
     p_goal_id, p_user_id, p_type, p_amount, p_category, p_description, p_movement_date,
     p_status, p_source, p_recurring_rule_id, p_scheduled_for_date,
-    p_verification_status, general_movement_id
+    p_verification_status, general_movement_id, now(), now()
   ) returning id into goal_movement_id;
 
   return goal_movement_id;
