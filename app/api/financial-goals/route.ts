@@ -53,8 +53,8 @@ export async function GET(request: Request) {
     diagnosticStage = "financial_goals";
     const { data: goals, error: goalsError } = await supabase
       .from("financial_goals")
-      .select("id, name, target_amount, currency, deadline, status, is_archived, created_at, updated_at")
-      .eq("user_id", userId).eq("is_archived", false).neq("status", "archived").order("created_at", { ascending: false });
+      .select("id, title, target_amount, currency, target_date, status, created_at, updated_at")
+      .eq("user_id", userId).neq("status", "archived").order("created_at", { ascending: false });
     if (goalsError) throw goalsError;
     diagnosticStage = "financial_accounts";
     const { data: accounts, error: accountsError } = await supabase
@@ -129,8 +129,6 @@ export async function GET(request: Request) {
       const target = Number(goal.target_amount);
       return {
         ...goal,
-        title: goal.name,
-        target_date: goal.deadline,
         target_amount: target,
         saved_amount: Math.max(0, saved),
         net_amount: saved,
@@ -257,8 +255,8 @@ export async function POST(request: Request) {
       ? null : typeof input.targetDate === "string" && validDateKey(input.targetDate) ? input.targetDate : undefined;
     if (targetDate === undefined) return NextResponse.json({ error: "La fecha objetivo no es válida." }, { status: 400 });
     const { data, error } = await supabase.from("financial_goals")
-      .insert({ user_id: userId, name: title, target_amount: input.targetAmount, currency: input.currency, deadline: targetDate })
-      .select("id, name, target_amount, currency, deadline, status, created_at").single();
+      .insert({ user_id: userId, title, target_amount: input.targetAmount, currency: input.currency, target_date: targetDate })
+      .select("id, title, target_amount, currency, target_date, status, created_at").single();
     if (error) throw error;
     return NextResponse.json({ goal: data }, { status: 201 });
   } catch {
@@ -412,14 +410,14 @@ export async function PATCH(request: Request) {
       }
       updates.status = input.status;
     }
-    if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.name = input.title.trim();
-    if (input.targetDate === null || input.targetDate === "") updates.deadline = null;
-    else if (typeof input.targetDate === "string" && validDateKey(input.targetDate)) updates.deadline = input.targetDate;
+    if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.title = input.title.trim();
+    if (input.targetDate === null || input.targetDate === "") updates.target_date = null;
+    else if (typeof input.targetDate === "string" && validDateKey(input.targetDate)) updates.target_date = input.targetDate;
     if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
     updates.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from("financial_goals").update(updates)
       .eq("id", input.id).eq("user_id", userId)
-      .select("id, name, target_amount, currency, deadline, status, updated_at").maybeSingle();
+      .select("id, title, target_amount, currency, target_date, status, updated_at").maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
     return NextResponse.json({ goal: data });
