@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 export const revalidate = 86_400;
 
-const COUNTRIES_URL = "https://restcountries.com/v3.1/all?fields=cca2,name,currencies";
+const COUNTRIES_URL = "https://restcountries.com/v3.1/all?fields=cca2,name,translations,currencies";
 
-type CountryRecord = { cca2?: unknown; name?: { common?: unknown }; currencies?: Record<string, { name?: unknown }> };
+type CountryRecord = { cca2?: unknown; name?: { common?: unknown }; translations?: { spa?: { common?: unknown } }; currencies?: Record<string, { name?: unknown; symbol?: unknown }> };
 
 export async function GET() {
   try {
@@ -14,11 +14,11 @@ export async function GET() {
     if (!Array.isArray(payload)) throw new Error("Invalid country catalog");
     const countries = (payload as CountryRecord[]).flatMap((item) => {
       const code = typeof item.cca2 === "string" ? item.cca2.toUpperCase() : "";
-      const name = typeof item.name?.common === "string" ? item.name.common : "";
+      const name = typeof item.translations?.spa?.common === "string" ? item.translations.spa.common : typeof item.name?.common === "string" ? item.name.common : "";
       if (!/^[A-Z]{2}$/.test(code) || !name) return [];
       const currencies = Object.entries(item.currencies ?? {}).map(([currencyCode, value]) => ({
         code: currencyCode,
-        name: typeof value?.name === "string" ? value.name : currencyCode,
+        name: typeof value?.name === "string" ? value.name : currencyCode,\n        symbol: typeof value?.symbol === "string" ? value.symbol : "",
       })).filter((currency) => /^[A-Z]{3}$/.test(currency.code));
       return [{ code, name, currencies }];
     }).sort((a, b) => a.name.localeCompare(b.name, "es"));
