@@ -53,6 +53,11 @@ create unique index if not exists financial_goal_movements_movement_id_uidx
   on public.financial_goal_movements (movement_id)
   where movement_id is not null;
 
+-- Refuerza la idempotencia de cada ocurrencia recurrente incluso ante ejecuciones concurrentes.
+create unique index if not exists financial_goal_movements_recurring_date_uidx
+  on public.financial_goal_movements (recurring_rule_id, scheduled_for_date)
+  where recurring_rule_id is not null and scheduled_for_date is not null;
+
 create or replace function public.create_linked_goal_movement(
   p_goal_id uuid,
   p_user_id uuid,
@@ -252,16 +257,19 @@ begin
   for update;
 
   if not found then raise exception 'Automatic movement is not pending verification'; end if;
-  if goal_movement.movement_id is null then raise exception 'Linked ledger movement not found'; end if;
 
-  update public.movements
-  set amount = p_amount,
-      category = trim(p_category),
-      description = coalesce(nullif(trim(p_description), ''), trim(p_category)),
-      movement_date = p_movement_date
-  where id = goal_movement.movement_id and user_id = p_user_id;
+  -- Los registros históricos anteriores a la vinculación pueden no tener movimiento_id.
+  -- En ese caso se corrige únicamente el registro del objetivo, sin crear ni duplicar uno general.
+  if goal_movement.movement_id is not null then
+    update public.movements
+    set amount = p_amount,
+        category = trim(p_category),
+        description = coalesce(nullif(trim(p_description), ''), trim(p_category)),
+        movement_date = p_movement_date
+    where id = goal_movement.movement_id and user_id = p_user_id;
 
-  if not found then raise exception 'Ledger movement not found'; end if;
+    if not found then raise exception 'Ledger movement not found'; end if;
+  end if;
 
   update public.financial_goal_movements
   set amount = p_amount,
