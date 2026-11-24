@@ -21,8 +21,8 @@ async function getUserClient(request: Request) {
   return { supabase, userId: data.user.id };
 }
 
-function validCurrency(value: unknown): value is "ARS" | "USD" | "EUR" {
-  return value === "ARS" || value === "USD" || value === "EUR";
+function validCurrency(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Z]{3}$/.test(value);
 }
 function validDateKey(value: string): boolean {
   if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) return false;
@@ -253,15 +253,24 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: "La cuenta debe pertenecer a tu usuario, estar activa y usar la misma moneda de la regla." }, { status: 400 });
         }
       }
-      const { data, error } = await supabase.from("financial_goal_recurring_rules").insert({
+      const rulePayload = {
         goal_id: input.goalId, user_id: userId, type: input.type, amount: input.amount, currency: ruleCurrency,
         category, description: description || null, frequency: input.frequency,
         interval_days: intervalDays, schedule_day: scheduleDay, start_date: startDate,
         end_date: endDate, next_run_date: startDate, mode: input.mode, status: "active",
         account_id: accountId, updated_at: new Date().toISOString(),
-      }).select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
-      if (error) throw error;
-      return NextResponse.json({ rule: data }, { status: 201 });
+      };
+      let insertedRule = await supabase.from("financial_goal_recurring_rules").insert(rulePayload)
+        .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
+      if (insertedRule.error && insertedRule.error.code === "42703" && ruleCurrency === goal.currency) {
+        const legacyPayload = { ...rulePayload } as Record<string, unknown>;
+        delete legacyPayload.currency;
+        insertedRule = await supabase.from("financial_goal_recurring_rules").insert(legacyPayload)
+          .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single() as typeof insertedRule;
+        if (insertedRule.data) return NextResponse.json({ rule: { ...insertedRule.data, currency: goal.currency } }, { status: 201 });
+      }
+      if (insertedRule.error) throw insertedRule.error;
+      return NextResponse.json({ rule: insertedRule.data }, { status: 201 });
     }
 
     if (input.action === "movement") {
@@ -466,12 +475,20 @@ export async function PATCH(request: Request) {
       }
       if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
       updates.updated_at = new Date().toISOString();
-      const { data, error } = await supabase.from("financial_goal_recurring_rules").update(updates)
+      let updatedRule = await supabase.from("financial_goal_recurring_rules").update(updates)
         .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
         .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
-      if (error) throw error;
-      if (!data) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
-      return NextResponse.json({ rule: data });
+      if (updatedRule.error && updatedRule.error.code === "42703" && ruleCurrency === goal.currency) {
+        const legacyUpdates = { ...updates };
+        delete legacyUpdates.currency;
+        updatedRule = await supabase.from("financial_goal_recurring_rules").update(legacyUpdates)
+          .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
+          .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle() as typeof updatedRule;
+        if (updatedRule.data) return NextResponse.json({ rule: { ...updatedRule.data, currency: goal.currency } });
+      }
+      if (updatedRule.error) throw updatedRule.error;
+      if (!updatedRule.data) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
+      return NextResponse.json({ rule: updatedRule.data });
     }
 
     if (typeof input.id !== "string") return NextResponse.json({ error: "El objetivo no es válido." }, { status: 400 });
@@ -483,12 +500,21 @@ export async function PATCH(request: Request) {
           .select("id, target_amount, currency").eq("id", input.id).eq("user_id", userId).maybeSingle();
         if (goalError) throw goalError;
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
-        const { data: entries, error: entriesError } = await supabase.from("financial_goal_movements")
+        const modernEntries = await supabase.from("financial_goal_movements")
           .select("type, amount, currency, status").eq("goal_id", input.id).eq("user_id", userId);
-        if (entriesError) throw entriesError;
-        const codes = [...new Set((entries ?? []).filter((entry) => entry.currency && entry.currency !== goal.currency).map((entry) => entry.currency))];
+        let completionEntries: Array<{ type: string; amount: number | string; currency: string; status: string }>;
+        if (modernEntries.error && modernEntries.error.code === "42703") {
+          const legacyEntries = await supabase.from("financial_goal_movements")
+            .select("type, amount, status").eq("goal_id", input.id).eq("user_id", userId);
+          if (legacyEntries.error) throw legacyEntries.error;
+          completionEntries = (legacyEntries.data ?? []).map((entry) => ({ ...entry, currency: goal.currency }));
+        } else {
+          if (modernEntries.error) throw modernEntries.error;
+          completionEntries = (modernEntries.data ?? []).map((entry) => ({ ...entry, currency: entry.currency ?? goal.currency }));
+        }
+        const codes = [...new Set(completionEntries.filter((entry) => entry.currency !== goal.currency).map((entry) => entry.currency))];
         const completionRates = await getReferenceRates(goal.currency, codes);
-        const completionTotal = (entries ?? []).reduce((sum, entry) => {
+        const completionTotal = completionEntries.reduce((sum, entry) => {
           if (entry.status !== "posted") return sum;
           const rate = entry.currency === goal.currency ? 1 : completionRates?.rates?.[entry.currency];
           if (typeof rate !== "number" || rate <= 0 || completionRates?.stale?.[entry.currency]) return sum;
