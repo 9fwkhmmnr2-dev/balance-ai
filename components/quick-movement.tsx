@@ -122,7 +122,7 @@ export default function QuickMovement() {
               <label>Descripción<input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Ej. Supermercado" maxLength={100} required /></label>
               <div className="quick-form-row">
                 <label>Importe<input type="text" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Ej. 160.000,50" required /></label>
-                <label>Moneda<CurrencyPicker value={currency} onChange={(next) => { setCurrency(next); setAccountId(accounts.find((account) => account.currency === next)?.id ?? ""); }} label="Moneda del movimiento" /></label>
+                <label>Moneda<CurrencyPicker value={currency} onChange={(next) => { setCurrency(next); setAccountId(accounts.find((account) => account.currency === next)?.id ?? ""); }} label="Moneda del movimiento" variant="light" /></label>
               </div>
               <label>Cuenta<select value={accountId} onChange={(event) => setAccountId(event.target.value)} disabled={loadingAccounts || matchingAccounts.length === 0}><option value="">{loadingAccounts ? "Cargando cuentas..." : matchingAccounts.length ? "Seleccionar cuenta" : "No hay cuentas en esta moneda"}</option>{matchingAccounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
               {matchingAccounts.length === 0 && !loadingAccounts && <p className="quick-modal-error">Necesitás una cuenta activa en {currency} para registrar este movimiento. <a href="/cuentas">Crear una cuenta</a>.</p>}
