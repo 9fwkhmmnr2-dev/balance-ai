@@ -71,7 +71,18 @@ export async function GET(request: Request) {
           .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
           .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true }),
       ]);
-      if (ruleResult.error) throw ruleResult.error;
+      let ruleRows = ruleResult.data ?? [];
+      if (ruleResult.error) {
+        const missingAccountColumn = ruleResult.error.code === "42703" ||
+          ruleResult.error.code === "PGRST204" ||
+          ruleResult.error.message?.includes("account_id");
+        if (!missingAccountColumn) throw ruleResult.error;
+        const fallbackRules = await supabase.from("financial_goal_recurring_rules")
+          .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
+          .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true });
+        if (fallbackRules.error) throw fallbackRules.error;
+        ruleRows = (fallbackRules.data ?? []).map((rule) => ({ ...rule, account_id: null }));
+      }
       if (movementResult.error) {
         const missingVerificationColumns = movementResult.error.code === "42703" ||
           movementResult.error.code === "PGRST204" ||
@@ -89,7 +100,7 @@ export async function GET(request: Request) {
       } else {
         movements = (movementResult.data ?? []) as typeof movements;
       }
-      rules = (ruleResult.data ?? []) as typeof rules;
+      rules = ruleRows as typeof rules;
     }
 
     const result = (goals ?? []).map((goal) => {
