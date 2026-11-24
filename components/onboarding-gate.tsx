@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
+import CurrencyPicker from "./currency-picker";
 
 type Frequency = "monthly" | "biweekly" | "weekly" | "daily" | "variable" | "none";
 type Commitment = {
@@ -139,6 +140,8 @@ export default function OnboardingGate({
   const [income, setIncome] = useState("");
   const [currency, setCurrency] = useState("ARS");
   const [countryCode, setCountryCode] = useState("AR");
+  const [nationalityCode, setNationalityCode] = useState("AR");
+  const [currencyCatalog, setCurrencyCatalog] = useState<{ code: string; name: string; symbol: string }[]>([]);
   const [defaultCurrency, setDefaultCurrency] = useState("ARS");
   const [countries, setCountries] = useState<{ code: string; name: string; currencies: { code: string; name: string; symbol?: string }[] }[]>([]);
   const [nextPayDate, setNextPayDate] = useState("");
@@ -167,13 +170,18 @@ export default function OnboardingGate({
       }
       if (!active) return;
       setUserId(auth.user.id);
-      try {
-        const response = await fetch("/api/countries");
-        if (response.ok) {
-          const payload = await response.json();
-          setCountries(Array.isArray(payload.countries) ? payload.countries : []);
-        }
-      } catch { /* La selección manual sigue disponible si falla el catálogo. */ }
+      const [countryResult, currencyResult] = await Promise.allSettled([
+        fetch("/api/countries"),
+        fetch("/api/currencies")
+      ]);
+      if (countryResult.status === "fulfilled" && countryResult.value.ok) {
+        const payload = await countryResult.value.json();
+        if (active) setCountries(Array.isArray(payload.countries) ? payload.countries : []);
+      }
+      if (currencyResult.status === "fulfilled" && currencyResult.value.ok) {
+        const payload = await currencyResult.value.json();
+        if (active) setCurrencyCatalog(Array.isArray(payload.currencies) ? payload.currencies : []);
+      }
 
       const [{ data: profile, error: profileError }, { data: savedCommitments, error: commitmentsError }] = await Promise.all([
         supabase.from("financial_profiles").select("*").eq("user_id", auth.user.id).maybeSingle(),
@@ -195,6 +203,7 @@ export default function OnboardingGate({
         setIncome(profile.typical_income?.toString() ?? "");
         setCurrency(profile.currency ?? "ARS");
         setCountryCode(profile.country_code ?? "AR");
+        setNationalityCode(profile.nationality_code ?? profile.country_code ?? "AR");
         setDefaultCurrency(profile.default_currency ?? profile.currency ?? "ARS");
         setNextPayDate(profile.next_pay_date ?? "");
         setIncomeSources(profile.income_sources ?? []);
@@ -243,6 +252,7 @@ export default function OnboardingGate({
     const { error: saveError } = await supabase.from("financial_profiles").upsert({
       user_id: userId,
       country_code: countryCode,
+      nationality_code: nationalityCode,
       default_currency: defaultCurrency,
       pay_frequency: frequency,
       typical_income: parsed,
@@ -360,7 +370,7 @@ export default function OnboardingGate({
       setIncomeSources([]);
       setSaving(true);
       const { error: saveError } = await supabase.from("financial_profiles").upsert({
-        user_id: userId, country_code: countryCode, default_currency: defaultCurrency,
+        user_id: userId, country_code: countryCode, nationality_code: nationalityCode, default_currency: defaultCurrency,
         pay_frequency: "none", typical_income: null,
         currency, next_pay_date: null, income_sources: [],
         expense_categories: expenseCategories, updated_at: new Date().toISOString()
@@ -390,16 +400,11 @@ export default function OnboardingGate({
     icon: countryFlag(item.code),
     searchText: item.code
   }));
-  const currencyMap = new Map<string, { name: string; symbol: string }>();
-  countries.forEach((item) => item.currencies.forEach((currencyItem) => {
-    if (!currencyMap.has(currencyItem.code)) currencyMap.set(currencyItem.code, { name: currencyItem.name, symbol: currencyItem.symbol ?? "" });
-  }));
-  if (defaultCurrency && !currencyMap.has(defaultCurrency)) currencyMap.set(defaultCurrency, { name: defaultCurrency, symbol: "" });
-  const currencyOptions: PickerOption[] = Array.from(currencyMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([code, info]) => ({
-    value: code,
-    label: code,
-    description: [info.name, info.symbol].filter(Boolean).join(" · "),
-    searchText: [info.name, info.symbol].filter(Boolean).join(" ")
+  const currencyOptions: PickerOption[] = currencyCatalog.map((item) => ({
+    value: item.code,
+    label: item.code,
+    description: [item.name, item.symbol].filter(Boolean).join(" · "),
+    searchText: [item.name, item.symbol].filter(Boolean).join(" ")
   }));
 
   return (
@@ -444,7 +449,7 @@ export default function OnboardingGate({
             </div>
             <div className="onboarding-field">
               <label style={labelStyle}>Moneda predeterminada</label>
-              <SearchablePicker label="Buscar moneda" value={defaultCurrency} options={currencyOptions} placeholder="Seleccionar moneda" onChange={setDefaultCurrency} />
+              <CurrencyPicker value={defaultCurrency} onChange={setDefaultCurrency} label="Buscar moneda" />
               <p style={{ color: "#92909A", fontSize: 11, marginTop: 6 }}>Se propone según tu país, pero podés buscar y elegir otra moneda.</p>
             </div>
             <div className="onboarding-field">
@@ -455,7 +460,7 @@ export default function OnboardingGate({
             </div>
             <div className="onboarding-field">
               <label style={labelStyle} htmlFor="profile-income">Ingreso habitual aproximado (opcional)</label>
-              <div className="onboarding-income"><input id="profile-income" style={fieldStyle} inputMode="decimal" placeholder="Ej. 250.000,50" value={income} onChange={(e) => setIncome(e.target.value)} /><select aria-label="Moneda del ingreso" style={{ ...fieldStyle, width: 100 }} value={currency} onChange={(e) => setCurrency(e.target.value)}><option>ARS</option><option>USD</option><option>EUR</option></select></div>
+              <div className="onboarding-income"><input id="profile-income" style={fieldStyle} inputMode="decimal" placeholder="Ej. 250.000,50" value={income} onChange={(e) => setIncome(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del ingreso" /></div></div>
             </div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="profile-pay-date">Próximo ingreso esperado (opcional)</label><input id="profile-pay-date" type="date" style={fieldStyle} value={nextPayDate} onChange={(e) => setNextPayDate(e.target.value)} /></div>
             <div className="onboarding-field"><label style={labelStyle}>Fuentes de ingresos</label><div className="onboarding-options">{["Sueldo","Trabajo independiente","Negocio propio","Ayuda familiar","Otros"].map((item) => <label className="onboarding-option" key={item}><input type="checkbox" checked={incomeSources.includes(item)} onChange={() => toggle(item, incomeSources, setIncomeSources)} />{item}</label>)}</div></div>
@@ -469,7 +474,7 @@ export default function OnboardingGate({
             <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 14 }}>Agregar {step === 1 ? "un gasto esencial" : "un compromiso"}</h3>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-name">Nombre</label><input id="commitment-name" style={fieldStyle} placeholder={step === 1 ? "Ej. Alquiler, supermercado..." : "Ej. Cuota, préstamo, suscripción..."} value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-category">Categoría</label><select id="commitment-category" style={fieldStyle} value={category} onChange={(e) => setCategory(e.target.value)}>{currentCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
-            <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-amount">Importe</label><div className="onboarding-income"><input id="commitment-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 85000" value={amount} onChange={(e) => setAmount(e.target.value)} /><select aria-label="Moneda del compromiso" style={{ ...fieldStyle, width: 100 }} value={commitmentCurrency} onChange={(e) => setCommitmentCurrency(e.target.value)}><option>ARS</option><option>USD</option><option>EUR</option></select></div></div>
+            <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-amount">Importe</label><div className="onboarding-income"><input id="commitment-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 85000" value={amount} onChange={(e) => setAmount(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={commitmentCurrency} onChange={setCommitmentCurrency} label="Moneda del compromiso" /></div></div></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-frequency">Frecuencia</label><select id="commitment-frequency" style={fieldStyle} value={commitmentFrequency} onChange={(e) => setCommitmentFrequency(e.target.value as "weekly" | "monthly" | "yearly")}><option value="weekly">Semanal</option><option value="monthly">Mensual</option><option value="yearly">Anual</option></select></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-due">Vencimiento (opcional)</label><input id="commitment-due" type="date" style={fieldStyle} value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-type">Importe</label><select id="commitment-type" style={fieldStyle} value={amountType} onChange={(e) => setAmountType(e.target.value as "exact" | "approximate")}><option value="exact">Exacto</option><option value="approximate">Aproximado</option></select></div>
@@ -483,13 +488,13 @@ export default function OnboardingGate({
         {step === 3 && (
           <>
             <p style={{ color: "#C6C1CD", fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>La reserva protegida es el dinero que querés mantener disponible para emergencias o necesidades esenciales. VERA la va a respetar al sugerir planes de ahorro.</p>
-            <div className="onboarding-field"><label style={labelStyle} htmlFor="reserve-amount">Importe que querés proteger (opcional)</label><div className="onboarding-income"><input id="reserve-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 150.000" value={reserveAmount} onChange={(e) => setReserveAmount(e.target.value)} /><select aria-label="Moneda de la reserva" style={{ ...fieldStyle, width: 100 }} value={reserveCurrency} onChange={(e) => setReserveCurrency(e.target.value)}><option>ARS</option><option>USD</option><option>EUR</option></select></div></div>
+            <div className="onboarding-field"><label style={labelStyle} htmlFor="reserve-amount">Importe que querés proteger (opcional)</label><div className="onboarding-income"><input id="reserve-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 150.000" value={reserveAmount} onChange={(e) => setReserveAmount(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={reserveCurrency} onChange={setReserveCurrency} label="Moneda de la reserva" /></div></div></div>
           </>
         )}
 
         {step === 4 && (
           <div style={{ display: "grid", gap: 12 }}>
-            {[["País de residencia", countries.find((item) => item.code === countryCode)?.name ?? countryCode], ["Moneda predeterminada", defaultCurrency], ["Frecuencia de ingresos", frequency ? ({monthly:"Mensual",biweekly:"Quincenal",weekly:"Semanal",daily:"Por día o trabajo",variable:"Variable",none:"Sin ingresos actualmente"} as Record<string,string>)[frequency] : "Pendiente"],["Ingreso habitual", income ? currency + " " + income : "No informado"],["Compromisos registrados", String(commitments.length)],["Categorías de gasto", String(expenseCategories.length)],["Reserva protegida", reserveAmount ? reserveCurrency + " " + reserveAmount : "Sin configurar"]].map(([label,value]) => <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #30323A" }}><span style={{ color: "#AAA7B0", fontSize: 13 }}>{label}</span><strong style={{ color: "#F2F0EB", fontSize: 13, textAlign: "right" }}>{value}</strong></div>)}
+            {[["País de residencia", countries.find((item) => item.code === countryCode)?.name ?? countryCode], ["Nacionalidad", countries.find((item) => item.code === nationalityCode)?.name ?? nationalityCode], ["Moneda predeterminada", defaultCurrency], ["Frecuencia de ingresos", frequency ? ({monthly:"Mensual",biweekly:"Quincenal",weekly:"Semanal",daily:"Por día o trabajo",variable:"Variable",none:"Sin ingresos actualmente"} as Record<string,string>)[frequency] : "Pendiente"],["Ingreso habitual", income ? currency + " " + income : "No informado"],["Compromisos registrados", String(commitments.length)],["Categorías de gasto", String(expenseCategories.length)],["Reserva protegida", reserveAmount ? reserveCurrency + " " + reserveAmount : "Sin configurar"]].map(([label,value]) => <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #30323A" }}><span style={{ color: "#AAA7B0", fontSize: 13 }}>{label}</span><strong style={{ color: "#F2F0EB", fontSize: 13, textAlign: "right" }}>{value}</strong></div>)}
             <p style={{ color: "#92909A", fontSize: 11, lineHeight: 1.5 }}>Podés volver a cualquier etapa para corregir los datos. La información también se puede editar más adelante desde Mi perfil.</p>
           </div>
         )}
