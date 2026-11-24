@@ -14,7 +14,7 @@ type Goal = {
   id: string;
   title: string;
   target_amount: number;
-  currency: "ARS" | "USD" | "EUR";
+  currency: string;
   target_date: string | null;
   status: "active" | "paused" | "completed";
   saved_amount: number;
