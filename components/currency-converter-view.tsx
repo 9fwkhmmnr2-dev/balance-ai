@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-const currencies = [
-  { code: "ARS", label: "Peso argentino" },
-  { code: "USD", label: "Dólar estadounidense" },
-  { code: "EUR", label: "Euro" },
-];
+import CurrencyPicker from "./currency-picker";
 
 const comparisonSources = [
   { id: "oficial", name: "Dólar oficial", description: "Referencia oficial" },
@@ -215,9 +210,9 @@ export default function CurrencyConverterView() {
             </label>
 
             <div className="converter-currency-row">
-              <label><span>De</span><select value={from} onChange={(event) => setFrom(event.target.value)}>{currencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} · {currency.label}</option>)}</select></label>
+              <label><span>De</span><CurrencyPicker value={from} onChange={setFrom} label="Moneda de origen" /></label>
               <button className="converter-swap" type="button" onClick={swapCurrencies} aria-label="Intercambiar monedas">⇄</button>
-              <label><span>A</span><select value={to} onChange={(event) => setTo(event.target.value)}>{currencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.code} · {currency.label}</option>)}</select></label>
+              <label><span>A</span><CurrencyPicker value={to} onChange={setTo} label="Moneda de destino" /></label>
             </div>
 
             <label className="converter-quick-source">
@@ -244,7 +239,7 @@ export default function CurrencyConverterView() {
                   ? "La fuente no confirmó este valor recientemente. No usamos esta cotización para calcular."
                   : conversion?.marketClosed
                     ? "Mercado cerrado. Se muestra la última cotización confirmada; el valor puede cambiar cuando vuelva a operar."
-                    : "El cálculo utiliza el valor de compra o venta correspondiente al sentido de la conversión.")}
+                    : "Las cotizaciones automáticas disponibles actualmente cubren ARS, USD y EUR. Para otras monedas se mostrará que falta una cotización confiable.")}
               </p>
             </div>
             {error && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar conexión</button>}
