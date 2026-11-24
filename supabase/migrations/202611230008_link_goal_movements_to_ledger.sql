@@ -11,7 +11,7 @@ alter table public.financial_goal_movements
 alter table public.financial_goal_recurring_rules
   add column if not exists account_id uuid;
 
-do $
+do $migration$
 begin
   if not exists (
     select 1 from pg_constraint
@@ -33,9 +33,9 @@ begin
       check (verification_status in ('not_required', 'pending', 'verified'));
   end if;
 end;
-$;
+$migration$;
 
-do $$
+do $
 begin
   if not exists (
     select 1 from pg_constraint
@@ -83,9 +83,9 @@ begin
     raise exception 'Not authorized';
   end if;
 
-  if p_type not in ('income', 'expense') or p_amount is null or p_amount <= 0
-     or p_status not in ('pending', 'posted', 'cancelled')
-     or p_source not in ('manual', 'recurring') then
+  if p_type is null or p_type not in ('income', 'expense') or p_amount is null or p_amount <= 0
+     or p_status is null or p_status not in ('pending', 'posted', 'cancelled')
+     or p_source is null or p_source not in ('manual', 'recurring') then
     raise exception 'Invalid goal movement data';
   end if;
 
