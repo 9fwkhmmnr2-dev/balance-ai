@@ -266,7 +266,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "La comprobación del movimiento no es válida." }, { status: 400 });
       }
       const { data, error } = await supabase.from("financial_goal_movements")
-        .update({ verification_status: "verified", verified_at: new Date().toISOString() })
+        .update({ verification_status: "verified", verified_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
         .eq("source", "recurring").eq("status", "posted").eq("verification_status", "pending")
         .select("id, verification_status, verified_at").maybeSingle();
