@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import MobileMenu from "./mobile-menu";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
+import CurrencyPicker from "./currency-picker";
 
 type AccountType = "cash" | "wallet" | "bank" | "savings" | "other";
-type Currency = "ARS" | "USD" | "EUR";
+type Currency = string;
 type Account = {
   id: string;
   name: string;
@@ -26,11 +27,7 @@ const accountTypes: { value: AccountType; label: string }[] = [
   { value: "savings", label: "Ahorros" },
   { value: "other", label: "Otra cuenta" }
 ];
-const currencies: { value: Currency; label: string }[] = [
-  { value: "ARS", label: "Pesos argentinos (ARS)" },
-  { value: "USD", label: "Dólares estadounidenses (USD)" },
-  { value: "EUR", label: "Euros (EUR)" }
-];
+
 const typeLabel = (type: AccountType) => accountTypes.find((item) => item.value === type)?.label ?? "Cuenta";
 
 function money(value: number, currency: string) {
@@ -240,7 +237,7 @@ export default function AccountsView() {
 
       {notice && <p className="accounts-notice" role="status">{notice}</p>}
 
-      {modalOpen && <div className="accounts-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setModalOpen(false); }}><section className="accounts-modal" role="dialog" aria-modal="true" aria-labelledby="accounts-modal-title"><div className="accounts-modal-heading"><div><p className="eyebrow">NUEVA CUENTA</p><h2 id="accounts-modal-title">Agregar cuenta</h2></div><button onClick={() => setModalOpen(false)} disabled={saving} aria-label="Cerrar">×</button></div><form onSubmit={createAccount}><label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ej. Mercado Pago" maxLength={50} required /></label><label>Tipo<select value={type} onChange={(event) => setType(event.target.value as AccountType)}>{accountTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label><label>Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value as Currency)}>{currencies.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label><label>Saldo inicial<input value={initialBalance} onChange={(event) => setInitialBalance(event.target.value)} inputMode="decimal" placeholder="Ej. 150.000,00" required /><small>Es el saldo que tenés hoy al comenzar a usar esta cuenta en FINANCETRACK.</small></label>{notice && <p className="accounts-notice" role="alert">{notice}</p>}<button className="accounts-add-button accounts-submit" type="submit" disabled={saving}>{saving ? "Guardando..." : "Crear cuenta"}</button></form></section></div>}
+      {modalOpen && <div className="accounts-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setModalOpen(false); }}><section className="accounts-modal" role="dialog" aria-modal="true" aria-labelledby="accounts-modal-title"><div className="accounts-modal-heading"><div><p className="eyebrow">NUEVA CUENTA</p><h2 id="accounts-modal-title">Agregar cuenta</h2></div><button onClick={() => setModalOpen(false)} disabled={saving} aria-label="Cerrar">×</button></div><form onSubmit={createAccount}><label>Nombre<input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ej. Mercado Pago" maxLength={50} required /></label><label>Tipo<select value={type} onChange={(event) => setType(event.target.value as AccountType)}>{accountTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label><label>Moneda<CurrencyPicker value={currency} onChange={setCurrency} label="Moneda de la cuenta" /></label><label>Saldo inicial<input value={initialBalance} onChange={(event) => setInitialBalance(event.target.value)} inputMode="decimal" placeholder="Ej. 150.000,00" required /><small>Es el saldo que tenés hoy al comenzar a usar esta cuenta en FINANCETRACK.</small></label>{notice && <p className="accounts-notice" role="alert">{notice}</p>}<button className="accounts-add-button accounts-submit" type="submit" disabled={saving}>{saving ? "Guardando..." : "Crear cuenta"}</button></form></section></div>}
     </div>
   );
 }
