@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import MobileMenu from "./mobile-menu";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
+import CurrencyPicker from "./currency-picker";
 
-type Account = { id: string; name: string; currency: "ARS" | "USD" | "EUR"; is_archived?: boolean };
+type Account = { id: string; name: string; currency: string; is_archived?: boolean };
 type Movement = { id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; recurring_mode?: "confirmation" | "automatic" | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null };
 type RecurringRule = { id: string; goal_id: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; mode: "confirmation" | "automatic"; status: "active" | "paused" | "completed"; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string };
 type Goal = {
@@ -22,7 +23,6 @@ type Goal = {
   recurring_rules: RecurringRule[];
 };
 
-const currencies = ["ARS", "USD", "EUR"] as const;
 function money(amount: number, currency: string) {
   try { return new Intl.NumberFormat("es-AR", { style: "currency", currency, maximumFractionDigits: 2 }).format(amount); }
   catch { return currency + " " + amount.toLocaleString("es-AR"); }
@@ -40,7 +40,7 @@ export default function FinancialGoalsView() {
   const [notice, setNotice] = useState("");
   const [title, setTitle] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
-  const [currency, setCurrency] = useState<(typeof currencies)[number]>("ARS");
+  const [currency, setCurrency] = useState("ARS");
   const [targetDate, setTargetDate] = useState("");
   const [contributionGoal, setContributionGoal] = useState<Goal | null>(null);
   const [contributionAmount, setContributionAmount] = useState("");
@@ -309,7 +309,7 @@ export default function FinancialGoalsView() {
             <label>Nombre del objetivo<input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={80} placeholder="Ej. Comprar una computadora" required /></label>
             <div className="goals-form-row">
               <label>Importe objetivo<input value={targetAmount} onChange={(event) => setTargetAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 500.000" required /></label>
-              <label>Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value as (typeof currencies)[number])}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+              <label>Moneda<CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del objetivo" /></label>
             </div>
             <label>Fecha objetivo <span>(opcional)</span><input type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} min={new Date().toISOString().slice(0, 10)} /></label>
             <button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Crear objetivo"}</button>
