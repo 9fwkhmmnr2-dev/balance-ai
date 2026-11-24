@@ -84,7 +84,8 @@ begin
   end if;
 
   if p_type not in ('income', 'expense') or p_amount is null or p_amount <= 0
-     or p_status not in ('pending', 'posted', 'cancelled') then
+     or p_status not in ('pending', 'posted', 'cancelled')
+     or p_source not in ('manual', 'recurring') then
     raise exception 'Invalid goal movement data';
   end if;
 
@@ -94,6 +95,18 @@ begin
   for update;
 
   if not found then raise exception 'Goal not found'; end if;
+
+  if p_source = 'manual' and p_recurring_rule_id is not null then
+    raise exception 'Manual movements cannot reference a recurring rule';
+  end if;
+  if p_source = 'recurring' and (
+    p_recurring_rule_id is null or not exists (
+      select 1 from public.financial_goal_recurring_rules
+      where id = p_recurring_rule_id and goal_id = p_goal_id and user_id = p_user_id
+    )
+  ) then
+    raise exception 'Recurring rule does not belong to this goal';
+  end if;
 
   if p_account_id is not null then
     select * into account_row
