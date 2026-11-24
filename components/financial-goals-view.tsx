@@ -5,6 +5,7 @@ import MobileMenu from "./mobile-menu";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
+import { useProfileCurrency } from "../lib/use-profile-currency";
 
 type Account = { id: string; name: string; currency: string; is_archived?: boolean };
 type Movement = { id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; recurring_mode?: "confirmation" | "automatic" | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null };
@@ -41,6 +42,8 @@ export default function FinancialGoalsView() {
   const [title, setTitle] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [currency, setCurrency] = useState("ARS");
+  const profileCurrency = useProfileCurrency();
+  useEffect(() => { setCurrency(profileCurrency); }, [profileCurrency]);
   const [targetDate, setTargetDate] = useState("");
   const [contributionGoal, setContributionGoal] = useState<Goal | null>(null);
   const [contributionAmount, setContributionAmount] = useState("");
