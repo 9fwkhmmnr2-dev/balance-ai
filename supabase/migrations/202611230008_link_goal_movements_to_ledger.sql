@@ -78,6 +78,7 @@ declare
   account_row public.financial_accounts%rowtype;
   general_movement_id uuid;
   goal_movement_id uuid;
+  existing_goal_movement_id uuid;
 begin
   if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
     raise exception 'Not authorized';
@@ -99,13 +100,23 @@ begin
   if p_source = 'manual' and p_recurring_rule_id is not null then
     raise exception 'Manual movements cannot reference a recurring rule';
   end if;
-  if p_source = 'recurring' and (
-    p_recurring_rule_id is null or not exists (
-      select 1 from public.financial_goal_recurring_rules
-      where id = p_recurring_rule_id and goal_id = p_goal_id and user_id = p_user_id
-    )
-  ) then
-    raise exception 'Recurring rule does not belong to this goal';
+  if p_source = 'recurring' then
+    if p_recurring_rule_id is null or p_scheduled_for_date is null then
+      raise exception 'Recurring movement requires a rule and scheduled date';
+    end if;
+    perform 1 from public.financial_goal_recurring_rules
+    where id = p_recurring_rule_id and goal_id = p_goal_id and user_id = p_user_id
+    for update;
+    if not found then raise exception 'Recurring rule does not belong to this goal'; end if;
+
+    select id into existing_goal_movement_id
+    from public.financial_goal_movements
+    where recurring_rule_id = p_recurring_rule_id
+      and scheduled_for_date = p_scheduled_for_date
+    limit 1;
+    if existing_goal_movement_id is not null then
+      return existing_goal_movement_id;
+    end if;
   end if;
 
   if p_account_id is not null then
