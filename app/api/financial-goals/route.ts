@@ -158,18 +158,27 @@ export async function POST(request: Request) {
       const scheduleDay = input.frequency === "monthly" && Number.isInteger(input.scheduleDay) && Number(input.scheduleDay) >= 1 && Number(input.scheduleDay) <= 31
         ? Number(input.scheduleDay) : null;
       const { data: goal, error: goalError } = await supabase.from("financial_goals")
-        .select("id, status").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
+        .select("id, status, currency").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
       if (goalError) throw goalError;
       if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
       if (!category) return NextResponse.json({ error: "Elegí una categoría." }, { status: 400 });
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
+      const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
+      if (accountId) {
+        const { data: account, error: accountError } = await supabase.from("financial_accounts")
+          .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
+        if (accountError) throw accountError;
+        if (!account || account.is_archived || account.currency !== goal.currency) {
+          return NextResponse.json({ error: "La cuenta debe pertenecer a tu usuario, estar activa y usar la misma moneda del objetivo." }, { status: 400 });
+        }
+      }
       const { data, error } = await supabase.from("financial_goal_recurring_rules").insert({
         goal_id: input.goalId, user_id: userId, type: input.type, amount: input.amount,
         category, description: description || null, frequency: input.frequency,
         interval_days: intervalDays, schedule_day: scheduleDay, start_date: startDate,
         end_date: endDate, next_run_date: startDate, mode: input.mode, status: "active",
-        account_id: typeof input.accountId === "string" && input.accountId ? input.accountId : null,
+        account_id: accountId,
       }).select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
       if (error) throw error;
       return NextResponse.json({ rule: data }, { status: 201 });
@@ -314,11 +323,24 @@ export async function PATCH(request: Request) {
         const scheduleDay = input.frequency === "monthly" && Number.isInteger(input.scheduleDay) && Number(input.scheduleDay) >= 1 && Number(input.scheduleDay) <= 31 ? Number(input.scheduleDay) : null;
         const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
         if (!category) return NextResponse.json({ error: "Elegí una categoría." }, { status: 400 });
+        const { data: goal, error: goalError } = await supabase.from("financial_goals")
+          .select("currency").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
+        if (goalError) throw goalError;
+        if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
+        const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
+        if (accountId) {
+          const { data: account, error: accountError } = await supabase.from("financial_accounts")
+            .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
+          if (accountError) throw accountError;
+          if (!account || account.is_archived || account.currency !== goal.currency) {
+            return NextResponse.json({ error: "La cuenta debe pertenecer a tu usuario, estar activa y usar la misma moneda del objetivo." }, { status: 400 });
+          }
+        }
         updates.type = input.type; updates.amount = input.amount; updates.category = category;
         updates.description = typeof input.description === "string" && input.description.trim() ? input.description.trim().slice(0, 240) : null;
         updates.frequency = input.frequency; updates.interval_days = intervalDays; updates.schedule_day = scheduleDay;
         updates.start_date = startDate; updates.end_date = endDate; updates.next_run_date = startDate; updates.mode = input.mode;
-        updates.account_id = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
+        updates.account_id = accountId;
       }
       if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
       const { data, error } = await supabase.from("financial_goal_recurring_rules").update(updates)
