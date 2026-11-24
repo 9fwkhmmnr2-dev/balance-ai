@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import CurrencyPicker from "./currency-picker";
+import { useProfileCurrency } from "../lib/use-profile-currency";
 
 const comparisonSources = [
   { id: "oficial", name: "Dólar oficial", description: "Referencia oficial" },
@@ -55,6 +56,8 @@ export default function CurrencyConverterView() {
   const [mode, setMode] = useState<"quick" | "advanced">("quick");
   const [amount, setAmount] = useState("1000");
   const [from, setFrom] = useState("ARS");
+  const profileCurrency = useProfileCurrency();
+  useEffect(() => { setFrom(profileCurrency); }, [profileCurrency]);
   const [to, setTo] = useState("USD");
   const [usdSource, setUsdSource] = useState<"oficial" | "mep" | "blue">("oficial");
   const [selectedSources, setSelectedSources] = useState<string[]>(["oficial", "mep", "blue"]);
