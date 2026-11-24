@@ -255,7 +255,7 @@ export async function POST(request: Request) {
       };
       let insertedRule = await supabase.from("financial_goal_recurring_rules").insert(rulePayload)
         .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
-      if (insertedRule.error && (insertedRule.error.code === "42703" || insertedRule.error.code === "PGRST204") && (updates.currency === undefined || (recurringGoalCurrency !== null && updates.currency === recurringGoalCurrency))) {
+      if (insertedRule.error && (insertedRule.error.code === "42703" || insertedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
         const legacyPayload = { ...rulePayload } as Record<string, unknown>;
         delete legacyPayload.currency;
         delete legacyPayload.account_id;
