@@ -119,6 +119,7 @@ export default function FinancialGoalsView() {
     try {
       await request("POST", { action: "movement", goalId: contributionGoal.id, type: movementType, amount, category: movementCategory, description: contributionNote.trim(), movementDate, accountId: contributionAccountId || null });
       setContributionGoal(null); setContributionAccountId(""); setContributionAmount(""); setContributionNote(""); setMovementType("income"); setMovementCategory("Ahorro");
+      window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice("Movimiento registrado. El progreso del objetivo fue actualizado.");
       await loadGoals();
     } catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos registrar el aporte."); }
@@ -197,6 +198,7 @@ export default function FinancialGoalsView() {
     setNotice("");
     try {
       await request("PATCH", { action: "movement_status", goalId: goal.id, movementId: movement.id, status });
+      if (status === "posted") window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice(status === "posted" ? "Movimiento recurrente confirmado y sumado al progreso." : "Movimiento recurrente cancelado.");
       await loadGoals();
     } catch (err) {
@@ -232,6 +234,7 @@ export default function FinancialGoalsView() {
       });
       setCorrectionGoal(null);
       setCorrectionMovement(null);
+      window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice("Movimiento corregido. Volvé a comprobarlo para confirmar que coincide con tu operación.");
       await loadGoals();
     } catch (err) {
@@ -258,6 +261,7 @@ export default function FinancialGoalsView() {
     setNotice("");
     try {
       await request("DELETE", { id: goal.id, movementId: movement.id });
+      window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice("Movimiento eliminado y progreso recalculado.");
       await loadGoals();
     } catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos eliminar el aporte."); }
