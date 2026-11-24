@@ -177,6 +177,12 @@ export default function ProfileView() {
 
       <section className="card" style={{ marginBottom: 20 }}>
         <h2 className="section-title">Información de la cuenta</h2>
+        <p className="card-label">País de residencia</p>
+        <p style={{ fontWeight: 600, marginTop: 7 }}>{countryNames[profile?.country_code ?? ""] || profile?.country_code || "No informado"}</p>
+        <p className="card-label" style={{ marginTop: 20 }}>Nacionalidad</p>
+        <p style={{ fontWeight: 600, marginTop: 7 }}>{countryNames[profile?.nationality_code ?? ""] || profile?.nationality_code || "No informada"}</p>
+        <p className="card-label" style={{ marginTop: 20 }}>Moneda predeterminada</p>
+        <p style={{ fontWeight: 600, marginTop: 7 }}>{profile?.default_currency || profile?.currency || "ARS"}</p>
         <p className="card-label">Correo electrónico</p>
         <p style={{ fontWeight: 600, marginTop: 7 }}>{email}</p>
         <p className="card-label" style={{ marginTop: 20 }}>
