@@ -21,8 +21,14 @@ export async function GET(request: Request) {
     const supabase = createClient(url, serviceRoleKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
-    const { data, error } = await supabase.rpc("process_financial_goal_recurring_rules");
-    if (error) throw error;
+    const { data, error } = await supabase.rpc("process_financial_goal_recurring_rules_multi_currency");
+    if (error) {
+      const missingFunction = error.code === "42883" || error.code === "PGRST202" || /process_financial_goal_recurring_rules_multi_currency/i.test(error.message ?? "");
+      if (!missingFunction) throw error;
+      const legacy = await supabase.rpc("process_financial_goal_recurring_rules");
+      if (legacy.error) throw legacy.error;
+      return NextResponse.json({ success: true, created_movements: Number(legacy.data ?? 0), timezone: "America/Argentina/Buenos_Aires", currency_migration_pending: true });
+    }
     return NextResponse.json({
       success: true,
       created_movements: Number(data ?? 0),

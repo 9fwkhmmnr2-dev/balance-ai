@@ -36,6 +36,31 @@ const recurringFrequencies = ["daily", "weekly", "every_15_days", "monthly", "ev
 function validRecurringFrequency(value: unknown): value is typeof recurringFrequencies[number] { return typeof value === "string" && recurringFrequencies.includes(value as typeof recurringFrequencies[number]); }
 function validRuleMode(value: unknown): value is "confirmation" | "automatic" { return value === "confirmation" || value === "automatic"; }
 
+type ExchangeRatesPayload = {
+  result?: string;
+  source?: string;
+  data_updated_at?: string;
+  effective_at?: Record<string, string>;
+  rates?: Record<string, number>;
+  stale?: Record<string, boolean>;
+};
+
+async function getReferenceRates(base: string, symbols: string[]): Promise<ExchangeRatesPayload | null> {
+  if (!symbols.length) return null;
+  const url = new URL(`https://api.exchangerate.dev/v1/latest/${base}`);
+  url.searchParams.set("symbols", symbols.join(","));
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (process.env.EXCHANGERATE_API_KEY) headers.Authorization = `Bearer ${process.env.EXCHANGERATE_API_KEY}`;
+  try {
+    const response = await fetch(url.toString(), { headers, next: { revalidate: 900 }, signal: AbortSignal.timeout(9000) });
+    if (!response.ok) return null;
+    const payload = await response.json() as ExchangeRatesPayload;
+    return payload.result === "success" && payload.rates ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
 function netAmount(entries: Array<{ type: string; amount: number | string; status: string }>) {
   return entries.reduce((sum, entry) => {
     if (entry.status !== "posted") return sum;
@@ -61,47 +86,48 @@ export async function GET(request: Request) {
     if (goalsError) throw goalsError;
 
     const ids = (goals ?? []).map((goal) => goal.id);
-    let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
-    let rules: Array<{ id: string; goal_id: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
+    const goalCurrencyById = new Map((goals ?? []).map((goal) => [goal.id, goal.currency]));
+    let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; currency: string; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
+    let rules: Array<{ id: string; goal_id: string; currency: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
     let accounts: Array<{ id: string; name: string; currency: string; is_archived: boolean }> = [];
 
     if (ids.length) {
       diagnosticStage = "financial_goal_movements";
-      const { data: movementRows, error: movementError } = await supabase
+      const modernMovements = await supabase
         .from("financial_goal_movements")
-        .select("id, goal_id, type, amount, category, description, movement_date:occurred_at, status, source, recurring_rule_id, created_at")
-        .eq("user_id", userId)
-        .in("goal_id", ids)
-        .order("occurred_at", { ascending: false });
-      if (movementError) {
-        console.error("[financial-goals][GET] movements query failed", {
-          code: movementError.code ?? null,
-          message: movementError.message ?? "Unknown Supabase error",
-        });
+        .select("id, goal_id, type, amount, currency, category, description, movement_date:occurred_at, status, source, recurring_rule_id, verification_status, verified_at, created_at")
+        .eq("user_id", userId).in("goal_id", ids).order("occurred_at", { ascending: false });
+      if (modernMovements.error) {
+        const legacyMovements = await supabase
+          .from("financial_goal_movements")
+          .select("id, goal_id, type, amount, category, description, movement_date:occurred_at, status, source, recurring_rule_id, created_at")
+          .eq("user_id", userId).in("goal_id", ids).order("occurred_at", { ascending: false });
+        if (legacyMovements.error) {
+          console.error("[financial-goals][GET] movements query failed", { code: legacyMovements.error.code ?? null, message: legacyMovements.error.message ?? "Unknown Supabase error" });
+        } else {
+          movements = (legacyMovements.data ?? []).map((entry) => ({ ...entry, currency: goalCurrencyById.get(entry.goal_id) ?? "ARS", verification_status: "not_required" as const, verified_at: null })) as typeof movements;
+        }
       } else {
-        movements = (movementRows ?? []).map((entry) => ({
-          ...entry,
-          verification_status: "not_required" as const,
-          verified_at: null,
-        })) as typeof movements;
+        movements = (modernMovements.data ?? []).map((entry) => ({ ...entry, currency: entry.currency ?? goalCurrencyById.get(entry.goal_id) ?? "ARS", verification_status: entry.verification_status ?? "not_required", verified_at: entry.verified_at ?? null })) as typeof movements;
       }
 
       // account_id is not part of the deployed recurring-rules schema.
       // Load the supported columns directly instead of querying then retrying.
       diagnosticStage = "financial_goal_recurring_rules";
-      const { data: ruleRows, error: ruleError } = await supabase
-        .from("financial_goal_recurring_rules")
-        .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
-        .eq("user_id", userId)
-        .in("goal_id", ids)
-        .order("next_run_date", { ascending: true });
-      if (ruleError) {
-        console.error("[financial-goals][GET] recurring_rules query failed", {
-          code: ruleError.code ?? null,
-          message: ruleError.message ?? "Unknown Supabase error",
-        });
+      const modernRules = await supabase.from("financial_goal_recurring_rules")
+        .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
+        .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true });
+      if (modernRules.error) {
+        const legacyRules = await supabase.from("financial_goal_recurring_rules")
+          .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
+          .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true });
+        if (legacyRules.error) {
+          console.error("[financial-goals][GET] recurring_rules query failed", { code: legacyRules.error.code ?? null, message: legacyRules.error.message ?? "Unknown Supabase error" });
+        } else {
+          rules = (legacyRules.data ?? []).map((rule) => ({ ...rule, currency: goalCurrencyById.get(rule.goal_id) ?? "ARS", account_id: null })) as typeof rules;
+        }
       } else {
-        rules = (ruleRows ?? []).map((rule) => ({ ...rule, account_id: null })) as typeof rules;
+        rules = (modernRules.data ?? []).map((rule) => ({ ...rule, currency: rule.currency ?? goalCurrencyById.get(rule.goal_id) ?? "ARS" })) as typeof rules;
       }
     }
 
@@ -123,9 +149,32 @@ export async function GET(request: Request) {
       accounts = accountRows ?? [];
     }
 
-    const result = (goals ?? []).map((goal) => {
+    const result = await Promise.all((goals ?? []).map(async (goal) => {
       const goalMovements = movements.filter((entry) => entry.goal_id === goal.id);
-      const saved = netAmount(goalMovements);
+      const netByCurrency = new Map<string, number>();
+      for (const entry of goalMovements) {
+        if (entry.status !== "posted") continue;
+        const code = entry.currency || goal.currency;
+        const signed = entry.type === "income" ? Number(entry.amount) : -Number(entry.amount);
+        netByCurrency.set(code, (netByCurrency.get(code) ?? 0) + signed);
+      }
+      const foreignCurrencies = [...netByCurrency.keys()].filter((code) => code !== goal.currency);
+      const rateData = await getReferenceRates(goal.currency, foreignCurrencies);
+      const convertedByCurrency = [...netByCurrency.entries()].map(([code, amount]) => {
+        const rate = code === goal.currency ? 1 : rateData?.rates?.[code];
+        const stale = code !== goal.currency && rateData?.stale?.[code] === true;
+        return { currency: code, amount, rate: typeof rate === "number" && rate > 0 && !stale ? rate : null };
+      });
+      const saved = convertedByCurrency.reduce((sum, item) => sum + (item.rate === null ? 0 : item.amount * item.rate), 0);
+      const unconvertedCurrencies = new Set(convertedByCurrency.filter((item) => item.rate === null).map((item) => item.currency));
+      const unconvertedMovementsCount = goalMovements.filter((entry) => entry.status === "posted" && unconvertedCurrencies.has(entry.currency || goal.currency)).length;
+      const positiveBreakdown = convertedByCurrency.filter((item) => item.rate !== null && item.amount > 0).map((item) => ({
+        currency: item.currency, amount: item.amount, equivalent_amount: item.amount * (item.rate ?? 1),
+      }));
+      const breakdownTotal = positiveBreakdown.reduce((sum, item) => sum + item.equivalent_amount, 0);
+      const currencyBreakdown = positiveBreakdown.map((item) => ({
+        ...item, percentage: breakdownTotal > 0 ? Math.round((item.equivalent_amount / breakdownTotal) * 1000) / 10 : 0,
+      }));
       const target = Number(goal.target_amount);
       return {
         ...goal,
@@ -134,13 +183,17 @@ export async function GET(request: Request) {
         net_amount: saved,
         remaining_amount: Math.max(0, target - saved),
         progress_percent: target > 0 ? Math.min(100, Math.max(0, Math.round((saved / target) * 1000) / 10)) : 0,
+        currency_breakdown: currencyBreakdown,
+        unconverted_movements_count: unconvertedMovementsCount,
+        currency_rates_updated_at: rateData?.data_updated_at ?? null,
+        currency_rates_source: rateData?.source ?? null,
         movements: goalMovements.map((movement) => ({
           ...movement,
           recurring_mode: rules.find((rule) => rule.id === movement.recurring_rule_id)?.mode ?? null,
         })),
         recurring_rules: rules.filter((rule) => rule.goal_id === goal.id),
       };
-    });
+    }));
 
     return NextResponse.json({ goals: result, accounts });
   } catch (error) {
@@ -188,6 +241,7 @@ export async function POST(request: Request) {
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
       if (!category) return NextResponse.json({ error: "Elegí una categoría." }, { status: 400 });
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
+      const ruleCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
       const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
       if (accountId) {
         const access = await requirePremium(supabase, userId);
@@ -195,17 +249,17 @@ export async function POST(request: Request) {
         const { data: account, error: accountError } = await supabase.from("financial_accounts")
           .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
         if (accountError) throw accountError;
-        if (!account || account.is_archived || account.currency !== goal.currency) {
-          return NextResponse.json({ error: "La cuenta debe pertenecer a tu usuario, estar activa y usar la misma moneda del objetivo." }, { status: 400 });
+        if (!account || account.is_archived || account.currency !== ruleCurrency) {
+          return NextResponse.json({ error: "La cuenta debe pertenecer a tu usuario, estar activa y usar la misma moneda de la regla." }, { status: 400 });
         }
       }
       const { data, error } = await supabase.from("financial_goal_recurring_rules").insert({
-        goal_id: input.goalId, user_id: userId, type: input.type, amount: input.amount,
+        goal_id: input.goalId, user_id: userId, type: input.type, amount: input.amount, currency: ruleCurrency,
         category, description: description || null, frequency: input.frequency,
         interval_days: intervalDays, schedule_day: scheduleDay, start_date: startDate,
         end_date: endDate, next_run_date: startDate, mode: input.mode, status: "active",
         account_id: accountId, updated_at: new Date().toISOString(),
-      }).select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
+      }).select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
       if (error) throw error;
       return NextResponse.json({ rule: data }, { status: 201 });
     }
@@ -216,9 +270,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Revisá el objetivo, el tipo y el importe del movimiento." }, { status: 400 });
       }
       const { data: goal, error: goalError } = await supabase.from("financial_goals")
-        .select("id, status").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
+        .select("id, status, currency").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
       if (goalError) throw goalError;
       if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
+      const movementCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
       const movementDate = typeof input.movementDate === "string" && validDateKey(input.movementDate)
         ? input.movementDate : new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
@@ -228,23 +283,35 @@ export async function POST(request: Request) {
       if (accountId) {
         const access = await requirePremium(supabase, userId);
         if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+        const { data: account, error: accountError } = await supabase.from("financial_accounts")
+          .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
+        if (accountError) throw accountError;
+        if (!account || account.is_archived || account.currency !== movementCurrency) {
+          return NextResponse.json({ error: "La cuenta debe usar la misma moneda del movimiento." }, { status: 400 });
+        }
       }
-      const { data: movementId, error } = await supabase.rpc("create_linked_goal_movement", {
-        p_goal_id: input.goalId,
-        p_user_id: userId,
-        p_type: input.type,
-        p_amount: input.amount,
-        p_category: category,
-        p_description: description || null,
-        p_movement_date: movementDate,
-        p_account_id: accountId,
-        p_source: "manual",
-        p_recurring_rule_id: null,
-        p_scheduled_for_date: null,
-        p_status: "posted",
-        p_verification_status: "not_required",
+      const { data: movementId, error } = await supabase.rpc("create_goal_movement_multi_currency", {
+        p_goal_id: input.goalId, p_user_id: userId, p_type: input.type,
+        p_amount: input.amount, p_currency: movementCurrency, p_category: category,
+        p_description: description || null, p_occurred_at: movementDate, p_account_id: accountId,
+        p_source: "manual", p_recurring_rule_id: null, p_scheduled_for_date: null,
+        p_status: "posted", p_verification_status: "not_required",
       });
-      if (error) throw error;
+      if (error) {
+        const missingFunction = error.code === "42883" || error.code === "PGRST202" || /create_goal_movement_multi_currency/i.test(error.message ?? "");
+        if (missingFunction && movementCurrency === goal.currency) {
+          const legacy = await supabase.rpc("create_linked_goal_movement", {
+            p_goal_id: input.goalId, p_user_id: userId, p_type: input.type, p_amount: input.amount,
+            p_category: category, p_description: description || null, p_movement_date: movementDate,
+            p_account_id: accountId, p_source: "manual", p_recurring_rule_id: null,
+            p_scheduled_for_date: null, p_status: "posted", p_verification_status: "not_required",
+          });
+          if (legacy.error) throw legacy.error;
+          return NextResponse.json({ movementId: legacy.data }, { status: 201 });
+        }
+        if (missingFunction) return NextResponse.json({ error: "Para registrar aportes en varias monedas primero hay que aplicar la migración de objetivos en Supabase Preview." }, { status: 409 });
+        throw error;
+      }
       return NextResponse.json({ movementId }, { status: 201 });
     }
 
@@ -280,15 +347,22 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "Revisá el importe, la categoría y la fecha corregidos." }, { status: 400 });
       }
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
-      const { data, error } = await supabase.rpc("correct_linked_goal_movement", {
-        p_goal_movement_id: input.movementId,
-        p_user_id: userId,
-        p_amount: input.amount,
-        p_category: input.category.trim().slice(0, 60),
-        p_description: description || null,
-        p_movement_date: input.movementDate,
+      const { data, error } = await supabase.rpc("correct_goal_movement_multi_currency", {
+        p_goal_movement_id: input.movementId, p_user_id: userId, p_amount: input.amount,
+        p_category: input.category.trim().slice(0, 60), p_description: description || null,
+        p_occurred_at: input.movementDate,
       });
-      if (error) throw error;
+      if (error) {
+        const missingFunction = error.code === "42883" || error.code === "PGRST202" || /correct_goal_movement_multi_currency/i.test(error.message ?? "");
+        if (!missingFunction) throw error;
+        const legacy = await supabase.rpc("correct_linked_goal_movement", {
+          p_goal_movement_id: input.movementId, p_user_id: userId, p_amount: input.amount,
+          p_category: input.category.trim().slice(0, 60), p_description: description || null,
+          p_movement_date: input.movementDate,
+        });
+        if (legacy.error) throw legacy.error;
+        return NextResponse.json({ movementId: legacy.data });
+      }
       return NextResponse.json({ movementId: data });
     }
 
@@ -312,10 +386,16 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "La actualización del movimiento no es válida." }, { status: 400 });
       }
       if (input.status === "posted") {
-        const { data, error } = await supabase.rpc("confirm_linked_goal_movement", {
+        const { data, error } = await supabase.rpc("confirm_goal_movement_multi_currency", {
           p_goal_movement_id: input.movementId, p_user_id: userId,
         });
-        if (error) throw error;
+        if (error) {
+          const missingFunction = error.code === "42883" || error.code === "PGRST202" || /confirm_goal_movement_multi_currency/i.test(error.message ?? "");
+          if (!missingFunction) throw error;
+          const legacy = await supabase.rpc("confirm_linked_goal_movement", { p_goal_movement_id: input.movementId, p_user_id: userId });
+          if (legacy.error) throw legacy.error;
+          return NextResponse.json({ movementId: legacy.data });
+        }
         return NextResponse.json({ movementId: data });
       }
       const { data, error } = await supabase.from("financial_goal_movements")
@@ -337,7 +417,7 @@ export async function PATCH(request: Request) {
         if (!["active", "paused", "completed"].includes(input.status)) return NextResponse.json({ error: "Estado no válido." }, { status: 400 });
         updates.status = input.status;
       }
-      const editing = ["type", "amount", "category", "description", "frequency", "intervalDays", "scheduleDay", "startDate", "endDate", "mode", "accountId"].some((key) => key in input);
+      const editing = ["type", "amount", "currency", "category", "description", "frequency", "intervalDays", "scheduleDay", "startDate", "endDate", "mode", "accountId"].some((key) => key in input);
       if (editing) {
         if ((input.type !== "income" && input.type !== "expense") || !validAmount(input.amount) ||
             !validRecurringFrequency(input.frequency) || !validRuleMode(input.mode)) {
@@ -358,6 +438,7 @@ export async function PATCH(request: Request) {
           .select("currency").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
         if (goalError) throw goalError;
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
+        const ruleCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
         const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
         if (accountId) {
           const access = await requirePremium(supabase, userId);
@@ -365,11 +446,11 @@ export async function PATCH(request: Request) {
           const { data: account, error: accountError } = await supabase.from("financial_accounts")
             .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
           if (accountError) throw accountError;
-          if (!account || account.is_archived || account.currency !== goal.currency) {
-            return NextResponse.json({ error: "La cuenta debe pertenecer a tu usuario, estar activa y usar la misma moneda del objetivo." }, { status: 400 });
+          if (!account || account.is_archived || account.currency !== ruleCurrency) {
+            return NextResponse.json({ error: "La cuenta debe usar la misma moneda de la regla." }, { status: 400 });
           }
         }
-        updates.type = input.type; updates.amount = input.amount; updates.category = category;
+        updates.type = input.type; updates.amount = input.amount; updates.currency = ruleCurrency; updates.category = category;
         updates.description = typeof input.description === "string" && input.description.trim() ? input.description.trim().slice(0, 240) : null;
         updates.frequency = input.frequency; updates.interval_days = intervalDays; updates.schedule_day = scheduleDay;
         const { data: currentRule, error: currentRuleError } = await supabase
@@ -387,7 +468,7 @@ export async function PATCH(request: Request) {
       updates.updated_at = new Date().toISOString();
       const { data, error } = await supabase.from("financial_goal_recurring_rules").update(updates)
         .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
-        .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
+        .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
       if (error) throw error;
       if (!data) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
       return NextResponse.json({ rule: data });
@@ -399,13 +480,21 @@ export async function PATCH(request: Request) {
     if (typeof input.status === "string" && ["active", "paused", "completed"].includes(input.status)) {
       if (input.status === "completed") {
         const { data: goal, error: goalError } = await supabase.from("financial_goals")
-          .select("id, target_amount").eq("id", input.id).eq("user_id", userId).maybeSingle();
+          .select("id, target_amount, currency").eq("id", input.id).eq("user_id", userId).maybeSingle();
         if (goalError) throw goalError;
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
         const { data: entries, error: entriesError } = await supabase.from("financial_goal_movements")
-          .select("type, amount, status").eq("goal_id", input.id).eq("user_id", userId);
+          .select("type, amount, currency, status").eq("goal_id", input.id).eq("user_id", userId);
         if (entriesError) throw entriesError;
-        if (netAmount(entries ?? []) < Number(goal.target_amount)) {
+        const codes = [...new Set((entries ?? []).filter((entry) => entry.currency && entry.currency !== goal.currency).map((entry) => entry.currency))];
+        const completionRates = await getReferenceRates(goal.currency, codes);
+        const completionTotal = (entries ?? []).reduce((sum, entry) => {
+          if (entry.status !== "posted") return sum;
+          const rate = entry.currency === goal.currency ? 1 : completionRates?.rates?.[entry.currency];
+          if (typeof rate !== "number" || rate <= 0 || completionRates?.stale?.[entry.currency]) return sum;
+          return sum + (entry.type === "income" ? 1 : -1) * Number(entry.amount) * rate;
+        }, 0);
+        if (completionTotal < Number(goal.target_amount)) {
           return NextResponse.json({ error: "Solo podés completar un objetivo cuando los ingresos confirmados, descontando los gastos, alcanzan el importe objetivo." }, { status: 400 });
         }
       }
@@ -438,10 +527,17 @@ export async function DELETE(request: Request) {
     }
     const input = body as { id: string; movementId?: unknown };
     if (typeof input.movementId === "string") {
-      const { data, error } = await supabase.rpc("delete_linked_manual_goal_movement", {
+      const { data, error } = await supabase.rpc("delete_goal_movement_multi_currency", {
         p_goal_movement_id: input.movementId, p_user_id: userId,
       });
-      if (error) throw error;
+      if (error) {
+        const missingFunction = error.code === "42883" || error.code === "PGRST202" || /delete_goal_movement_multi_currency/i.test(error.message ?? "");
+        if (!missingFunction) throw error;
+        const legacy = await supabase.rpc("delete_linked_manual_goal_movement", { p_goal_movement_id: input.movementId, p_user_id: userId });
+        if (legacy.error) throw legacy.error;
+        if (!legacy.data) return NextResponse.json({ error: "No encontré ese movimiento manual." }, { status: 404 });
+        return NextResponse.json({ success: true });
+      }
       if (!data) return NextResponse.json({ error: "No encontré ese movimiento manual." }, { status: 404 });
       return NextResponse.json({ success: true });
     }

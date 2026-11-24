@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         : payload.code === "quota_exceeded" || payload.code === "ip_rate_limited"
           ? "Se alcanzó temporalmente el límite de consultas del proveedor. Intentá más tarde."
           : "El proveedor internacional no pudo devolver esta cotización.";
-      return NextResponse.json({ error: message }, { status: response.status === 429 ? 429 : 502 }, { headers: { "Cache-Control": "no-store" } });
+      return NextResponse.json({ error: message }, { status: response.status === 429 ? 429 : 502, headers: { "Cache-Control": "no-store" } });
     }
     const availableRates: Record<string, number> = {};
     const availableStale: Record<string, boolean> = {};
