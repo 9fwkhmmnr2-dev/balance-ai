@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
+import { useProfileCurrency } from "../lib/use-profile-currency";
 
 const categories = ["Alimentación", "Transporte", "Vivienda", "Servicios", "Salud", "Educación", "Entretenimiento", "Trabajo", "Ventas", "Otros"];
 type AccountOption = { id: string; name: string; currency: string };
@@ -22,6 +23,8 @@ export default function QuickMovement() {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("ARS");
+  const profileCurrency = useProfileCurrency();
+  useEffect(() => { setCurrency(profileCurrency); }, [profileCurrency]);
   const [category, setCategory] = useState("Otros");
   const [accountId, setAccountId] = useState("");
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
