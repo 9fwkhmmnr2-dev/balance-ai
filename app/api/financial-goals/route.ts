@@ -306,6 +306,9 @@ export async function POST(request: Request) {
       });
       if (error) {
         const missingFunction = error.code === "42883" || error.code === "PGRST202" || /create_goal_movement_multi_currency/i.test(error.message ?? "");
+        if (missingFunction && input.requireLedgerLink === true) {
+          return NextResponse.json({ error: "La vinculación con objetivos necesita que se aplique primero la migración de movimientos multidivisa en Supabase Preview. No se guardó el movimiento." }, { status: 409 });
+        }
         if (missingFunction && movementCurrency === goal.currency) {
           // Same-currency manual contributions must work before the optional
           // multi-currency migration is applied. Without an account, write
