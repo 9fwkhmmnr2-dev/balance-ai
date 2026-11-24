@@ -5,6 +5,7 @@ import MobileMenu from "./mobile-menu";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
+import { useProfileCurrency } from "../lib/use-profile-currency";
 
 type AccountType = "cash" | "wallet" | "bank" | "savings" | "other";
 type Currency = string;
@@ -52,6 +53,8 @@ export default function AccountsView() {
   const [name, setName] = useState("");
   const [type, setType] = useState<AccountType>("wallet");
   const [currency, setCurrency] = useState<Currency>("ARS");
+  const profileCurrency = useProfileCurrency();
+  useEffect(() => { setCurrency(profileCurrency); }, [profileCurrency]);
   const [initialBalance, setInitialBalance] = useState("0");
 
   const loadAccounts = useCallback(async () => {
