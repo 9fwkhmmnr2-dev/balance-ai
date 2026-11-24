@@ -50,62 +50,76 @@ export async function GET(request: Request) {
     const auth = await getUserClient(request);
     if ("error" in auth) return auth.error;
     const { supabase, userId } = auth;
+
     diagnosticStage = "financial_goals";
     const { data: goals, error: goalsError } = await supabase
       .from("financial_goals")
       .select("id, title, target_amount, currency, target_date, status, created_at, updated_at")
-      .eq("user_id", userId).neq("status", "archived").order("created_at", { ascending: false });
+      .eq("user_id", userId)
+      .neq("status", "archived")
+      .order("created_at", { ascending: false });
     if (goalsError) throw goalsError;
-    diagnosticStage = "financial_accounts";
-    const { data: accounts, error: accountsError } = await supabase
-      .from("financial_accounts")
-      .select("id, name, currency, is_archived")
-      .eq("user_id", userId).eq("is_archived", false).order("created_at", { ascending: true });
-    if (accountsError) throw accountsError;
 
     const ids = (goals ?? []).map((goal) => goal.id);
     let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
     let rules: Array<{ id: string; goal_id: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
+    let accounts: Array<{ id: string; name: string; currency: string; is_archived: boolean }> = [];
+
     if (ids.length) {
-      diagnosticStage = "financial_goal_movements_and_recurring_rules";
-      const [movementResult, ruleResult] = await Promise.all([
-        supabase.from("financial_goal_movements")
-          .select("id, goal_id, type, amount, category, description, movement_date:occurred_at, status, source, recurring_rule_id, created_at")
-          .eq("user_id", userId).in("goal_id", ids).order("occurred_at", { ascending: false }),
-        supabase.from("financial_goal_recurring_rules")
-          .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
-          .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true }),
-      ]);
-      let ruleRows = ruleResult.data ?? [];
-      if (ruleResult.error) {
-        console.error("[financial-goals][GET] recurring_rules query failed", {
-          code: ruleResult.error.code ?? null,
-          message: ruleResult.error.message ?? "Unknown Supabase error",
-        });
-        const missingAccountColumn = ruleResult.error.code === "42703" ||
-          ruleResult.error.code === "PGRST204" ||
-          ruleResult.error.message?.includes("account_id");
-        if (!missingAccountColumn) throw ruleResult.error;
-        const fallbackRules = await supabase.from("financial_goal_recurring_rules")
-          .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
-          .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true });
-        if (fallbackRules.error) {
-          diagnosticStage = "financial_goal_recurring_rules_fallback";
-          throw fallbackRules.error;
-        }
-        ruleRows = (fallbackRules.data ?? []).map((rule) => ({ ...rule, account_id: null }));
-      }
-      if (movementResult.error) throw movementResult.error;
-      movements = (movementResult.data ?? []).map((entry) => ({
-        ...entry, verification_status: "not_required" as const, verified_at: null,
+      diagnosticStage = "financial_goal_movements";
+      const { data: movementRows, error: movementError } = await supabase
+        .from("financial_goal_movements")
+        .select("id, goal_id, type, amount, category, description, movement_date:occurred_at, status, source, recurring_rule_id, created_at")
+        .eq("user_id", userId)
+        .in("goal_id", ids)
+        .order("occurred_at", { ascending: false });
+      if (movementError) throw movementError;
+      movements = (movementRows ?? []).map((entry) => ({
+        ...entry,
+        verification_status: "not_required" as const,
+        verified_at: null,
       })) as typeof movements;
-      rules = ruleRows as typeof rules;
+
+      // account_id is not part of the deployed recurring-rules schema.
+      // Load the supported columns directly instead of querying then retrying.
+      diagnosticStage = "financial_goal_recurring_rules";
+      const { data: ruleRows, error: ruleError } = await supabase
+        .from("financial_goal_recurring_rules")
+        .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
+        .eq("user_id", userId)
+        .in("goal_id", ids)
+        .order("next_run_date", { ascending: true });
+      if (ruleError) {
+        console.error("[financial-goals][GET] recurring_rules query failed", {
+          code: ruleError.code ?? null,
+          message: ruleError.message ?? "Unknown Supabase error",
+        });
+      } else {
+        rules = (ruleRows ?? []).map((rule) => ({ ...rule, account_id: null })) as typeof rules;
+      }
+    }
+
+    // Accounts are optional for displaying objectives. A failed account lookup
+    // must not prevent the goals and their recorded progress from loading.
+    diagnosticStage = "financial_accounts";
+    const { data: accountRows, error: accountsError } = await supabase
+      .from("financial_accounts")
+      .select("id, name, currency, is_archived")
+      .eq("user_id", userId)
+      .eq("is_archived", false)
+      .order("created_at", { ascending: true });
+    if (accountsError) {
+      console.error("[financial-goals][GET] accounts query failed", {
+        code: accountsError.code ?? null,
+        message: accountsError.message ?? "Unknown Supabase error",
+      });
+    } else {
+      accounts = accountRows ?? [];
     }
 
     const result = (goals ?? []).map((goal) => {
       const goalMovements = movements.filter((entry) => entry.goal_id === goal.id);
-      const posted = goalMovements.filter((entry) => entry.status === "posted");
-      const saved = netAmount(posted);
+      const saved = netAmount(goalMovements);
       const target = Number(goal.target_amount);
       return {
         ...goal,
@@ -113,7 +127,7 @@ export async function GET(request: Request) {
         saved_amount: Math.max(0, saved),
         net_amount: saved,
         remaining_amount: Math.max(0, target - saved),
-        progress_percent: Math.min(100, Math.max(0, Math.round((saved / target) * 1000) / 10)),
+        progress_percent: target > 0 ? Math.min(100, Math.max(0, Math.round((saved / target) * 1000) / 10)) : 0,
         movements: goalMovements.map((movement) => ({
           ...movement,
           recurring_mode: rules.find((rule) => rule.id === movement.recurring_rule_id)?.mode ?? null,
@@ -121,7 +135,8 @@ export async function GET(request: Request) {
         recurring_rules: rules.filter((rule) => rule.goal_id === goal.id),
       };
     });
-    return NextResponse.json({ goals: result, accounts: accounts ?? [] });
+
+    return NextResponse.json({ goals: result, accounts });
   } catch (error) {
     const dbError = error as { code?: unknown; message?: unknown };
     console.error("[financial-goals][GET] request failed", {
@@ -129,7 +144,7 @@ export async function GET(request: Request) {
       code: typeof dbError?.code === "string" ? dbError.code : null,
       message: typeof dbError?.message === "string" ? dbError.message : "Unknown error",
     });
-    return NextResponse.json({ error: "No pude cargar tus objetivos. Revisá que las tablas de movimientos y reglas estén disponibles." }, { status: 500 });
+    return NextResponse.json({ error: "No pude cargar tus objetivos. Revisá que las tablas de movimientos estén disponibles." }, { status: 500 });
   }
 }
 
