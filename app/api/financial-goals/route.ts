@@ -73,12 +73,18 @@ export async function GET(request: Request) {
         .eq("user_id", userId)
         .in("goal_id", ids)
         .order("occurred_at", { ascending: false });
-      if (movementError) throw movementError;
-      movements = (movementRows ?? []).map((entry) => ({
-        ...entry,
-        verification_status: "not_required" as const,
-        verified_at: null,
-      })) as typeof movements;
+      if (movementError) {
+        console.error("[financial-goals][GET] movements query failed", {
+          code: movementError.code ?? null,
+          message: movementError.message ?? "Unknown Supabase error",
+        });
+      } else {
+        movements = (movementRows ?? []).map((entry) => ({
+          ...entry,
+          verification_status: "not_required" as const,
+          verified_at: null,
+        })) as typeof movements;
+      }
 
       // account_id is not part of the deployed recurring-rules schema.
       // Load the supported columns directly instead of querying then retrying.
