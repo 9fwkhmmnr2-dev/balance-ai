@@ -70,8 +70,8 @@ export async function GET(request: Request) {
       diagnosticStage = "financial_goal_movements_and_recurring_rules";
       const [movementResult, ruleResult] = await Promise.all([
         supabase.from("financial_goal_movements")
-          .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
-          .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false }),
+          .select("id, goal_id, type, amount, category, description, movement_date:occurred_at, status, source, recurring_rule_id, created_at")
+          .eq("user_id", userId).in("goal_id", ids).order("occurred_at", { ascending: false }),
         supabase.from("financial_goal_recurring_rules")
           .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
           .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true }),
@@ -95,30 +95,10 @@ export async function GET(request: Request) {
         }
         ruleRows = (fallbackRules.data ?? []).map((rule) => ({ ...rule, account_id: null }));
       }
-      if (movementResult.error) {
-        console.error("[financial-goals][GET] goal_movements query failed", {
-          code: movementResult.error.code ?? null,
-          message: movementResult.error.message ?? "Unknown Supabase error",
-        });
-        const missingVerificationColumns = movementResult.error.code === "42703" ||
-          movementResult.error.code === "PGRST204" ||
-          movementResult.error.message?.includes("verification_status") ||
-          movementResult.error.message?.includes("verified_at");
-        if (!missingVerificationColumns) throw movementResult.error;
-        // Preview puede seguir usando el esquema compartido anterior hasta aplicar la migración en una base aislada.
-        const fallbackResult = await supabase.from("financial_goal_movements")
-          .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, created_at")
-          .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false });
-        if (fallbackResult.error) {
-          diagnosticStage = "financial_goal_movements_fallback";
-          throw fallbackResult.error;
-        }
-        movements = (fallbackResult.data ?? []).map((entry) => ({
-          ...entry, verification_status: "not_required" as const, verified_at: null,
-        })) as typeof movements;
-      } else {
-        movements = (movementResult.data ?? []) as typeof movements;
-      }
+      if (movementResult.error) throw movementResult.error;
+      movements = (movementResult.data ?? []).map((entry) => ({
+        ...entry, verification_status: "not_required" as const, verified_at: null,
+      })) as typeof movements;
       rules = ruleRows as typeof rules;
     }
 
