@@ -90,7 +90,11 @@ export default function AccountsView() {
     void loadAccounts();
     const refresh = () => { void loadAccounts(); };
     window.addEventListener("finance:transfer-saved", refresh);
-    return () => window.removeEventListener("finance:transfer-saved", refresh);
+    window.addEventListener("finance:movement-saved", refresh);
+    return () => {
+      window.removeEventListener("finance:transfer-saved", refresh);
+      window.removeEventListener("finance:movement-saved", refresh);
+    };
   }, [loadAccounts]);
 
   const balances = useMemo(() => {
