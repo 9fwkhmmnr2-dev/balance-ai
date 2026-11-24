@@ -10,15 +10,17 @@ type Props = {
   onChange: (code: string) => void;
   label?: string;
   disabled?: boolean;
+  allowFavorites?: boolean;
 };
 
-export default function CurrencyPicker({ value, onChange, label = "Moneda", disabled = false }: Props) {
+export default function CurrencyPicker({ value, onChange, label = "Moneda", disabled = false, allowFavorites = true }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
   const [favorites, setFavorites] = useState<string[]>(["ARS"]);
   const [loading, setLoading] = useState(true);
   const [favoriteError, setFavoriteError] = useState("");
+  const [profileExists, setProfileExists] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -34,9 +36,12 @@ export default function CurrencyPicker({ value, onChange, label = "Moneda", disa
         }
         const user = authResult.data.user;
         if (user) {
-          const { data } = await supabase.from("financial_profiles").select("favorite_currencies").eq("user_id", user.id).maybeSingle();
-          if (active && Array.isArray(data?.favorite_currencies) && data.favorite_currencies.length) {
-            setFavorites(data.favorite_currencies.filter((code: unknown): code is string => typeof code === "string" && /^[A-Z]{3}$/.test(code)));
+          const { data, error } = await supabase.from("financial_profiles").select("favorite_currencies").eq("user_id", user.id).maybeSingle();
+          if (active && !error && data) {
+            setProfileExists(true);
+            if (Array.isArray(data.favorite_currencies) && data.favorite_currencies.length) {
+              setFavorites(data.favorite_currencies.filter((code: unknown): code is string => typeof code === "string" && /^[A-Z]{3}$/.test(code)));
+            }
           }
         }
       } catch {
@@ -63,6 +68,10 @@ export default function CurrencyPicker({ value, onChange, label = "Moneda", disa
 
   async function toggleFavorite(code: string) {
     setFavoriteError("");
+    if (!profileExists) {
+      setFavoriteError("Completá tu perfil y aplicá la migración para guardar favoritas.");
+      return;
+    }
     const next = favorites.includes(code) ? favorites.filter((item) => item !== code) : [...favorites, code];
     if (!next.length) {
       setFavoriteError("Dejá al menos una moneda favorita.");
@@ -108,7 +117,7 @@ export default function CurrencyPicker({ value, onChange, label = "Moneda", disa
                 ))}
               {!loading && filtered.length === 0 && <p style={{ color: "#AAA7B0", padding: 20, textAlign: "center" }}>No encontramos coincidencias.</p>}
             </div>
-            <p style={{ color: "#777681", fontSize: 10, margin: "10px 2px 0" }}>Las monedas favoritas aparecen primero. Podés guardar hasta 20.</p>
+            <p style={{ color: "#777681", fontSize: 10, margin: "10px 2px 0" }}>{allowFavorites ? "Las monedas favoritas aparecen primero. Podés guardar hasta 20." : "Buscá por nombre, código o símbolo."}</p>
           </section>
         </div>
       )}
