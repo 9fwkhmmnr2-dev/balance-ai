@@ -1,8 +1,39 @@
 -- VERA · Vinculación atómica entre movimientos de objetivos y movimientos generales.
 -- Esta migración se prepara en la rama de desarrollo. No se ejecuta automáticamente.
 
+-- Columnas necesarias para vincular cada movimiento del objetivo con el libro general.
 alter table public.financial_goal_movements
-  add column if not exists movement_id uuid;
+  add column if not exists movement_id uuid,
+  add column if not exists verification_status text not null default 'not_required',
+  add column if not exists verified_at timestamptz;
+
+-- La cuenta asociada es opcional: NULL significa que el movimiento no modifica saldos.
+alter table public.financial_goal_recurring_rules
+  add column if not exists account_id uuid;
+
+do $
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'financial_goal_recurring_rules_account_id_fkey'
+      and conrelid = 'public.financial_goal_recurring_rules'::regclass
+  ) then
+    alter table public.financial_goal_recurring_rules
+      add constraint financial_goal_recurring_rules_account_id_fkey
+      foreign key (account_id) references public.financial_accounts(id) on delete set null;
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'financial_goal_movements_verification_status_check'
+      and conrelid = 'public.financial_goal_movements'::regclass
+  ) then
+    alter table public.financial_goal_movements
+      add constraint financial_goal_movements_verification_status_check
+      check (verification_status in ('not_required', 'pending', 'verified'));
+  end if;
+end;
+$;
 
 do $$
 begin
