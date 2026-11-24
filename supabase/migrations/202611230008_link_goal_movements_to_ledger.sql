@@ -35,7 +35,7 @@ begin
 end;
 $migration$;
 
-do $
+do $movement_fk$
 begin
   if not exists (
     select 1 from pg_constraint
@@ -47,7 +47,7 @@ begin
       foreign key (movement_id) references public.movements(id) on delete set null;
   end if;
 end;
-$$;
+$movement_fk$;
 
 create unique index if not exists financial_goal_movements_movement_id_uidx
   on public.financial_goal_movements (movement_id)
