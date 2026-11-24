@@ -255,7 +255,7 @@ export async function POST(request: Request) {
       };
       let insertedRule = await supabase.from("financial_goal_recurring_rules").insert(rulePayload)
         .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
-      if (insertedRule.error && (insertedRule.error.code === "42703" || insertedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
+      if (insertedRule.error && (insertedRule.error.code === "42703" || insertedRule.error.code === "PGRST204") && (updates.currency === undefined || (recurringGoalCurrency !== null && updates.currency === recurringGoalCurrency))) {
         const legacyPayload = { ...rulePayload } as Record<string, unknown>;
         delete legacyPayload.currency;
         delete legacyPayload.account_id;
@@ -420,6 +420,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "La regla recurrente no es válida." }, { status: 400 });
       }
       const updates: Record<string, unknown> = {};
+      let recurringGoalCurrency: string | null = null;
       if (typeof input.status === "string") {
         if (!["active", "paused", "completed"].includes(input.status)) return NextResponse.json({ error: "Estado no válido." }, { status: 400 });
         updates.status = input.status;
@@ -445,6 +446,7 @@ export async function PATCH(request: Request) {
           .select("currency").eq("id", input.goalId).eq("user_id", userId).maybeSingle();
         if (goalError) throw goalError;
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
+        recurringGoalCurrency = goal.currency;
         const ruleCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
         const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
         if (accountId) {
@@ -485,7 +487,7 @@ export async function PATCH(request: Request) {
           .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
         if (legacyUpdatedRule.error) throw legacyUpdatedRule.error;
         if (legacyUpdatedRule.data) {
-          return NextResponse.json({ rule: { ...legacyUpdatedRule.data, currency: goal.currency, account_id: null } });
+          return NextResponse.json({ rule: { ...legacyUpdatedRule.data, currency: recurringGoalCurrency ?? "ARS", account_id: null } });
         }
       }
       if (updatedRule.error) throw updatedRule.error;
