@@ -229,18 +229,16 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: "Revisá el importe, la categoría y la fecha corregidos." }, { status: 400 });
       }
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
-      const { data, error } = await supabase.from("financial_goal_movements")
-        .update({
-          amount: input.amount, category: input.category.trim().slice(0, 60),
-          description: description || null, movement_date: input.movementDate,
-          verification_status: "pending", verified_at: null,
-        })
-        .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
-        .eq("source", "recurring").eq("status", "posted").eq("verification_status", "pending")
-        .select("id, amount, category, description, movement_date, verification_status").maybeSingle();
+      const { data, error } = await supabase.rpc("correct_linked_goal_movement", {
+        p_goal_movement_id: input.movementId,
+        p_user_id: userId,
+        p_amount: input.amount,
+        p_category: input.category.trim().slice(0, 60),
+        p_description: description || null,
+        p_movement_date: input.movementDate,
+      });
       if (error) throw error;
-      if (!data) return NextResponse.json({ error: "El movimiento ya fue comprobado o no existe." }, { status: 404 });
-      return NextResponse.json({ movement: data });
+      return NextResponse.json({ movementId: data });
     }
 
     if (input.action === "verify_automatic_movement") {
@@ -365,9 +363,11 @@ export async function DELETE(request: Request) {
     }
     const input = body as { id: string; movementId?: unknown };
     if (typeof input.movementId === "string") {
-      const { error } = await supabase.from("financial_goal_movements").delete()
-        .eq("id", input.movementId).eq("goal_id", input.id).eq("user_id", userId).eq("source", "manual");
+      const { data, error } = await supabase.rpc("delete_linked_manual_goal_movement", {
+        p_goal_movement_id: input.movementId, p_user_id: userId,
+      });
       if (error) throw error;
+      if (!data) return NextResponse.json({ error: "No encontré ese movimiento manual." }, { status: 404 });
       return NextResponse.json({ success: true });
     }
     const { error } = await supabase.from("financial_goals").delete().eq("id", input.id).eq("user_id", userId);
