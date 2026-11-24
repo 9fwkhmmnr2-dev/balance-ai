@@ -31,6 +31,8 @@ type QuoteResponse = {
   error?: string;
 };
 
+type GlobalConversion = { value: number; rate: number; updatedAt: string | null; source: string; stale: boolean };
+
 function parseAmount(value: string): number | null {
   const normalized = value.trim().replace(/[.]/g, "").replace(",", ".");
   const parsed = Number(normalized);
@@ -65,6 +67,9 @@ export default function CurrencyConverterView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [globalConversion, setGlobalConversion] = useState<GlobalConversion | null>(null);
+  const [globalLoading, setGlobalLoading] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -93,6 +98,44 @@ export default function CurrencyConverterView() {
   }, [refreshKey]);
 
   const parsedAmount = useMemo(() => parseAmount(amount), [amount]);
+  const isStandardCurrencyPair = ["ARS", "USD", "EUR"].includes(from) && ["ARS", "USD", "EUR"].includes(to);
+
+  useEffect(() => {
+    if (isStandardCurrencyPair || from === to || parsedAmount === null) {
+      setGlobalConversion(null);
+      setGlobalError(null);
+      setGlobalLoading(false);
+      return;
+    }
+    let active = true;
+    async function loadGlobalRate() {
+      setGlobalLoading(true);
+      setGlobalError(null);
+      setGlobalConversion(null);
+      try {
+        const params = new URLSearchParams({ base: from, symbols: to });
+        const response = await fetch(`/api/global-currency-rates?${params.toString()}`, { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "No se pudo obtener esta cotización.");
+        const rate = Number(data.rates?.[to]);
+        const stale = data.stale?.[to] === true;
+        if (!Number.isFinite(rate) || rate <= 0) throw new Error("El proveedor no ofrece una cotización para este par de monedas.");
+        if (active) setGlobalConversion({
+          value: parsedAmount * rate,
+          rate,
+          updatedAt: data.effective_at?.[to] ?? data.data_updated_at ?? data.timestamp ?? null,
+          source: data.sources?.[to] ?? data.source ?? "ExchangeRate.dev",
+          stale,
+        });
+      } catch (err) {
+        if (active) setGlobalError(err instanceof Error ? err.message : "No pudimos consultar esta moneda.");
+      } finally {
+        if (active) setGlobalLoading(false);
+      }
+    }
+    void loadGlobalRate();
+    return () => { active = false; };
+  }, [from, to, parsedAmount, isStandardCurrencyPair, refreshKey]);
   const getQuote = (id: string) => quoteData?.quotes.find((quote) => quote.id === id);
   const usdQuote = getQuote(usdSource);
   const euroQuote = getQuote("euro");
@@ -218,34 +261,56 @@ export default function CurrencyConverterView() {
               <label><span>A</span><CurrencyPicker value={to} onChange={setTo} label="Moneda de destino" /></label>
             </div>
 
-            <label className="converter-quick-source">
-              <span>Referencia para el dólar</span>
-              <select value={usdSource} onChange={(event) => setUsdSource(event.target.value as typeof usdSource)}>
-                <option value="oficial">Dólar oficial</option>
-                <option value="mep">Dólar MEP</option>
-                <option value="blue">Dólar blue</option>
-              </select>
-              <small>Para conversiones con euros se utiliza la referencia Euro oficial.</small>
-            </label>
+            {isStandardCurrencyPair && (
+              <label className="converter-quick-source">
+                <span>Referencia para el dólar</span>
+                <select value={usdSource} onChange={(event) => setUsdSource(event.target.value as typeof usdSource)}>
+                  <option value="oficial">Dólar oficial</option>
+                  <option value="mep">Dólar MEP</option>
+                  <option value="blue">Dólar blue</option>
+                </select>
+                <small>Para conversiones con euros se utiliza la referencia Euro oficial.</small>
+              </label>
+            )}
 
             <div className="converter-result-placeholder">
               <span>Resultado de la conversión</span>
-              {loading ? <strong>Consultando cotizaciones…</strong> :
+              {isStandardCurrencyPair ? (
+                loading ? <strong>Consultando cotizaciones…</strong> :
                 error ? <strong>No se pudo cargar la cotización</strong> :
                 parsedAmount === null ? <strong>Ingresá un importe válido</strong> :
                 conversion?.missing ? <strong>Cotización no disponible</strong> :
                 conversion?.stale ? <strong>Dato desactualizado · no disponible para calcular</strong> :
                 conversion?.value !== null && conversion?.value !== undefined ? <strong>{formatMoney(conversion.value, to)}</strong> :
-                <strong>Esperando datos</strong>}
+                <strong>Esperando datos</strong>
+              ) : (
+                globalLoading ? <strong>Consultando cotización internacional…</strong> :
+                globalError ? <strong>{globalError}</strong> :
+                parsedAmount === null ? <strong>Ingresá un importe válido</strong> :
+                globalConversion?.stale ? <strong>Cotización desactualizada · no disponible para calcular</strong> :
+                globalConversion ? <strong>{formatMoney(globalConversion.value, to)}</strong> :
+                <strong>Esperando datos</strong>
+              )}
               <p>
-                {error || (conversion?.stale
-                  ? "La fuente no confirmó este valor recientemente. No usamos esta cotización para calcular."
-                  : conversion?.marketClosed
-                    ? "Mercado cerrado. Se muestra la última cotización confirmada; el valor puede cambiar cuando vuelva a operar."
-                    : "Las cotizaciones automáticas disponibles actualmente cubren ARS, USD y EUR. Para otras monedas se mostrará que falta una cotización confiable.")}
+                {isStandardCurrencyPair
+                  ? error || (conversion?.stale
+                    ? "La fuente no confirmó este valor recientemente. No usamos esta cotización para calcular."
+                    : conversion?.marketClosed
+                      ? "Mercado cerrado. Se muestra la última cotización confirmada; el valor puede cambiar cuando vuelva a operar."
+                      : "Para ARS, USD y EUR conservamos las referencias locales del conversor.")
+                  : globalError || (globalConversion?.stale
+                    ? "La fuente informó que el dato está desactualizado; no lo usamos para calcular."
+                    : "Cotización internacional de referencia. No representa necesariamente el precio de compra o venta de una entidad financiera.")}
               </p>
             </div>
             {error && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar conexión</button>}
+            {!isStandardCurrencyPair && globalError && <button type="button" className="converter-refresh-button" onClick={() => setRefreshKey((value) => value + 1)}>Reintentar cotización</button>}
+            {!isStandardCurrencyPair && globalConversion && (
+              <div className="converter-source-note">
+                <span aria-hidden="true">ⓘ</span>
+                <span>Fuente: ExchangeRate.dev · 1 {from} = {globalConversion.rate.toLocaleString("es-AR", { maximumFractionDigits: 8 })} {to}. Observación: {globalConversion.updatedAt ? formatDate(globalConversion.updatedAt) : "fecha no informada"}. Fuente de referencia: {globalConversion.source}. Datos indicativos, no aptos para liquidación.</span>
+              </div>
+            )}
             {!loading && !error && usdQuote && euroQuote && (
               <div className="converter-source-note">
                 <span aria-hidden="true">ⓘ</span>
