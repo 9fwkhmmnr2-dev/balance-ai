@@ -268,7 +268,7 @@ export default function FinancialGoalsView() {
   }
 
   async function deleteGoal(goal: Goal) {
-    if (!window.confirm(`¿Eliminar “${goal.title}” y todo su historial de movimientos? Esta acción no se puede deshacer.`)) return;
+    if (!window.confirm(`¿Eliminar “${goal.title}” y el historial asociado al objetivo? Los movimientos generales que ya se registraron se conservarán en Movimientos y en los saldos de sus cuentas. Esta acción no se puede deshacer.`)) return;
     setNotice("");
     try { await request("DELETE", { id: goal.id }); setNotice("Objetivo eliminado."); await loadGoals(); }
     catch (err) { setNotice(err instanceof Error ? err.message : "No pudimos eliminar el objetivo."); }
