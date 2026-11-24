@@ -307,6 +307,25 @@ export async function POST(request: Request) {
       if (error) {
         const missingFunction = error.code === "42883" || error.code === "PGRST202" || /create_goal_movement_multi_currency/i.test(error.message ?? "");
         if (missingFunction && movementCurrency === goal.currency) {
+          // Same-currency manual contributions must work before the optional
+          // multi-currency migration is applied. Without an account, write
+          // directly to the deployed goal-movements schema.
+          if (!accountId) {
+            const legacyMovement = await supabase.from("financial_goal_movements").insert({
+              goal_id: input.goalId,
+              user_id: userId,
+              type: input.type,
+              amount: input.amount,
+              category,
+              description: description || null,
+              source: "manual",
+              recurring_rule_id: null,
+              status: "posted",
+              occurred_at: movementDate,
+            }).select("id").single();
+            if (legacyMovement.error) throw legacyMovement.error;
+            return NextResponse.json({ movementId: legacyMovement.data.id }, { status: 201 });
+          }
           const legacy = await supabase.rpc("create_linked_goal_movement", {
             p_goal_id: input.goalId, p_user_id: userId, p_type: input.type, p_amount: input.amount,
             p_category: category, p_description: description || null, p_movement_date: movementDate,
@@ -334,8 +353,13 @@ export async function POST(request: Request) {
       .select("id, title, target_amount, currency, target_date, status, created_at").single();
     if (error) throw error;
     return NextResponse.json({ goal: data }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "No pude guardar el objetivo. Verificá que la migración esté aplicada." }, { status: 500 });
+  } catch (error) {
+    const dbError = error as { code?: unknown; message?: unknown };
+    console.error("[financial-goals][POST] request failed", {
+      code: typeof dbError?.code === "string" ? dbError.code : null,
+      message: typeof dbError?.message === "string" ? dbError.message : "Unknown error",
+    });
+    return NextResponse.json({ error: "No pude guardar el movimiento. Revisá los datos e intentá nuevamente." }, { status: 500 });
   }
 }
 
