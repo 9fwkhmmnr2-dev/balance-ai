@@ -31,6 +31,7 @@ function money(amount: number, currency: string) {
 export default function FinancialGoalsView() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [isPremium, setIsPremium] = useState(false);
   const [contributionAccountId, setContributionAccountId] = useState("");
   const [ruleAccountId, setRuleAccountId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -86,6 +87,22 @@ export default function FinancialGoalsView() {
       const data = await request("GET");
       setGoals(data.goals ?? []);
       setAccounts(data.accounts ?? []);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (token) {
+        const planResponse = await fetch("/api/user-plan", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store"
+        });
+        if (planResponse.ok) {
+          const planData = await planResponse.json();
+          setIsPremium(planData.plan === "premium" && planData.active === true);
+        } else {
+          setIsPremium(false);
+        }
+      } else {
+        setIsPremium(false);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "No pudimos cargar tus objetivos.");
     } finally { setLoading(false); }
@@ -376,7 +393,8 @@ export default function FinancialGoalsView() {
             {ruleFrequency === "monthly" && <label>Día del mes<input type="number" min="1" max="31" value={ruleScheduleDay} onChange={(event) => setRuleScheduleDay(event.target.value)} required /></label>}
             {ruleFrequency === "custom" && <label>Repetir cada (días)<input type="number" min="1" max="365" value={ruleIntervalDays} onChange={(event) => setRuleIntervalDays(event.target.value)} required /></label>}
             <label>Modalidad<select value={ruleMode} onChange={(event) => setRuleMode(event.target.value as "confirmation" | "automatic")}><option value="confirmation">Pedir confirmación antes de registrar</option><option value="automatic">Registro automático no verificado</option></select></label>
-            <label>Cuenta asociada<select value={ruleAccountId} onChange={(event) => setRuleAccountId(event.target.value)}><option value="">Sin cuenta (no modifica saldos)</option>{accounts.filter((account) => account.currency === recurringGoal?.currency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
+            <label>Cuenta asociada<select value={ruleAccountId} onChange={(event) => setRuleAccountId(event.target.value)} disabled={!isPremium}><option value="">Sin cuenta (no modifica saldos)</option>{isPremium && accounts.filter((account) => account.currency === recurringGoal?.currency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
+            {!isPremium && <p className="goals-disclaimer">Vincular una cuenta para actualizar su saldo es una función Premium. Podés crear la regla sin asociar una cuenta.</p>}
             <label>Fecha de inicio<input type="date" value={ruleStartDate} onChange={(event) => setRuleStartDate(event.target.value)} required /></label>
             <label>Fecha de finalización <span>(opcional)</span><input type="date" value={ruleEndDate} min={ruleStartDate} onChange={(event) => setRuleEndDate(event.target.value)} /></label>
             <button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : editingRule ? "Guardar cambios" : "Crear regla recurrente"}</button>
@@ -400,7 +418,7 @@ export default function FinancialGoalsView() {
           <p className="goals-disclaimer">La corrección recalcula el progreso y deja el movimiento pendiente de comprobación.</p>
         </section>
       </div>}
-      {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Cuenta asociada<select value={contributionAccountId} onChange={(event) => setContributionAccountId(event.target.value)}><option value="">Sin cuenta (no modifica saldos)</option>{accounts.filter((account) => account.currency === contributionGoal?.currency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label><label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">El movimiento también aparecerá en Movimientos. Si elegís una cuenta, se reflejará en su saldo registrado; “Sin cuenta” evita modificar saldos. No se realiza ninguna transferencia bancaria.</p></section></div>}
+      {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Cuenta asociada<select value={contributionAccountId} onChange={(event) => setContributionAccountId(event.target.value)} disabled={!isPremium}><option value="">Sin cuenta (no modifica saldos)</option>{isPremium && accounts.filter((account) => account.currency === contributionGoal?.currency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>{!isPremium && <p className="goals-disclaimer">Vincular una cuenta para actualizar su saldo es una función Premium. Podés registrar el movimiento sin asociar una cuenta.</p>}<label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">El movimiento también aparecerá en Movimientos. Si elegís una cuenta, se reflejará en su saldo registrado; “Sin cuenta” evita modificar saldos. No se realiza ninguna transferencia bancaria.</p></section></div>}
     </div>
   );
 }
