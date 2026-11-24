@@ -25,7 +25,7 @@ select
   now() + interval '30 days',
   now()
 from auth.users
-where id = 'REEMPLAZAR-POR-UUID-DEL-USUARIO'::uuid
+where id = 'ce8590cf-ced5-440f-b7e1-acae447df9a9'::uuid
 on conflict (user_id) do update
 set
   plan = excluded.plan,
@@ -36,7 +36,7 @@ set
 -- Verificá que se haya actualizado exactamente el usuario esperado.
 select user_id, plan, status, expires_at
 from public.user_plan_subscriptions
-where user_id = 'REEMPLAZAR-POR-UUID-DEL-USUARIO'::uuid;
+where user_id = 'ce8590cf-ced5-440f-b7e1-acae447df9a9'::uuid;
 
 commit;
 
