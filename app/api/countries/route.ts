@@ -18,7 +18,8 @@ export async function GET() {
       if (!/^[A-Z]{2}$/.test(code) || !name) return [];
       const currencies = Object.entries(item.currencies ?? {}).map(([currencyCode, value]) => ({
         code: currencyCode,
-        name: typeof value?.name === "string" ? value.name : currencyCode,\n        symbol: typeof value?.symbol === "string" ? value.symbol : "",
+        name: typeof value?.name === "string" ? value.name : currencyCode,
+        symbol: typeof value?.symbol === "string" ? value.symbol : "",
       })).filter((currency) => /^[A-Z]{3}$/.test(currency.code));
       return [{ code, name, currencies }];
     }).sort((a, b) => a.name.localeCompare(b.name, "es"));
