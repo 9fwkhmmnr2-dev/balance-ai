@@ -41,7 +41,10 @@ export default function MovementsManager() {
   }
 
   useEffect(() => {
-    loadMovements();
+    void loadMovements();
+    const refresh = () => { void loadMovements(); };
+    window.addEventListener("finance:movement-saved", refresh);
+    return () => window.removeEventListener("finance:movement-saved", refresh);
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
