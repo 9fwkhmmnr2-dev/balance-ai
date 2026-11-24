@@ -31,10 +31,12 @@ function localizedName(code: string, fallback: string): string {
 
 function getDecimals(code: string): number {
   try {
-    return new Intl.NumberFormat("es-AR", {
-      style: "currency",
-      currency: code,
-    }).resolvedOptions().maximumFractionDigits;
+    return (
+      new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: code,
+      }).resolvedOptions().maximumFractionDigits ?? 2
+    );
   } catch {
     return 2;
   }
