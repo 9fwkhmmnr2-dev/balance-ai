@@ -88,7 +88,7 @@ function SearchablePicker({
       {open && (
         <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}
           style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(5,6,10,.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <section role="dialog" aria-modal="true" aria-label={label} style={{ width: "100%", maxWidth: 440, maxHeight: "min( min(680px, 85dvh), 85dvh)", display: "flex", flexDirection: "column", background: "#17191F", border: "1px solid #343640", borderRadius: 16, padding: 16, boxShadow: "0 20px 60px rgba(0,0,0,.45)" }}>
+          <section role="dialog" aria-modal="true" aria-label={label} style={{ width: "100%", maxWidth: 440, maxHeight: "85dvh", display: "flex", flexDirection: "column", background: "#17191F", border: "1px solid #343640", borderRadius: 16, padding: 16, boxShadow: "0 20px 60px rgba(0,0,0,.45)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
               <strong style={{ color: "#F2F0EB", fontSize: 16 }}>{label}</strong>
               <button type="button" aria-label="Cerrar" onClick={() => setOpen(false)} style={{ border: 0, background: "transparent", color: "#C6C1CD", fontSize: 24, cursor: "pointer", padding: "0 4px" }}>×</button>
@@ -140,7 +140,7 @@ export default function OnboardingGate({
   const [currency, setCurrency] = useState("ARS");
   const [countryCode, setCountryCode] = useState("AR");
   const [defaultCurrency, setDefaultCurrency] = useState("ARS");
-  const [countries, setCountries] = useState<{ code: string; name: string; currencies: { code: string; name: string }[] }[]>([]);
+  const [countries, setCountries] = useState<{ code: string; name: string; currencies: { code: string; name: string; symbol?: string }[] }[]>([]);
   const [nextPayDate, setNextPayDate] = useState("");
   const [incomeSources, setIncomeSources] = useState<string[]>([]);
   const [expenseCategories, setExpenseCategories] = useState<string[]>([]);
