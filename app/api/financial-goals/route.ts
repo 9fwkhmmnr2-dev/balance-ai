@@ -178,7 +178,7 @@ export async function POST(request: Request) {
         category, description: description || null, frequency: input.frequency,
         interval_days: intervalDays, schedule_day: scheduleDay, start_date: startDate,
         end_date: endDate, next_run_date: startDate, mode: input.mode, status: "active",
-        account_id: accountId,
+        account_id: accountId, updated_at: new Date().toISOString(),
       }).select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
       if (error) throw error;
       return NextResponse.json({ rule: data }, { status: 201 });
@@ -339,10 +339,19 @@ export async function PATCH(request: Request) {
         updates.type = input.type; updates.amount = input.amount; updates.category = category;
         updates.description = typeof input.description === "string" && input.description.trim() ? input.description.trim().slice(0, 240) : null;
         updates.frequency = input.frequency; updates.interval_days = intervalDays; updates.schedule_day = scheduleDay;
-        updates.start_date = startDate; updates.end_date = endDate; updates.next_run_date = startDate; updates.mode = input.mode;
+        const { data: currentRule, error: currentRuleError } = await supabase
+          .from("financial_goal_recurring_rules")
+          .select("next_run_date")
+          .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId).maybeSingle();
+        if (currentRuleError) throw currentRuleError;
+        if (!currentRule) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
+        const nextRunDate = currentRule.next_run_date && currentRule.next_run_date > startDate
+          ? currentRule.next_run_date : startDate;
+        updates.start_date = startDate; updates.end_date = endDate; updates.next_run_date = nextRunDate; updates.mode = input.mode;
         updates.account_id = accountId;
       }
       if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
+      updates.updated_at = new Date().toISOString();
       const { data, error } = await supabase.from("financial_goal_recurring_rules").update(updates)
         .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
         .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
