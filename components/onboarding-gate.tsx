@@ -440,7 +440,7 @@ export default function OnboardingGate({
             </div>
             <div className="onboarding-field">
               <label style={labelStyle}>Moneda predeterminada</label>
-              <CurrencyPicker value={defaultCurrency} onChange={setDefaultCurrency} label="Buscar moneda" />
+              <CurrencyPicker value={defaultCurrency} onChange={setDefaultCurrency} label="Buscar moneda" allowFavorites={mode === "edit"} />
               <p style={{ color: "#92909A", fontSize: 11, marginTop: 6 }}>Se propone según tu país, pero podés buscar y elegir otra moneda.</p>
             </div>
             <div className="onboarding-field">
@@ -451,7 +451,7 @@ export default function OnboardingGate({
             </div>
             <div className="onboarding-field">
               <label style={labelStyle} htmlFor="profile-income">Ingreso habitual aproximado (opcional)</label>
-              <div className="onboarding-income"><input id="profile-income" style={fieldStyle} inputMode="decimal" placeholder="Ej. 250.000,50" value={income} onChange={(e) => setIncome(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del ingreso" /></div></div>
+              <div className="onboarding-income"><input id="profile-income" style={fieldStyle} inputMode="decimal" placeholder="Ej. 250.000,50" value={income} onChange={(e) => setIncome(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del ingreso" allowFavorites={mode === "edit"} /></div></div>
             </div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="profile-pay-date">Próximo ingreso esperado (opcional)</label><input id="profile-pay-date" type="date" style={fieldStyle} value={nextPayDate} onChange={(e) => setNextPayDate(e.target.value)} /></div>
             <div className="onboarding-field"><label style={labelStyle}>Fuentes de ingresos</label><div className="onboarding-options">{["Sueldo","Trabajo independiente","Negocio propio","Ayuda familiar","Otros"].map((item) => <label className="onboarding-option" key={item}><input type="checkbox" checked={incomeSources.includes(item)} onChange={() => toggle(item, incomeSources, setIncomeSources)} />{item}</label>)}</div></div>
@@ -465,7 +465,7 @@ export default function OnboardingGate({
             <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 14 }}>Agregar {step === 1 ? "un gasto esencial" : "un compromiso"}</h3>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-name">Nombre</label><input id="commitment-name" style={fieldStyle} placeholder={step === 1 ? "Ej. Alquiler, supermercado..." : "Ej. Cuota, préstamo, suscripción..."} value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-category">Categoría</label><select id="commitment-category" style={fieldStyle} value={category} onChange={(e) => setCategory(e.target.value)}>{currentCategories.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></div>
-            <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-amount">Importe</label><div className="onboarding-income"><input id="commitment-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 85000" value={amount} onChange={(e) => setAmount(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={commitmentCurrency} onChange={setCommitmentCurrency} label="Moneda del compromiso" /></div></div></div>
+            <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-amount">Importe</label><div className="onboarding-income"><input id="commitment-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 85000" value={amount} onChange={(e) => setAmount(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={commitmentCurrency} onChange={setCommitmentCurrency} label="Moneda del compromiso" allowFavorites={mode === "edit"} /></div></div></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-frequency">Frecuencia</label><select id="commitment-frequency" style={fieldStyle} value={commitmentFrequency} onChange={(e) => setCommitmentFrequency(e.target.value as "weekly" | "monthly" | "yearly")}><option value="weekly">Semanal</option><option value="monthly">Mensual</option><option value="yearly">Anual</option></select></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-due">Vencimiento (opcional)</label><input id="commitment-due" type="date" style={fieldStyle} value={dueDate} onChange={(e) => setDueDate(e.target.value)} /></div>
             <div className="onboarding-field"><label style={labelStyle} htmlFor="commitment-type">Importe</label><select id="commitment-type" style={fieldStyle} value={amountType} onChange={(e) => setAmountType(e.target.value as "exact" | "approximate")}><option value="exact">Exacto</option><option value="approximate">Aproximado</option></select></div>
@@ -479,7 +479,7 @@ export default function OnboardingGate({
         {step === 3 && (
           <>
             <p style={{ color: "#C6C1CD", fontSize: 13, lineHeight: 1.6, marginBottom: 18 }}>La reserva protegida es el dinero que querés mantener disponible para emergencias o necesidades esenciales. VERA la va a respetar al sugerir planes de ahorro.</p>
-            <div className="onboarding-field"><label style={labelStyle} htmlFor="reserve-amount">Importe que querés proteger (opcional)</label><div className="onboarding-income"><input id="reserve-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 150.000" value={reserveAmount} onChange={(e) => setReserveAmount(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={reserveCurrency} onChange={setReserveCurrency} label="Moneda de la reserva" /></div></div></div>
+            <div className="onboarding-field"><label style={labelStyle} htmlFor="reserve-amount">Importe que querés proteger (opcional)</label><div className="onboarding-income"><input id="reserve-amount" style={fieldStyle} inputMode="decimal" placeholder="Ej. 150.000" value={reserveAmount} onChange={(e) => setReserveAmount(e.target.value)} /><div style={{ width: 150 }}><CurrencyPicker value={reserveCurrency} onChange={setReserveCurrency} label="Moneda de la reserva" allowFavorites={mode === "edit"} /></div></div></div>
           </>
         )}
 
