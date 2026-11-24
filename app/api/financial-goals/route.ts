@@ -288,7 +288,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ movementId: data });
       }
       const { data, error } = await supabase.from("financial_goal_movements")
-        .update({ status: "cancelled" })
+        .update({ status: "cancelled", updated_at: new Date().toISOString() })
         .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
         .eq("source", "recurring").eq("status", "pending")
         .select("id, status").maybeSingle();
