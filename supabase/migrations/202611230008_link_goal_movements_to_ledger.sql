@@ -197,6 +197,98 @@ begin
 end;
 $$;
 
+create or replace function public.correct_linked_goal_movement(
+  p_goal_movement_id uuid,
+  p_user_id uuid,
+  p_amount numeric,
+  p_category text,
+  p_description text,
+  p_movement_date date
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $
+declare
+  goal_movement public.financial_goal_movements%rowtype;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'Not authorized';
+  end if;
+  if p_amount is null or p_amount <= 0 or nullif(trim(p_category), '') is null or p_movement_date is null then
+    raise exception 'Invalid correction data';
+  end if;
+
+  select * into goal_movement
+  from public.financial_goal_movements
+  where id = p_goal_movement_id and user_id = p_user_id
+    and source = 'recurring' and status = 'posted'
+    and verification_status = 'pending'
+  for update;
+
+  if not found then raise exception 'Automatic movement is not pending verification'; end if;
+  if goal_movement.movement_id is null then raise exception 'Linked ledger movement not found'; end if;
+
+  update public.movements
+  set amount = p_amount,
+      category = trim(p_category),
+      description = coalesce(nullif(trim(p_description), ''), trim(p_category)),
+      movement_date = p_movement_date
+  where id = goal_movement.movement_id and user_id = p_user_id;
+
+  if not found then raise exception 'Ledger movement not found'; end if;
+
+  update public.financial_goal_movements
+  set amount = p_amount,
+      category = trim(p_category),
+      description = nullif(trim(p_description), ''),
+      movement_date = p_movement_date,
+      verification_status = 'pending',
+      verified_at = null,
+      updated_at = now()
+  where id = p_goal_movement_id and user_id = p_user_id;
+
+  return p_goal_movement_id;
+end;
+$;
+
+create or replace function public.delete_linked_manual_goal_movement(
+  p_goal_movement_id uuid,
+  p_user_id uuid
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $
+declare
+  goal_movement public.financial_goal_movements%rowtype;
+begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'Not authorized';
+  end if;
+
+  select * into goal_movement
+  from public.financial_goal_movements
+  where id = p_goal_movement_id and user_id = p_user_id
+    and source = 'manual'
+  for update;
+
+  if not found then return false; end if;
+
+  if goal_movement.movement_id is not null then
+    delete from public.movements
+    where id = goal_movement.movement_id and user_id = p_user_id;
+  end if;
+
+  delete from public.financial_goal_movements
+  where id = p_goal_movement_id and user_id = p_user_id;
+
+  return true;
+end;
+$;
+
 create or replace function public.process_financial_goal_recurring_rules()
 returns integer
 language plpgsql
@@ -294,7 +386,11 @@ $$;
 
 revoke all on function public.create_linked_goal_movement(uuid, uuid, text, numeric, text, text, date, uuid, text, uuid, date, text, text) from public, anon, authenticated;
 revoke all on function public.confirm_linked_goal_movement(uuid, uuid) from public, anon, authenticated;
+revoke all on function public.correct_linked_goal_movement(uuid, uuid, numeric, text, text, date) from public, anon, authenticated;
+revoke all on function public.delete_linked_manual_goal_movement(uuid, uuid) from public, anon, authenticated;
 revoke all on function public.process_financial_goal_recurring_rules() from public, anon, authenticated;
 grant execute on function public.create_linked_goal_movement(uuid, uuid, text, numeric, text, text, date, uuid, text, uuid, date, text, text) to authenticated;
 grant execute on function public.confirm_linked_goal_movement(uuid, uuid) to authenticated;
+grant execute on function public.correct_linked_goal_movement(uuid, uuid, numeric, text, text, date) to authenticated;
+grant execute on function public.delete_linked_manual_goal_movement(uuid, uuid) to authenticated;
 grant execute on function public.process_financial_goal_recurring_rules() to service_role;
