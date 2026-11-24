@@ -258,9 +258,14 @@ export async function POST(request: Request) {
       if (insertedRule.error && (insertedRule.error.code === "42703" || insertedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
         const legacyPayload = { ...rulePayload } as Record<string, unknown>;
         delete legacyPayload.currency;
-        insertedRule = await supabase.from("financial_goal_recurring_rules").insert(legacyPayload)
-          .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single() as typeof insertedRule;
-        if (insertedRule.data) return NextResponse.json({ rule: { ...insertedRule.data, currency: goal.currency } }, { status: 201 });
+        delete legacyPayload.account_id;
+        const legacyInsertedRule = await supabase.from("financial_goal_recurring_rules").insert(legacyPayload)
+          .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
+        if (legacyInsertedRule.error) throw legacyInsertedRule.error;
+        if (legacyInsertedRule.data) {
+          return NextResponse.json({ rule: { ...legacyInsertedRule.data, currency: goal.currency, account_id: null } }, { status: 201 });
+        }
+        return NextResponse.json({ error: "No se pudo crear la regla recurrente." }, { status: 500 });
       }
       if (insertedRule.error) throw insertedRule.error;
       return NextResponse.json({ rule: insertedRule.data }, { status: 201 });
@@ -474,10 +479,14 @@ export async function PATCH(request: Request) {
       if (updatedRule.error && (updatedRule.error.code === "42703" || updatedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
         const legacyUpdates = { ...updates };
         delete legacyUpdates.currency;
-        updatedRule = await supabase.from("financial_goal_recurring_rules").update(legacyUpdates)
+        delete legacyUpdates.account_id;
+        const legacyUpdatedRule = await supabase.from("financial_goal_recurring_rules").update(legacyUpdates)
           .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
-          .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle() as typeof updatedRule;
-        if (updatedRule.data) return NextResponse.json({ rule: { ...updatedRule.data, currency: goal.currency } });
+          .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
+        if (legacyUpdatedRule.error) throw legacyUpdatedRule.error;
+        if (legacyUpdatedRule.data) {
+          return NextResponse.json({ rule: { ...legacyUpdatedRule.data, currency: goal.currency, account_id: null } });
+        }
       }
       if (updatedRule.error) throw updatedRule.error;
       if (!updatedRule.data) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
