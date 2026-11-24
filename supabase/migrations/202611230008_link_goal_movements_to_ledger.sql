@@ -48,6 +48,10 @@ declare
   general_movement_id uuid;
   goal_movement_id uuid;
 begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'Not authorized';
+  end if;
+
   if p_type not in ('income', 'expense') or p_amount is null or p_amount <= 0
      or p_status not in ('pending', 'posted', 'cancelled') then
     raise exception 'Invalid goal movement data';
@@ -110,6 +114,10 @@ declare
   rule_account_id uuid;
   general_movement_id uuid;
 begin
+  if auth.role() <> 'service_role' and auth.uid() is distinct from p_user_id then
+    raise exception 'Not authorized';
+  end if;
+
   select * into goal_movement
   from public.financial_goal_movements
   where id = p_goal_movement_id and user_id = p_user_id
@@ -256,5 +264,6 @@ $$;
 revoke all on function public.create_linked_goal_movement(uuid, uuid, text, numeric, text, text, date, uuid, text, uuid, date, text, text) from public, anon, authenticated;
 revoke all on function public.confirm_linked_goal_movement(uuid, uuid) from public, anon, authenticated;
 revoke all on function public.process_financial_goal_recurring_rules() from public, anon, authenticated;
+grant execute on function public.create_linked_goal_movement(uuid, uuid, text, numeric, text, text, date, uuid, text, uuid, date, text, text) to authenticated;
 grant execute on function public.confirm_linked_goal_movement(uuid, uuid) to authenticated;
 grant execute on function public.process_financial_goal_recurring_rules() to service_role;
