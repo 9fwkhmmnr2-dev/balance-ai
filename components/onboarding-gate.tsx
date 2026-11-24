@@ -141,7 +141,6 @@ export default function OnboardingGate({
   const [currency, setCurrency] = useState("ARS");
   const [countryCode, setCountryCode] = useState("AR");
   const [nationalityCode, setNationalityCode] = useState("AR");
-  const [currencyCatalog, setCurrencyCatalog] = useState<{ code: string; name: string; symbol: string }[]>([]);
   const [defaultCurrency, setDefaultCurrency] = useState("ARS");
   const [countries, setCountries] = useState<{ code: string; name: string; currencies: { code: string; name: string; symbol?: string }[] }[]>([]);
   const [nextPayDate, setNextPayDate] = useState("");
@@ -170,17 +169,14 @@ export default function OnboardingGate({
       }
       if (!active) return;
       setUserId(auth.user.id);
-      const [countryResult, currencyResult] = await Promise.allSettled([
-        fetch("/api/countries"),
-        fetch("/api/currencies")
-      ]);
-      if (countryResult.status === "fulfilled" && countryResult.value.ok) {
-        const payload = await countryResult.value.json();
-        if (active) setCountries(Array.isArray(payload.countries) ? payload.countries : []);
-      }
-      if (currencyResult.status === "fulfilled" && currencyResult.value.ok) {
-        const payload = await currencyResult.value.json();
-        if (active) setCurrencyCatalog(Array.isArray(payload.currencies) ? payload.currencies : []);
+      try {
+        const response = await fetch("/api/countries");
+        if (response.ok) {
+          const payload = await response.json();
+          if (active) setCountries(Array.isArray(payload.countries) ? payload.countries : []);
+        }
+      } catch {
+        // The API route supplies a local backup catalog when remote providers fail.
       }
 
       const [{ data: profile, error: profileError }, { data: savedCommitments, error: commitmentsError }] = await Promise.all([
@@ -400,12 +396,7 @@ export default function OnboardingGate({
     icon: countryFlag(item.code),
     searchText: item.code
   }));
-  const currencyOptions: PickerOption[] = currencyCatalog.map((item) => ({
-    value: item.code,
-    label: item.code,
-    description: [item.name, item.symbol].filter(Boolean).join(" · "),
-    searchText: [item.name, item.symbol].filter(Boolean).join(" ")
-  }));
+
 
   return (
     <main className="onboarding-page">
