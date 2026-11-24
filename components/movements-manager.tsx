@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
+import { useProfileCurrency } from "../lib/use-profile-currency";
 
 type Movement = {
   id: string;
@@ -23,6 +24,8 @@ export default function MovementsManager() {
   const [category, setCategory] = useState("Otros");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [currency, setCurrency] = useState("ARS");
+  const profileCurrency = useProfileCurrency();
+  useEffect(() => { setCurrency(profileCurrency); }, [profileCurrency]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
