@@ -50,7 +50,7 @@ export async function GET(request: Request) {
     const { supabase, userId } = auth;
     const { data: goals, error: goalsError } = await supabase
       .from("financial_goals")
-      .select("id, title, target_amount, currency, target_date, status, created_at, updated_at")
+      .select("id, name, target_amount, currency, deadline, status, is_archived, created_at, updated_at")
       .eq("user_id", userId).neq("status", "archived").order("created_at", { ascending: false });
     if (goalsError) throw goalsError;
 
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
           .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
           .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false }),
         supabase.from("financial_goal_recurring_rules")
-          .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
+          .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
           .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true }),
       ]);
       if (ruleResult.error) throw ruleResult.error;
@@ -94,6 +94,8 @@ export async function GET(request: Request) {
       const target = Number(goal.target_amount);
       return {
         ...goal,
+        title: goal.name,
+        target_date: goal.deadline,
         target_amount: target,
         saved_amount: Math.max(0, saved),
         net_amount: saved,
@@ -151,7 +153,8 @@ export async function POST(request: Request) {
         category, description: description || null, frequency: input.frequency,
         interval_days: intervalDays, schedule_day: scheduleDay, start_date: startDate,
         end_date: endDate, next_run_date: startDate, mode: input.mode, status: "active",
-      }).select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
+        account_id: typeof input.accountId === "string" && input.accountId ? input.accountId : null,
+      }).select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
       if (error) throw error;
       return NextResponse.json({ rule: data }, { status: 201 });
     }
@@ -170,13 +173,23 @@ export async function POST(request: Request) {
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
       if (!category) return NextResponse.json({ error: "Elegí una categoría para el movimiento." }, { status: 400 });
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
-      const { data, error } = await supabase.from("financial_goal_movements").insert({
-        goal_id: input.goalId, user_id: userId, type: input.type, amount: input.amount,
-        category, description: description || null, movement_date: movementDate,
-        status: "posted", source: "manual",
-      }).select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, created_at").single();
+      const { data: movementId, error } = await supabase.rpc("create_linked_goal_movement", {
+        p_goal_id: input.goalId,
+        p_user_id: userId,
+        p_type: input.type,
+        p_amount: input.amount,
+        p_category: category,
+        p_description: description || null,
+        p_movement_date: movementDate,
+        p_account_id: typeof input.accountId === "string" && input.accountId ? input.accountId : null,
+        p_source: "manual",
+        p_recurring_rule_id: null,
+        p_scheduled_for_date: null,
+        p_status: "posted",
+        p_verification_status: "not_required",
+      });
       if (error) throw error;
-      return NextResponse.json({ movement: data }, { status: 201 });
+      return NextResponse.json({ movementId }, { status: 201 });
     }
 
     const title = typeof input.title === "string" ? input.title.trim() : "";
@@ -187,8 +200,8 @@ export async function POST(request: Request) {
       ? null : typeof input.targetDate === "string" && validDateKey(input.targetDate) ? input.targetDate : undefined;
     if (targetDate === undefined) return NextResponse.json({ error: "La fecha objetivo no es válida." }, { status: 400 });
     const { data, error } = await supabase.from("financial_goals")
-      .insert({ user_id: userId, title, target_amount: input.targetAmount, currency: input.currency, target_date: targetDate })
-      .select("id, title, target_amount, currency, target_date, status, created_at").single();
+      .insert({ user_id: userId, name: title, target_amount: input.targetAmount, currency: input.currency, deadline: targetDate })
+      .select("id, name, target_amount, currency, deadline, status, created_at").single();
     if (error) throw error;
     return NextResponse.json({ goal: data }, { status: 201 });
   } catch {
@@ -244,8 +257,15 @@ export async function PATCH(request: Request) {
           (input.status !== "posted" && input.status !== "cancelled")) {
         return NextResponse.json({ error: "La actualización del movimiento no es válida." }, { status: 400 });
       }
+      if (input.status === "posted") {
+        const { data, error } = await supabase.rpc("confirm_linked_goal_movement", {
+          p_goal_movement_id: input.movementId, p_user_id: userId,
+        });
+        if (error) throw error;
+        return NextResponse.json({ movementId: data });
+      }
       const { data, error } = await supabase.from("financial_goal_movements")
-        .update({ status: input.status })
+        .update({ status: "cancelled" })
         .eq("id", input.movementId).eq("goal_id", input.goalId).eq("user_id", userId)
         .eq("source", "recurring").eq("status", "pending")
         .select("id, status").maybeSingle();
@@ -263,7 +283,7 @@ export async function PATCH(request: Request) {
         if (!["active", "paused", "completed"].includes(input.status)) return NextResponse.json({ error: "Estado no válido." }, { status: 400 });
         updates.status = input.status;
       }
-      const editing = ["type", "amount", "category", "description", "frequency", "intervalDays", "scheduleDay", "startDate", "endDate", "mode"].some((key) => key in input);
+      const editing = ["type", "amount", "category", "description", "frequency", "intervalDays", "scheduleDay", "startDate", "endDate", "mode", "accountId"].some((key) => key in input);
       if (editing) {
         if ((input.type !== "income" && input.type !== "expense") || !validAmount(input.amount) ||
             !validRecurringFrequency(input.frequency) || !validRuleMode(input.mode)) {
@@ -284,11 +304,12 @@ export async function PATCH(request: Request) {
         updates.description = typeof input.description === "string" && input.description.trim() ? input.description.trim().slice(0, 240) : null;
         updates.frequency = input.frequency; updates.interval_days = intervalDays; updates.schedule_day = scheduleDay;
         updates.start_date = startDate; updates.end_date = endDate; updates.next_run_date = startDate; updates.mode = input.mode;
+        updates.account_id = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
       }
       if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
       const { data, error } = await supabase.from("financial_goal_recurring_rules").update(updates)
         .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
-        .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
+        .select("id, goal_id, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
       if (error) throw error;
       if (!data) return NextResponse.json({ error: "No encontré esa regla recurrente." }, { status: 404 });
       return NextResponse.json({ rule: data });
@@ -312,14 +333,14 @@ export async function PATCH(request: Request) {
       }
       updates.status = input.status;
     }
-    if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.title = input.title.trim();
-    if (input.targetDate === null || input.targetDate === "") updates.target_date = null;
-    else if (typeof input.targetDate === "string" && validDateKey(input.targetDate)) updates.target_date = input.targetDate;
+    if (typeof input.title === "string" && input.title.trim().length > 0 && input.title.trim().length <= 80) updates.name = input.title.trim();
+    if (input.targetDate === null || input.targetDate === "") updates.deadline = null;
+    else if (typeof input.targetDate === "string" && validDateKey(input.targetDate)) updates.deadline = input.targetDate;
     if (!Object.keys(updates).length) return NextResponse.json({ error: "No hay cambios válidos." }, { status: 400 });
     updates.updated_at = new Date().toISOString();
     const { data, error } = await supabase.from("financial_goals").update(updates)
       .eq("id", input.id).eq("user_id", userId)
-      .select("id, title, target_amount, currency, target_date, status, updated_at").maybeSingle();
+      .select("id, name, target_amount, currency, deadline, status, updated_at").maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
     return NextResponse.json({ goal: data });
