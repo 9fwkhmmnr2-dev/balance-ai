@@ -11,9 +11,10 @@ type Props = {
   label?: string;
   disabled?: boolean;
   allowFavorites?: boolean;
+  variant?: "dark" | "light";
 };
 
-export default function CurrencyPicker({ value, onChange, label = "Moneda", disabled = false, allowFavorites = true }: Props) {
+export default function CurrencyPicker({ value, onChange, label = "Moneda", disabled = false, allowFavorites = true, variant = "dark" }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
@@ -95,14 +96,14 @@ export default function CurrencyPicker({ value, onChange, label = "Moneda", disa
   return (
     <div>
       <button type="button" disabled={disabled} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setQuery(""); setFavoriteError(""); setOpen(true); }}
-        style={{ width: "100%", minHeight: 44, padding: "10px 12px", borderRadius: 10, border: "1px solid #343640", background: "#17191F", color: "#F2F0EB", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, textAlign: "left", cursor: disabled ? "not-allowed" : "pointer" }}>
+        style={{ width: "100%", minHeight: variant === "light" ? 45 : 44, boxSizing: "border-box", padding: "10px 12px", borderRadius: variant === "light" ? 9 : 10, border: variant === "light" ? "1px solid #E3DFD5" : "1px solid #343640", background: variant === "light" ? "#FFFFFF" : "#17191F", color: variant === "light" ? "#0D0D0D" : "#F2F0EB", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, textAlign: "left", cursor: disabled ? "not-allowed" : "pointer" }}>
         <span>{selected ? <><strong>{selected.code}</strong> · {selected.name}</> : value || "Seleccionar moneda"}</span><span aria-hidden="true">⌄</span>
       </button>
       {open && (
         <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}
           style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(5,6,10,.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
           <section role="dialog" aria-modal="true" aria-label={label} style={{ width: "100%", maxWidth: 460, maxHeight: "85dvh", display: "flex", flexDirection: "column", background: "#17191F", border: "1px solid #343640", borderRadius: 16, padding: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, color: "#F2F0EB" }}><strong>{label}</strong><button type="button" onClick={() => setOpen(false)} aria-label="Cerrar" style={{ background: "transparent", color: "#C6C1CD", border: 0, fontSize: 24 }}>×</button></div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, color: "#F2F0EB" }}><strong>{label}</strong><button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setOpen(false); }} aria-label="Cerrar" style={{ position: "relative", zIndex: 2, cursor: "pointer", touchAction: "manipulation", background: "transparent", color: "#C6C1CD", border: 0, fontSize: 24, lineHeight: 1, padding: 6 }}>×</button></div>
             <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por moneda, código o símbolo..." style={{ width: "100%", boxSizing: "border-box", minHeight: 44, padding: 11, borderRadius: 10, border: "1px solid #343640", background: "#202229", color: "#F2F0EB", marginBottom: 10 }} />
             {favoriteError && <p role="alert" style={{ color: "#D49A91", fontSize: 12 }}>{favoriteError}</p>}
             <div style={{ overflowY: "auto", minHeight: 0 }}>
