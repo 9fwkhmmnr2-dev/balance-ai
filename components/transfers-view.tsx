@@ -5,7 +5,7 @@ import MobileMenu from "./mobile-menu";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 
-type Currency = "ARS" | "USD" | "EUR";
+type Currency = string;
 type Account = {
   id: string;
   name: string;
@@ -13,11 +13,6 @@ type Account = {
   is_archived: boolean;
 };
 
-const currencyNames: Record<Currency, string> = {
-  ARS: "Pesos argentinos",
-  USD: "Dólares estadounidenses",
-  EUR: "Euros"
-};
 
 function money(amount: number, currency: Currency) {
   return new Intl.NumberFormat("es-AR", {
@@ -146,7 +141,7 @@ export default function TransfersView() {
               </label>
               <label>Importe
                 <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 25.000" required />
-                {fromAccount && <small>{currencyNames[fromAccount.currency]}</small>}
+                {fromAccount && <small>{currencyNames[fromAccount.currency] ?? fromAccount.currency}</small>}
               </label>
               {matchingDestinations.length === 0 && <p className="transfers-error">No hay otra cuenta activa en la misma moneda.</p>}
               {error && <p className="transfers-error" role="alert">{error}</p>}
