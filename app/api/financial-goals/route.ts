@@ -45,15 +45,18 @@ function netAmount(entries: Array<{ type: string; amount: number | string; statu
 }
 
 export async function GET(request: Request) {
+  let diagnosticStage = "authentication";
   try {
     const auth = await getUserClient(request);
     if ("error" in auth) return auth.error;
     const { supabase, userId } = auth;
+    diagnosticStage = "financial_goals";
     const { data: goals, error: goalsError } = await supabase
       .from("financial_goals")
       .select("id, name, target_amount, currency, deadline, status, is_archived, created_at, updated_at")
       .eq("user_id", userId).eq("is_archived", false).neq("status", "archived").order("created_at", { ascending: false });
     if (goalsError) throw goalsError;
+    diagnosticStage = "financial_accounts";
     const { data: accounts, error: accountsError } = await supabase
       .from("financial_accounts")
       .select("id, name, currency, is_archived")
@@ -64,6 +67,7 @@ export async function GET(request: Request) {
     let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
     let rules: Array<{ id: string; goal_id: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
     if (ids.length) {
+      diagnosticStage = "financial_goal_movements_and_recurring_rules";
       const [movementResult, ruleResult] = await Promise.all([
         supabase.from("financial_goal_movements")
           .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
@@ -74,6 +78,10 @@ export async function GET(request: Request) {
       ]);
       let ruleRows = ruleResult.data ?? [];
       if (ruleResult.error) {
+        console.error("[financial-goals][GET] recurring_rules query failed", {
+          code: ruleResult.error.code ?? null,
+          message: ruleResult.error.message ?? "Unknown Supabase error",
+        });
         const missingAccountColumn = ruleResult.error.code === "42703" ||
           ruleResult.error.code === "PGRST204" ||
           ruleResult.error.message?.includes("account_id");
@@ -81,10 +89,17 @@ export async function GET(request: Request) {
         const fallbackRules = await supabase.from("financial_goal_recurring_rules")
           .select("id, goal_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status")
           .eq("user_id", userId).in("goal_id", ids).order("next_run_date", { ascending: true });
-        if (fallbackRules.error) throw fallbackRules.error;
+        if (fallbackRules.error) {
+          diagnosticStage = "financial_goal_recurring_rules_fallback";
+          throw fallbackRules.error;
+        }
         ruleRows = (fallbackRules.data ?? []).map((rule) => ({ ...rule, account_id: null }));
       }
       if (movementResult.error) {
+        console.error("[financial-goals][GET] goal_movements query failed", {
+          code: movementResult.error.code ?? null,
+          message: movementResult.error.message ?? "Unknown Supabase error",
+        });
         const missingVerificationColumns = movementResult.error.code === "42703" ||
           movementResult.error.code === "PGRST204" ||
           movementResult.error.message?.includes("verification_status") ||
@@ -94,7 +109,10 @@ export async function GET(request: Request) {
         const fallbackResult = await supabase.from("financial_goal_movements")
           .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, created_at")
           .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false });
-        if (fallbackResult.error) throw fallbackResult.error;
+        if (fallbackResult.error) {
+          diagnosticStage = "financial_goal_movements_fallback";
+          throw fallbackResult.error;
+        }
         movements = (fallbackResult.data ?? []).map((entry) => ({
           ...entry, verification_status: "not_required" as const, verified_at: null,
         })) as typeof movements;
@@ -126,7 +144,13 @@ export async function GET(request: Request) {
       };
     });
     return NextResponse.json({ goals: result, accounts: accounts ?? [] });
-  } catch {
+  } catch (error) {
+    const dbError = error as { code?: unknown; message?: unknown };
+    console.error("[financial-goals][GET] request failed", {
+      stage: diagnosticStage,
+      code: typeof dbError?.code === "string" ? dbError.code : null,
+      message: typeof dbError?.message === "string" ? dbError.message : "Unknown error",
+    });
     return NextResponse.json({ error: "No pude cargar tus objetivos. Revisá que las tablas de movimientos y reglas estén disponibles." }, { status: 500 });
   }
 }
