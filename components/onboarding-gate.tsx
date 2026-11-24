@@ -70,7 +70,7 @@ function SearchablePicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const selected = options.find((option) => option.value === value);
-  const normalize = (text: string) => text.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("es");
+  const normalize = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("es");
   const filtered = options.filter((option) => normalize([option.value, option.label, option.description ?? "", option.searchText ?? ""].join(" ")).includes(normalize(query.trim())));
   return (
     <div>
