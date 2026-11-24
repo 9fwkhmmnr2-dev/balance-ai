@@ -107,6 +107,7 @@ export default function CurrencyConverterView() {
       setGlobalLoading(false);
       return;
     }
+    const amountToConvert = parsedAmount;
     let active = true;
     async function loadGlobalRate() {
       setGlobalLoading(true);
@@ -121,7 +122,7 @@ export default function CurrencyConverterView() {
         const stale = data.stale?.[to] === true;
         if (!Number.isFinite(rate) || rate <= 0) throw new Error("El proveedor no ofrece una cotización para este par de monedas.");
         if (active) setGlobalConversion({
-          value: parsedAmount * rate,
+          value: amountToConvert * rate,
           rate,
           updatedAt: data.effective_at?.[to] ?? data.data_updated_at ?? data.timestamp ?? null,
           source: data.sources?.[to] ?? data.source ?? "ExchangeRate.dev",
