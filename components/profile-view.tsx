@@ -69,6 +69,13 @@ export default function ProfileView() {
         if (profileError) throw profileError;
 
         setProfile(profileData);
+        const countryResponse = await fetch("/api/countries");
+        if (countryResponse.ok) {
+          const countryPayload = await countryResponse.json();
+          if (Array.isArray(countryPayload.countries)) {
+            setCountryNames(Object.fromEntries(countryPayload.countries.map((item: { code: string; name: string }) => [item.code, item.name])));
+          }
+        }
 
         const preferredCurrency = profileData?.currency || "ARS";
         setCurrency(preferredCurrency);
