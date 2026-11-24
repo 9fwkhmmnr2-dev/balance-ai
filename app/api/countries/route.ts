@@ -62,11 +62,36 @@ export async function GET() {
     if (!countries.length) throw new Error("Empty country catalog");
     return NextResponse.json({ countries, fetchedAt: new Date().toISOString(), fallback: false });
   } catch {
+    try {
+      const backup = await fetch("https://countriesnow.space/api/v0.1/countries/currency", {
+        signal: AbortSignal.timeout(4000),
+      });
+      if (backup.ok) {
+        const backupPayload = await backup.json();
+        const rows = Array.isArray(backupPayload?.data) ? backupPayload.data : [];
+        const countries = rows.flatMap((item: { country?: unknown; iso2?: unknown; currency?: unknown }) => {
+          const code = typeof item.iso2 === "string" ? item.iso2.toUpperCase() : "";
+          const name = typeof item.country === "string" ? item.country : "";
+          const currency = typeof item.currency === "string" ? item.currency.toUpperCase() : "";
+          if (!/^[A-Z]{2}$/.test(code) || !name) return [];
+          return [{
+            code,
+            name,
+            currencies: /^[A-Z]{3}$/.test(currency) ? [{ code: currency, name: currency, symbol: currency }] : [],
+          }];
+        }).sort((a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, "es"));
+        if (countries.length) {
+          return NextResponse.json({ countries, fetchedAt: new Date().toISOString(), fallback: true });
+        }
+      }
+    } catch {
+      // Fall through to the bundled emergency catalog.
+    }
     return NextResponse.json({
       countries: localFallback(),
       fetchedAt: new Date().toISOString(),
       fallback: true,
-      warning: "Catálogo local reducido: no se pudo consultar el catálogo internacional.",
+      warning: "Se está usando un catálogo local de respaldo.",
     });
   }
 }
