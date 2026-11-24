@@ -8,8 +8,8 @@ import CurrencyPicker from "./currency-picker";
 import { useProfileCurrency } from "../lib/use-profile-currency";
 
 type Account = { id: string; name: string; currency: string; is_archived?: boolean };
-type Movement = { id: string; goal_id: string; type: "income" | "expense"; amount: number; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; recurring_mode?: "confirmation" | "automatic" | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null };
-type RecurringRule = { id: string; goal_id: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; mode: "confirmation" | "automatic"; status: "active" | "paused" | "completed"; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string };
+type Movement = { id: string; goal_id: string; type: "income" | "expense"; amount: number; currency: string; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; recurring_mode?: "confirmation" | "automatic" | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null };
+type RecurringRule = { id: string; goal_id: string; currency: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; mode: "confirmation" | "automatic"; status: "active" | "paused" | "completed"; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string };
 type Goal = {
   id: string;
   title: string;
@@ -20,6 +20,9 @@ type Goal = {
   saved_amount: number;
   remaining_amount: number;
   progress_percent: number;
+  currency_breakdown?: Array<{ currency: string; amount: number; equivalent_amount: number; percentage: number }>;
+  unconverted_movements_count?: number;
+  currency_rates_updated_at?: string | null;
   movements: Movement[];
   recurring_rules: RecurringRule[];
 };
@@ -47,6 +50,7 @@ export default function FinancialGoalsView() {
   const [targetDate, setTargetDate] = useState("");
   const [contributionGoal, setContributionGoal] = useState<Goal | null>(null);
   const [contributionAmount, setContributionAmount] = useState("");
+  const [contributionCurrency, setContributionCurrency] = useState("ARS");
   const [contributionNote, setContributionNote] = useState("");
   const [correctionGoal, setCorrectionGoal] = useState<Goal | null>(null);
   const [correctionMovement, setCorrectionMovement] = useState<Movement | null>(null);
@@ -61,6 +65,7 @@ export default function FinancialGoalsView() {
   const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
   const [ruleType, setRuleType] = useState<"income" | "expense">("income");
   const [ruleAmount, setRuleAmount] = useState("");
+  const [ruleCurrency, setRuleCurrency] = useState("ARS");
   const [ruleCategory, setRuleCategory] = useState("Ahorro");
   const [ruleDescription, setRuleDescription] = useState("");
   const [ruleFrequency, setRuleFrequency] = useState("monthly");
@@ -137,7 +142,7 @@ export default function FinancialGoalsView() {
     if (amount === null || amount <= 0) { setNotice("Ingresá un importe válido para el aporte."); return; }
     setSaving(true); setNotice("");
     try {
-      await request("POST", { action: "movement", goalId: contributionGoal.id, type: movementType, amount, category: movementCategory, description: contributionNote.trim(), movementDate, accountId: contributionAccountId || null });
+      await request("POST", { action: "movement", goalId: contributionGoal.id, type: movementType, amount, currency: contributionCurrency, category: movementCategory, description: contributionNote.trim(), movementDate, accountId: contributionAccountId || null });
       setContributionGoal(null); setContributionAccountId(""); setContributionAmount(""); setContributionNote(""); setMovementType("income"); setMovementCategory("Ahorro");
       window.dispatchEvent(new Event("finance:movement-saved"));
       setNotice("Movimiento registrado. El progreso del objetivo fue actualizado.");
@@ -151,6 +156,7 @@ export default function FinancialGoalsView() {
     setEditingRule(rule ?? null);
     setRuleType(rule?.type ?? "income");
     setRuleAmount(rule ? String(rule.amount) : "");
+    setRuleCurrency(rule?.currency ?? goal.currency);
     setRuleCategory(rule?.category ?? "Ahorro");
     setRuleDescription(rule?.description ?? "");
     setRuleFrequency(rule?.frequency ?? "monthly");
@@ -179,7 +185,7 @@ export default function FinancialGoalsView() {
     }
     setSaving(true); setNotice("");
     const payload = {
-      action: "recurring_rule", goalId: recurringGoal.id, type: ruleType, amount,
+      action: "recurring_rule", goalId: recurringGoal.id, type: ruleType, amount, currency: ruleCurrency,
       category: ruleCategory.trim(), description: ruleDescription.trim(),
       frequency: ruleFrequency, mode: ruleMode, startDate: ruleStartDate,
       endDate: ruleEndDate || null, scheduleDay: ruleFrequency === "monthly" ? scheduleDay : null,
@@ -329,13 +335,15 @@ export default function FinancialGoalsView() {
                 <div className="goal-amounts"><div><small>Acumulado</small><strong>{money(goal.saved_amount, goal.currency)}</strong></div><div><small>Objetivo</small><strong>{money(goal.target_amount, goal.currency)}</strong></div><div><small>Falta</small><strong>{money(goal.remaining_amount, goal.currency)}</strong></div></div>
                 <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progreso de ${goal.title}`}><span style={{ width: `${goal.progress_percent}%` }} /></div>
                 <div className="goal-progress-caption"><strong>{goal.progress_percent.toLocaleString("es-AR")}%</strong><span>{goal.movements.filter((entry) => entry.status === "posted").length} movimientos confirmados</span></div>
-                {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setContributionAccountId(""); setNotice(""); }}>＋ Registrar ingreso o gasto</button>}
+                {(goal.currency_breakdown?.length ?? 0) > 1 && <section className="goal-currency-breakdown" aria-label="Distribución de ahorros por moneda"><strong>Distribución de ahorros</strong><div>{goal.currency_breakdown!.map((item) => <span key={item.currency}><b>{item.currency} · {item.percentage.toLocaleString("es-AR")}%</b><small>{money(item.equivalent_amount, goal.currency)} equivalentes</small></span>)}</div></section>}
+                {(goal.unconverted_movements_count ?? 0) > 0 && <p className="goals-disclaimer">{goal.unconverted_movements_count} movimiento(s) no se incluyen en el progreso porque no hay una cotización confiable disponible.</p>}
+                {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setContributionCurrency(goal.currency); setContributionAccountId(""); setNotice(""); }}>＋ Registrar ingreso o gasto</button>}
                 {goal.movements.some((entry) => entry.source === "recurring" && entry.status === "posted" && entry.verification_status === "pending") && <section className="goal-verification-alert" aria-label="Movimientos automáticos por comprobar">
                   <strong>Comprobá tus movimientos automáticos</strong>
                   <p>VERA registró estos movimientos en el progreso del objetivo. Revisá que coincidan con tus operaciones reales.</p>
                   {goal.movements.filter((entry) => entry.source === "recurring" && entry.status === "posted" && entry.verification_status === "pending").map((entry) => <div className="goal-verification-row" key={entry.id}>
                     <span>{new Date(entry.movement_date + "T12:00:00").toLocaleDateString("es-AR")} · {entry.category} · {entry.type === "income" ? "Ingreso" : "Gasto"}</span>
-                    <strong>{money(Number(entry.amount), goal.currency)}</strong>
+                    <strong>{money(Number(entry.amount), entry.currency || goal.currency)}</strong>
                     <button type="button" onClick={() => openMovementCorrection(goal, entry)}>Corregir</button>
                     <button type="button" onClick={() => void verifyAutomaticMovement(goal, entry)}>Ya lo comprobé</button>
                   </div>)}
@@ -344,7 +352,8 @@ export default function FinancialGoalsView() {
                 <section className="goal-projection" aria-label="Proyección de cumplimiento"><h4>Proyección de cumplimiento</h4>
                   {goal.recurring_rules.some((rule) => rule.status === "active") ? (() => {
                     const factors: Record<string, number> = { daily: 30.4375, weekly: 4.348, every_15_days: 2.03, monthly: 1, every_2_months: 0.5, every_3_months: 1/3, every_6_months: 1/6, yearly: 1/12 };
-                    const monthlyNet = goal.recurring_rules.filter((rule) => rule.status === "active").reduce((sum, rule) => {
+                    const activeRules = goal.recurring_rules.filter((rule) => rule.status === "active");
+                    const monthlyNet = activeRules.filter((rule) => (rule.currency || goal.currency) === goal.currency).reduce((sum, rule) => {
                       const factor = rule.frequency === "custom" ? (rule.interval_days ? 30.4375 / rule.interval_days : 0) : (factors[rule.frequency] ?? 0);
                       return sum + (rule.type === "income" ? 1 : -1) * Number(rule.amount) * factor;
                     }, 0);
@@ -355,13 +364,13 @@ export default function FinancialGoalsView() {
                       const date = new Date(); date.setDate(1); date.setMonth(date.getMonth() + months);
                       return date.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
                     };
-                    return <><p>Flujo recurrente neto estimado: <strong>{money(monthlyNet, goal.currency)}/mes</strong></p><div className="goal-projection-grid"><span>Conservador<strong>{estimate(0.8) ?? "Sin fecha estimable"}</strong></span><span>Esperado<strong>{estimate(1) ?? "Sin fecha estimable"}</strong></span><span>Optimista<strong>{estimate(1.2) ?? "Sin fecha estimable"}</strong></span></div><small>Estimación orientativa basada en reglas recurrentes activas. No es una garantía y no cuenta movimientos pendientes.</small></>;
+                    return <><p>Flujo recurrente neto estimado: <strong>{money(monthlyNet, goal.currency)}/mes</strong></p><div className="goal-projection-grid"><span>Conservador<strong>{estimate(0.8) ?? "Sin fecha estimable"}</strong></span><span>Esperado<strong>{estimate(1) ?? "Sin fecha estimable"}</strong></span><span>Optimista<strong>{estimate(1.2) ?? "Sin fecha estimable"}</strong></span></div><small>Estimación orientativa basada en reglas recurrentes activas en {goal.currency}. No es una garantía y no cuenta movimientos pendientes. {activeRules.some((rule) => (rule.currency || goal.currency) !== goal.currency) ? "Las reglas en otras monedas no se incluyen en esta proyección." : ""}</small></>;
                   })() : <p>Agregá ingresos y gastos recurrentes para que VERA pueda estimar una fecha de cumplimiento. Los movimientos aislados no se proyectan como ingresos futuros.</p>}
                 </section>
                 {goal.status === "active" && <button className="goals-secondary goal-recurring-add" onClick={() => openRecurringRule(goal)}>＋ Agregar ingreso o gasto recurrente</button>}
                 {goal.recurring_rules.length > 0 && <details className="goal-recurring-list"><summary>Reglas recurrentes ({goal.recurring_rules.length})</summary>
                   {goal.recurring_rules.map((rule) => <div className="goal-recurring-row" key={rule.id}>
-                    <div className="goal-recurring-info"><strong>{rule.type === "income" ? "Ingreso" : "Gasto"} · {money(Number(rule.amount), goal.currency)}</strong>
+                    <div className="goal-recurring-info"><strong>{rule.type === "income" ? "Ingreso" : "Gasto"} · {money(Number(rule.amount), rule.currency || goal.currency)}</strong>
                       <span>{rule.category} · {({ daily: "Diario", weekly: "Semanal", every_15_days: "Cada 15 días", monthly: "Mensual", every_2_months: "Cada 2 meses", every_3_months: "Cada 3 meses", every_6_months: "Cada 6 meses", yearly: "Anual", custom: "Personalizado" } as Record<string, string>)[rule.frequency] ?? rule.frequency} · {rule.mode === "confirmation" ? "Requiere confirmación" : "Automático no verificado"}</span>
                       <small>Próxima fecha: {new Date(rule.next_run_date + "T12:00:00").toLocaleDateString("es-AR")} · {rule.status === "active" ? "Activa" : rule.status === "paused" ? "En pausa" : "Finalizada"}</small>
                     </div>
@@ -388,6 +397,7 @@ export default function FinancialGoalsView() {
           <form onSubmit={saveRecurringRule} className="goals-form">
             <label>Tipo<select value={ruleType} onChange={(event) => { setRuleType(event.target.value as "income" | "expense"); setRuleCategory(event.target.value === "income" ? "Ahorro" : "Servicios"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label>
             <label>Importe<input value={ruleAmount} onChange={(event) => setRuleAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 50.000" required /></label>
+            <label>Moneda de la regla<CurrencyPicker value={ruleCurrency} onChange={(code) => { setRuleCurrency(code); setRuleAccountId(""); }} label="Moneda de la regla" variant="light" /></label>
             <label>Categoría<input value={ruleCategory} onChange={(event) => setRuleCategory(event.target.value)} maxLength={60} required /></label>
             <label>Descripción <span>(opcional)</span><input value={ruleDescription} onChange={(event) => setRuleDescription(event.target.value)} maxLength={240} placeholder="Detalle de la regla" /></label>
             <label>Frecuencia<select value={ruleFrequency} onChange={(event) => setRuleFrequency(event.target.value)}>
@@ -396,7 +406,7 @@ export default function FinancialGoalsView() {
             {ruleFrequency === "monthly" && <label>Día del mes<input type="number" min="1" max="31" value={ruleScheduleDay} onChange={(event) => setRuleScheduleDay(event.target.value)} required /></label>}
             {ruleFrequency === "custom" && <label>Repetir cada (días)<input type="number" min="1" max="365" value={ruleIntervalDays} onChange={(event) => setRuleIntervalDays(event.target.value)} required /></label>}
             <label>Modalidad<select value={ruleMode} onChange={(event) => setRuleMode(event.target.value as "confirmation" | "automatic")}><option value="confirmation">Pedir confirmación antes de registrar</option><option value="automatic">Registro automático no verificado</option></select></label>
-            <label>Cuenta asociada<select value={ruleAccountId} onChange={(event) => setRuleAccountId(event.target.value)} disabled={!isPremium}><option value="">Sin cuenta (no modifica saldos)</option>{isPremium && accounts.filter((account) => account.currency === recurringGoal?.currency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
+            <label>Cuenta asociada<select value={ruleAccountId} onChange={(event) => setRuleAccountId(event.target.value)} disabled={!isPremium}><option value="">Sin cuenta (no modifica saldos)</option>{isPremium && accounts.filter((account) => account.currency === ruleCurrency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
             {!isPremium && <p className="goals-disclaimer">Vincular una cuenta para actualizar su saldo es una función Premium. Podés crear la regla sin asociar una cuenta.</p>}
             <label>Fecha de inicio<input type="date" value={ruleStartDate} onChange={(event) => setRuleStartDate(event.target.value)} required /></label>
             <label>Fecha de finalización <span>(opcional)</span><input type="date" value={ruleEndDate} min={ruleStartDate} onChange={(event) => setRuleEndDate(event.target.value)} /></label>
@@ -421,7 +431,7 @@ export default function FinancialGoalsView() {
           <p className="goals-disclaimer">La corrección recalcula el progreso y deja el movimiento pendiente de comprobación.</p>
         </section>
       </div>}
-      {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Cuenta asociada<select value={contributionAccountId} onChange={(event) => setContributionAccountId(event.target.value)} disabled={!isPremium}><option value="">Sin cuenta (no modifica saldos)</option>{isPremium && accounts.filter((account) => account.currency === contributionGoal?.currency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>{!isPremium && <p className="goals-disclaimer">Vincular una cuenta para actualizar su saldo es una función Premium. Podés registrar el movimiento sin asociar una cuenta.</p>}<label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">El movimiento también aparecerá en Movimientos. Si elegís una cuenta, se reflejará en su saldo registrado; “Sin cuenta” evita modificar saldos. No se realiza ninguna transferencia bancaria.</p></section></div>}
+      {contributionGoal && <div className="goals-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setContributionGoal(null); }}><section className="goals-modal" role="dialog" aria-modal="true" aria-labelledby="goal-contribution-title"><button className="goals-modal-close" onClick={() => setContributionGoal(null)} disabled={saving} aria-label="Cerrar">×</button><p className="goals-eyebrow">ACTUALIZAR PROGRESO</p><h2 id="goal-contribution-title">Registrar movimiento</h2><p className="goals-modal-description">{contributionGoal.title}</p><form onSubmit={addContribution} className="goals-form"><label>Tipo de movimiento<select value={movementType} onChange={(event) => { setMovementType(event.target.value as "income" | "expense"); setMovementCategory(event.target.value === "income" ? "Ahorro" : "Compras"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label><label>Importe<input value={contributionAmount} onChange={(event) => setContributionAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 15.000" required /></label><label>Moneda del movimiento<CurrencyPicker value={contributionCurrency} onChange={(code) => { setContributionCurrency(code); setContributionAccountId(""); }} label="Moneda del movimiento" variant="light" /></label><label>Categoría<input value={movementCategory} onChange={(event) => setMovementCategory(event.target.value)} maxLength={60} placeholder="Ej. Trabajo, transporte..." required /></label><label>Fecha<input type="date" value={movementDate} onChange={(event) => setMovementDate(event.target.value)} required /></label><label>Cuenta asociada<select value={contributionAccountId} onChange={(event) => setContributionAccountId(event.target.value)} disabled={!isPremium}><option value="">Sin cuenta (no modifica saldos)</option>{isPremium && accounts.filter((account) => account.currency === contributionCurrency).map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>{!isPremium && <p className="goals-disclaimer">Vincular una cuenta para actualizar su saldo es una función Premium. Podés registrar el movimiento sin asociar una cuenta.</p>}<label>Descripción <span>(opcional)</span><input value={contributionNote} onChange={(event) => setContributionNote(event.target.value)} maxLength={240} placeholder="Detalle del movimiento" /></label><button className="goals-primary" type="submit" disabled={saving}>{saving ? "Guardando..." : "Confirmar movimiento"}</button></form><p className="goals-disclaimer">El movimiento también aparecerá en Movimientos. Si elegís una cuenta, se reflejará en su saldo registrado; “Sin cuenta” evita modificar saldos. No se realiza ninguna transferencia bancaria.</p></section></div>}
     </div>
   );
 }
