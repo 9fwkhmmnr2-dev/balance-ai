@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requirePremium } from "../../../lib/server/plan-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -166,6 +167,8 @@ export async function POST(request: Request) {
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
       const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
       if (accountId) {
+        const access = await requirePremium(supabase, userId);
+        if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
         const { data: account, error: accountError } = await supabase.from("financial_accounts")
           .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
         if (accountError) throw accountError;
@@ -198,6 +201,11 @@ export async function POST(request: Request) {
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
       if (!category) return NextResponse.json({ error: "Elegí una categoría para el movimiento." }, { status: 400 });
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
+      const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
+      if (accountId) {
+        const access = await requirePremium(supabase, userId);
+        if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+      }
       const { data: movementId, error } = await supabase.rpc("create_linked_goal_movement", {
         p_goal_id: input.goalId,
         p_user_id: userId,
@@ -206,7 +214,7 @@ export async function POST(request: Request) {
         p_category: category,
         p_description: description || null,
         p_movement_date: movementDate,
-        p_account_id: typeof input.accountId === "string" && input.accountId ? input.accountId : null,
+        p_account_id: accountId,
         p_source: "manual",
         p_recurring_rule_id: null,
         p_scheduled_for_date: null,
@@ -329,6 +337,8 @@ export async function PATCH(request: Request) {
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
         const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
         if (accountId) {
+          const access = await requirePremium(supabase, userId);
+          if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
           const { data: account, error: accountError } = await supabase.from("financial_accounts")
             .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
           if (accountError) throw accountError;
