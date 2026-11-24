@@ -118,7 +118,8 @@ export default function MovementsManager() {
           type,
           amount: numericAmount,
           currency,
-          category
+          category,
+          movement_date: new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" })
         });
         if (error) throw error;
       }
