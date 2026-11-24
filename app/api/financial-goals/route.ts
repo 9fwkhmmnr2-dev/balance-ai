@@ -161,9 +161,10 @@ export async function GET(request: Request) {
       const foreignCurrencies = [...netByCurrency.keys()].filter((code) => code !== goal.currency);
       const rateData = await getReferenceRates(goal.currency, foreignCurrencies);
       const convertedByCurrency = [...netByCurrency.entries()].map(([code, amount]) => {
-        const rate = code === goal.currency ? 1 : rateData?.rates?.[code];
+        const quotedRate = code === goal.currency ? 1 : rateData?.rates?.[code];
         const stale = code !== goal.currency && rateData?.stale?.[code] === true;
-        return { currency: code, amount, rate: typeof rate === "number" && rate > 0 && !stale ? rate : null };
+        const conversionFactor = code === goal.currency ? 1 : typeof quotedRate === "number" && quotedRate > 0 ? 1 / quotedRate : null;
+        return { currency: code, amount, rate: conversionFactor !== null && !stale ? conversionFactor : null };
       });
       const saved = convertedByCurrency.reduce((sum, item) => sum + (item.rate === null ? 0 : item.amount * item.rate), 0);
       const unconvertedCurrencies = new Set(convertedByCurrency.filter((item) => item.rate === null).map((item) => item.currency));
@@ -262,7 +263,7 @@ export async function POST(request: Request) {
       };
       let insertedRule = await supabase.from("financial_goal_recurring_rules").insert(rulePayload)
         .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").single();
-      if (insertedRule.error && insertedRule.error.code === "42703" && ruleCurrency === goal.currency) {
+      if (insertedRule.error && (insertedRule.error.code === "42703" || insertedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
         const legacyPayload = { ...rulePayload } as Record<string, unknown>;
         delete legacyPayload.currency;
         insertedRule = await supabase.from("financial_goal_recurring_rules").insert(legacyPayload)
@@ -478,7 +479,7 @@ export async function PATCH(request: Request) {
       let updatedRule = await supabase.from("financial_goal_recurring_rules").update(updates)
         .eq("id", input.ruleId).eq("goal_id", input.goalId).eq("user_id", userId)
         .select("id, goal_id, currency, account_id, type, amount, category, description, frequency, interval_days, schedule_day, start_date, end_date, next_run_date, mode, status").maybeSingle();
-      if (updatedRule.error && updatedRule.error.code === "42703" && ruleCurrency === goal.currency) {
+      if (updatedRule.error && (updatedRule.error.code === "42703" || updatedRule.error.code === "PGRST204") && ruleCurrency === goal.currency) {
         const legacyUpdates = { ...updates };
         delete legacyUpdates.currency;
         updatedRule = await supabase.from("financial_goal_recurring_rules").update(legacyUpdates)
@@ -503,7 +504,7 @@ export async function PATCH(request: Request) {
         const modernEntries = await supabase.from("financial_goal_movements")
           .select("type, amount, currency, status").eq("goal_id", input.id).eq("user_id", userId);
         let completionEntries: Array<{ type: string; amount: number | string; currency: string; status: string }>;
-        if (modernEntries.error && modernEntries.error.code === "42703") {
+        if (modernEntries.error && (modernEntries.error.code === "42703" || modernEntries.error.code === "PGRST204")) {
           const legacyEntries = await supabase.from("financial_goal_movements")
             .select("type, amount, status").eq("goal_id", input.id).eq("user_id", userId);
           if (legacyEntries.error) throw legacyEntries.error;
@@ -516,9 +517,10 @@ export async function PATCH(request: Request) {
         const completionRates = await getReferenceRates(goal.currency, codes);
         const completionTotal = completionEntries.reduce((sum, entry) => {
           if (entry.status !== "posted") return sum;
-          const rate = entry.currency === goal.currency ? 1 : completionRates?.rates?.[entry.currency];
-          if (typeof rate !== "number" || rate <= 0 || completionRates?.stale?.[entry.currency]) return sum;
-          return sum + (entry.type === "income" ? 1 : -1) * Number(entry.amount) * rate;
+          const quotedRate = entry.currency === goal.currency ? 1 : completionRates?.rates?.[entry.currency];
+          const factor = entry.currency === goal.currency ? 1 : typeof quotedRate === "number" && quotedRate > 0 ? 1 / quotedRate : null;
+          if (factor === null || completionRates?.stale?.[entry.currency]) return sum;
+          return sum + (entry.type === "income" ? 1 : -1) * Number(entry.amount) * factor;
         }, 0);
         if (completionTotal < Number(goal.target_amount)) {
           return NextResponse.json({ error: "Solo podés completar un objetivo cuando los ingresos confirmados, descontando los gastos, alcanzan el importe objetivo." }, { status: 400 });

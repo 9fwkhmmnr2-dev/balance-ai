@@ -23,6 +23,7 @@ type Goal = {
   currency_breakdown?: Array<{ currency: string; amount: number; equivalent_amount: number; percentage: number }>;
   unconverted_movements_count?: number;
   currency_rates_updated_at?: string | null;
+  currency_rates_source?: string | null;
   movements: Movement[];
   recurring_rules: RecurringRule[];
 };
@@ -336,6 +337,7 @@ export default function FinancialGoalsView() {
                 <div className="goal-progress-track" role="progressbar" aria-valuenow={goal.progress_percent} aria-valuemin={0} aria-valuemax={100} aria-label={`Progreso de ${goal.title}`}><span style={{ width: `${goal.progress_percent}%` }} /></div>
                 <div className="goal-progress-caption"><strong>{goal.progress_percent.toLocaleString("es-AR")}%</strong><span>{goal.movements.filter((entry) => entry.status === "posted").length} movimientos confirmados</span></div>
                 {(goal.currency_breakdown?.length ?? 0) > 1 && <section className="goal-currency-breakdown" aria-label="Distribución de ahorros por moneda"><strong>Distribución de ahorros</strong><div>{goal.currency_breakdown!.map((item) => <span key={item.currency}><b>{item.currency} · {item.percentage.toLocaleString("es-AR")}%</b><small>{money(item.equivalent_amount, goal.currency)} equivalentes</small></span>)}</div></section>}
+                {(goal.currency_breakdown?.length ?? 0) > 1 && <small className="goal-currency-rate-note">Cotizaciones indicativas · {goal.currency_rates_source ?? "ExchangeRate.dev"} · {goal.currency_rates_updated_at ? new Date(goal.currency_rates_updated_at).toLocaleString("es-AR") : "fecha de actualización no informada"}</small>}
                 {(goal.unconverted_movements_count ?? 0) > 0 && <p className="goals-disclaimer">{goal.unconverted_movements_count} movimiento(s) no se incluyen en el progreso porque no hay una cotización confiable disponible.</p>}
                 {goal.status === "active" && <button className="goals-primary goals-contribute" onClick={() => { setContributionGoal(goal); setContributionCurrency(goal.currency); setContributionAccountId(""); setNotice(""); }}>＋ Registrar ingreso o gasto</button>}
                 {goal.movements.some((entry) => entry.source === "recurring" && entry.status === "posted" && entry.verification_status === "pending") && <section className="goal-verification-alert" aria-label="Movimientos automáticos por comprobar">
