@@ -55,6 +55,73 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 7
 };
 
+
+type PickerOption = { value: string; label: string; description?: string; searchText?: string; icon?: string };
+
+function SearchablePicker({
+  label, value, options, placeholder, onChange
+}: {
+  label: string;
+  value: string;
+  options: PickerOption[];
+  placeholder: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const selected = options.find((option) => option.value === value);
+  const normalize = (text: string) => text.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLocaleLowerCase("es");
+  const filtered = options.filter((option) => normalize([option.value, option.label, option.description ?? "", option.searchText ?? ""].join(" ")).includes(normalize(query.trim())));
+  return (
+    <div>
+      <button type="button" aria-haspopup="dialog" aria-expanded={open} onClick={() => { setQuery(""); setOpen(true); }}
+        style={{ ...fieldStyle, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, textAlign: "left", cursor: "pointer" }}>
+        <span style={{ display: "flex", alignItems: "center", gap: 9, minWidth: 0 }}>
+          {selected?.icon && <span aria-hidden="true">{selected.icon}</span>}
+          <span style={{ minWidth: 0 }}>
+            <span style={{ display: "block", color: selected ? "#F2F0EB" : "#92909A" }}>{selected?.label ?? placeholder}</span>
+            {selected?.description && <span style={{ display: "block", color: "#92909A", fontSize: 11, marginTop: 2 }}>{selected.description}</span>}
+          </span>
+        </span>
+        <span aria-hidden="true" style={{ color: "#AAA7B0", flexShrink: 0 }}>⌄</span>
+      </button>
+      {open && (
+        <div role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}
+          style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(5,6,10,.78)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <section role="dialog" aria-modal="true" aria-label={label} style={{ width: "100%", maxWidth: 440, maxHeight: "min( min(680px, 85dvh), 85dvh)", display: "flex", flexDirection: "column", background: "#17191F", border: "1px solid #343640", borderRadius: 16, padding: 16, boxShadow: "0 20px 60px rgba(0,0,0,.45)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14 }}>
+              <strong style={{ color: "#F2F0EB", fontSize: 16 }}>{label}</strong>
+              <button type="button" aria-label="Cerrar" onClick={() => setOpen(false)} style={{ border: 0, background: "transparent", color: "#C6C1CD", fontSize: 24, cursor: "pointer", padding: "0 4px" }}>×</button>
+            </div>
+            <div style={{ position: "relative", marginBottom: 12 }}>
+              <span aria-hidden="true" style={{ position: "absolute", left: 12, top: 11, color: "#92909A" }}>⌕</span>
+              <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Escribí para buscar..." style={{ ...fieldStyle, paddingLeft: 36 }} />
+            </div>
+            <div style={{ overflowY: "auto", minHeight: 0, overscrollBehavior: "contain" }}>
+              {filtered.length ? filtered.map((option) => (
+                <button key={option.value} type="button" onClick={() => { onChange(option.value); setOpen(false); }}
+                  style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, textAlign: "left", padding: "11px 9px", border: 0, borderBottom: "1px solid #30323A", borderRadius: 8, background: option.value === value ? "#30253F" : "transparent", color: "#F2F0EB", cursor: "pointer" }}>
+                  {option.icon && <span aria-hidden="true" style={{ fontSize: 18 }}>{option.icon}</span>}
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 13, fontWeight: 600 }}>{option.label}</span>
+                    {option.description && <span style={{ display: "block", color: "#AAA7B0", fontSize: 11, marginTop: 3 }}>{option.description}</span>}
+                  </span>
+                  {option.value === value && <span aria-label="Seleccionado" style={{ color: "#C8A96B" }}>✓</span>}
+                </button>
+              )) : <p style={{ color: "#AAA7B0", fontSize: 13, textAlign: "center", padding: 24 }}>No encontramos coincidencias.</p>}
+            </div>
+            <p style={{ color: "#777681", fontSize: 10, margin: "10px 2px 0" }}>{filtered.length} resultados</p>
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function countryFlag(code: string) {
+  return String.fromCodePoint(...code.toUpperCase().split("").map((char) => 127397 + char.charCodeAt(0)));
+}
+
 export default function OnboardingGate({
   children,
   mode = "onboarding"
@@ -316,6 +383,24 @@ export default function OnboardingGate({
 
   const progressWidth = ((step + 1) / steps.length) * 100;
   const currentCategories = step === 1 ? essentialCategories : otherCategories;
+  const countryOptions: PickerOption[] = countries.map((item) => ({
+    value: item.code,
+    label: item.name,
+    description: item.code,
+    icon: countryFlag(item.code),
+    searchText: item.code
+  }));
+  const currencyMap = new Map<string, { name: string; symbol: string }>();
+  countries.forEach((item) => item.currencies.forEach((currencyItem) => {
+    if (!currencyMap.has(currencyItem.code)) currencyMap.set(currencyItem.code, { name: currencyItem.name, symbol: currencyItem.symbol ?? "" });
+  }));
+  if (defaultCurrency && !currencyMap.has(defaultCurrency)) currencyMap.set(defaultCurrency, { name: defaultCurrency, symbol: "" });
+  const currencyOptions: PickerOption[] = Array.from(currencyMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([code, info]) => ({
+    value: code,
+    label: code,
+    description: [info.name, info.symbol].filter(Boolean).join(" · "),
+    searchText: [info.name, info.symbol].filter(Boolean).join(" ")
+  }));
 
   return (
     <main className="onboarding-page">
@@ -344,10 +429,10 @@ export default function OnboardingGate({
         {step === 0 && (
           <>
             <div className="onboarding-field">
-              <label style={labelStyle} htmlFor="profile-country">País de residencia</label>
-              <select id="profile-country" required style={fieldStyle} value={countryCode} onChange={(e) => {
-                const selected = countries.find((item) => item.code === e.target.value);
-                setCountryCode(e.target.value);
+              <label style={labelStyle}>País de residencia</label>
+              <SearchablePicker label="Buscar país" value={countryCode} options={countryOptions} placeholder="Seleccionar país" onChange={(nextCode) => {
+                const selected = countries.find((item) => item.code === nextCode);
+                setCountryCode(nextCode);
                 if (selected?.currencies.length) {
                   const preferred = selected.currencies.find((item) => item.code === "USD") ?? selected.currencies[0];
                   setDefaultCurrency(preferred.code);
@@ -355,17 +440,12 @@ export default function OnboardingGate({
                   setCommitmentCurrency(preferred.code);
                   setReserveCurrency(preferred.code);
                 }
-              }}>
-                <option value="">Seleccionar país</option>
-                {countries.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-              </select>
+              }} />
             </div>
             <div className="onboarding-field">
-              <label style={labelStyle} htmlFor="profile-default-currency">Moneda predeterminada</label>
-              <select id="profile-default-currency" required style={fieldStyle} value={defaultCurrency} onChange={(e) => setDefaultCurrency(e.target.value)}>
-                {Array.from(new Set([defaultCurrency, ...countries.flatMap((item) => item.currencies.map((currency) => currency.code))])).sort().map((code) => <option key={code} value={code}>{code}</option>)}
-              </select>
-              <p style={{ color: "#92909A", fontSize: 11, marginTop: 6 }}>Se propone según tu país, pero podés elegir otra moneda.</p>
+              <label style={labelStyle}>Moneda predeterminada</label>
+              <SearchablePicker label="Buscar moneda" value={defaultCurrency} options={currencyOptions} placeholder="Seleccionar moneda" onChange={setDefaultCurrency} />
+              <p style={{ color: "#92909A", fontSize: 11, marginTop: 6 }}>Se propone según tu país, pero podés buscar y elegir otra moneda.</p>
             </div>
             <div className="onboarding-field">
               <label style={labelStyle} htmlFor="profile-frequency">¿Cada cuánto recibís ingresos?</label>
