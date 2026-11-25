@@ -153,6 +153,8 @@ export default function VeraView() {
   const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "nucleus-gold" | "focus" | "transform" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
   const [goldWorkspaceMode, setGoldWorkspaceMode] = useState<"purchase" | "decision" | "planning" | null>(null);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const attachmentRef = useRef<HTMLInputElement | null>(null);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -737,6 +739,20 @@ export default function VeraView() {
           {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
           {error && <div className="vera-error" role="alert">{error}</div>}
           <div className="vera-compose">
+            <input ref={attachmentRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" style={{ display: "none" }} onChange={async (event) => {
+              const file = event.target.files?.[0]; event.target.value = "";
+              if (!file || attachmentBusy) return;
+              if (file.size > 4 * 1024 * 1024) { setError("El archivo debe pesar menos de 4 MB."); return; }
+              setAttachmentBusy(true); setError("");
+              try {
+                const token = await getToken(); const form = new FormData(); form.append("file", file);
+                const response = await fetch("/api/vera/documents/analyze", { method: "POST", headers: { Authorization: "Bearer " + token }, body: form });
+                const payload = await response.json(); if (!response.ok) throw new Error(payload.error || "No pude analizar el archivo.");
+                const rows = (payload.transactions ?? []).slice(0, 100).map((item: { date: string; description: string; amount: number; currency: string; type: string; category: string }, index: number) => (index + 1) + ". " + item.date + " · " + item.description + " · " + (item.type === "income" ? "Ingreso" : "Gasto") + " · " + item.amount + " " + item.currency + " · " + item.category).join("\n");
+                await sendMessage("Analizá el documento " + file.name + ". Se detectaron " + (payload.summary?.count ?? 0) + " movimientos. No importes ni guardes nada. Revisá patrones e inconsistencias usando estos datos extraídos:\n" + rows);
+              } catch (cause) { setError(cause instanceof Error ? cause.message : "No pude analizar el archivo."); }
+              finally { setAttachmentBusy(false); }
+            }} />
             <form onSubmit={handleSubmit}>
               <div className="vera-compose-tools">
                 <button className="vera-tool-trigger" type="button" aria-label="Abrir herramientas" aria-expanded={showTools} onClick={() => setShowTools((current) => !current)} disabled={sending}>＋</button>
@@ -754,7 +770,7 @@ export default function VeraView() {
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("purchase"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular una compra</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("decision"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular otra decisión</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
-                      <a className="vera-tools-action gold" href="/documentos"><span className="vera-tool-icon" aria-hidden="true">▤</span>Analizar documentos</a>
+                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
                     </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con GOLD.
                         {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar GOLD de prueba solo en Preview."); }}>Copiar ID para habilitar prueba GOLD</button>}
                       </div>}
@@ -770,7 +786,7 @@ export default function VeraView() {
               <button className={`vera-send${draft.trim() ? " ready" : ""}`} type="submit" aria-label="Enviar mensaje" disabled={sending || !draft.trim()}><span className="vera-send-arrow">↑</span></button>
             </form>
             {listening && <p className="vera-listening-label" role="status">Escuchando… hablá con claridad. Tocá el micrófono para terminar.</p>}
-            <p className="vera-privacy">VERA analiza los movimientos registrados en FINANCETRACK. No realiza operaciones ni modifica tus cuentas.</p>
+            <p className="vera-privacy">{attachmentBusy ? "VERA está analizando tu archivo…" : "VERA analiza los movimientos registrados en FINANCETRACK. No realiza operaciones ni modifica tus cuentas."}</p>
           </div>
         </section>
       </section>
