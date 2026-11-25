@@ -173,7 +173,7 @@ export async function GET(request: Request) {
         progress_percent: target > 0 ? Math.min(100, Math.max(0, Math.round((saved / target) * 1000) / 10)) : 0,
         currency_breakdown: currencyBreakdown,
         unconverted_movements_count: unconvertedMovementsCount,
-        currency_rates_updated_at: goalMovements.filter((entry) => entry.status === "posted").map((entry) => entry.rate_at).sort().at(-1) ?? null,
+        currency_rates_updated_at: goalMovements.filter((entry) => entry.status === "posted").map((entry) => entry.rate_at).sort().slice(-1)[0] ?? null,
         currency_rates_source: "Cotización indicativa guardada por movimiento",
         movements: goalMovements.map((movement) => ({
           ...movement,
