@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
@@ -41,13 +41,7 @@ export default function QuickMovement({ showButton = true }: { showButton?: bool
 
   const matchingAccounts = accounts.filter((account) => account.currency === currency);
 
-  useEffect(() => {
-    const openFromMovementsPage = () => { void openModal(); };
-    window.addEventListener("finance:open-quick-movement", openFromMovementsPage);
-    return () => window.removeEventListener("finance:open-quick-movement", openFromMovementsPage);
-  }, [currency]);
-
-  async function openModal() {
+  const openModal = useCallback(async () => {
     setMessage("");
     setOpen(true);
     setLoadingAccounts(true);
@@ -73,7 +67,13 @@ export default function QuickMovement({ showButton = true }: { showButton?: bool
     } finally {
       setLoadingAccounts(false);
     }
-  }
+  }, [currency]);
+
+  useEffect(() => {
+    const openFromMovementsPage = () => { void openModal(); };
+    window.addEventListener("finance:open-quick-movement", openFromMovementsPage);
+    return () => window.removeEventListener("finance:open-quick-movement", openFromMovementsPage);
+  }, [currency]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
