@@ -331,7 +331,18 @@ export async function POST(request: Request) {
           const currencyColumnMissing = legacyError?.code === "42703" || legacyError?.code === "PGRST204" ||
             /column.*currency|currency.*column/i.test(legacyError?.message ?? "");
           if (legacyMovement.error && currencyColumnMissing) {
-            const { currency: _currency, ...olderPayload } = payload;
+            const olderPayload = {
+              goal_id: input.goalId,
+              user_id: userId,
+              type: input.type,
+              amount: input.amount,
+              category,
+              description: description || null,
+              source: "manual",
+              recurring_rule_id: null,
+              status: "posted",
+              occurred_at: movementDate,
+            };
             legacyMovement = await supabase.from("financial_goal_movements")
               .insert(olderPayload).select("id").single();
           }
