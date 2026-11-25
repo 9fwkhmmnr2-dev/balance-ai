@@ -207,7 +207,7 @@ export default function FinancialGoalsView() {
     setEditingRule(rule ?? null);
     setRuleType(rule?.type ?? "income");
     setRuleAmount(rule ? String(rule.amount) : "");
-    setRuleCurrency(rule?.currency ?? goal.currency);
+    setRuleCurrency(goal.currency);
     setRuleCategory(rule?.category ?? "Ahorro");
     setRuleDescription(rule?.description ?? "");
     setRuleFrequency(rule?.frequency ?? "monthly");
@@ -449,7 +449,7 @@ export default function FinancialGoalsView() {
           <form onSubmit={saveRecurringRule} className="goals-form">
             <label>Tipo<select value={ruleType} onChange={(event) => { setRuleType(event.target.value as "income" | "expense"); setRuleCategory(event.target.value === "income" ? "Ahorro" : "Servicios"); }}><option value="income">Ingreso</option><option value="expense">Gasto</option></select></label>
             <label>Importe<input value={ruleAmount} onChange={(event) => setRuleAmount(event.target.value)} inputMode="decimal" placeholder="Ej. 50.000" required /></label>
-            <label>Moneda de la regla<CurrencyPicker value={ruleCurrency} onChange={(code) => { setRuleCurrency(code); setRuleAccountId(""); }} label="Moneda de la regla" variant="light" /></label>
+            <p className="goals-disclaimer">Moneda de la regla: <strong>{recurringGoal.currency}</strong>. Las reglas recurrentes usan por ahora la moneda del objetivo; los movimientos individuales sí admiten conversión multidivisa.</p>
             <label>Categoría<input value={ruleCategory} onChange={(event) => setRuleCategory(event.target.value)} maxLength={60} required /></label>
             <label>Descripción <span>(opcional)</span><input value={ruleDescription} onChange={(event) => setRuleDescription(event.target.value)} maxLength={240} placeholder="Detalle de la regla" /></label>
             <label>Frecuencia<select value={ruleFrequency} onChange={(event) => setRuleFrequency(event.target.value)}>
