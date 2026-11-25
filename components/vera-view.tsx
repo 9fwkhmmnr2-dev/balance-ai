@@ -743,12 +743,13 @@ export default function VeraView() {
               const file = event.target.files?.[0]; event.target.value = "";
               if (!file || attachmentBusy) return;
               if (file.size > 4 * 1024 * 1024) { setError("El archivo debe pesar menos de 4 MB."); return; }
+              if (!window.confirm("El archivo se enviará a Gemini para extraer movimientos y luego VERA analizará el resultado. No se importará ni guardará ningún movimiento. ¿Continuar?")) return;
               setAttachmentBusy(true); setError("");
               try {
                 const token = await getToken(); const form = new FormData(); form.append("file", file);
                 const response = await fetch("/api/vera/documents/analyze", { method: "POST", headers: { Authorization: "Bearer " + token }, body: form });
                 const payload = await response.json(); if (!response.ok) throw new Error(payload.error || "No pude analizar el archivo.");
-                const rows = (payload.transactions ?? []).slice(0, 100).map((item: { date: string; description: string; amount: number; currency: string; type: string; category: string }, index: number) => (index + 1) + ". " + item.date + " · " + item.description + " · " + (item.type === "income" ? "Ingreso" : "Gasto") + " · " + item.amount + " " + item.currency + " · " + item.category).join("\n");
+                const rows = (payload.transactions ?? []).slice(0, 20).map((item: { date: string; description: string; amount: number; currency: string; type: string; category: string }, index: number) => (index + 1) + ". " + item.date + " · " + item.description.slice(0, 70) + " · " + (item.type === "income" ? "Ingreso" : "Gasto") + " · " + item.amount + " " + item.currency + " · " + item.category).join("\n");
                 await sendMessage("Analizá el documento " + file.name + ". Se detectaron " + (payload.summary?.count ?? 0) + " movimientos. No importes ni guardes nada. Revisá patrones e inconsistencias usando estos datos extraídos:\n" + rows);
               } catch (cause) { setError(cause instanceof Error ? cause.message : "No pude analizar el archivo."); }
               finally { setAttachmentBusy(false); }
@@ -766,7 +767,8 @@ export default function VeraView() {
                   <section className="vera-tools-group gold">
                     <span className="vera-tools-group-title">VERA GOLD</span>
                     {isGold ? <>
-                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
+                      <button className="vera-tools-action gold" type="button" title="Compara ingresos, gastos y categorías con el período anterior equivalente; muestra variaciones y tendencias respaldadas por tus movimientos." onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
+                      <p className="vera-tools-locked">Compara ingresos, gastos y categorías contra el período anterior equivalente. Detecta variaciones en dinero y porcentaje, tendencias y datos faltantes.</p>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("purchase"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular una compra</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("decision"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular otra decisión</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
