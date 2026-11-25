@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Transaction = {
@@ -18,13 +19,13 @@ type Transaction = {
 };
 type Account = { id: string; name: string; currency: string };
 
-const panel: React.CSSProperties = {
+const panel: CSSProperties = {
   background: "rgba(255,255,255,0.035)",
   border: "1px solid rgba(255,255,255,0.09)",
   borderRadius: 18,
   padding: 20,
 };
-const field: React.CSSProperties = {
+const field: CSSProperties = {
   width: "100%", minWidth: 0, padding: "10px 11px", borderRadius: 10,
   border: "1px solid rgba(255,255,255,0.14)", background: "#111827",
   color: "#f8fafc", fontSize: 14,
@@ -39,9 +40,9 @@ export default function DocumentIntelligence() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [imported, setImported] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   const selectedRows = useMemo(() => rows.filter((row) => row.selected), [rows]);
-  const currencies = useMemo(() => Array.from(new Set(rows.map((row) => row.currency))), [rows]);
 
   async function analyze() {
     if (!file) return;
@@ -95,7 +96,7 @@ export default function DocumentIntelligence() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ transactions: selectedRows.map(({ date, description, amount, currency, type, category, accountId }) =>
-          ({ date, description, amount, currency, type, category, accountId })) }),
+          ({ date, description, amount, currency, type, category, accountId, allowPossibleDuplicate: row.possibleDuplicate })) }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "No pudimos importar los movimientos.");
@@ -126,7 +127,8 @@ export default function DocumentIntelligence() {
           onChange={(event) => { setFile(event.target.files?.[0] ?? null); setRows([]); setError(""); setMessage(""); setImported(false); }}
           style={{ display: "block", width: "100%", color: "#cbd5e1", marginBottom: 16 }} />
         {file && <div style={{ color: "#cbd5e1", fontSize: 13, marginBottom: 14 }}>{file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB</div>}
-        <button onClick={analyze} disabled={!file || busy} style={{ border: 0, borderRadius: 11, padding: "12px 18px", background: busy ? "#625a49" : "#c6a66c", color: "#151515", fontWeight: 750, cursor: busy ? "wait" : "pointer" }}>
+        <label style={{ display: "flex", gap: 9, alignItems: "flex-start", color: "#aab4c5", fontSize: 12, lineHeight: 1.5, marginBottom: 15 }}><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />Entiendo que el archivo se enviará a Google Gemini para analizarlo. VERA no conserva una copia del documento.</label>
+        <button onClick={analyze} disabled={!file || !consent || busy} style={{ border: 0, borderRadius: 11, padding: "12px 18px", background: busy ? "#625a49" : "#c6a66c", color: "#151515", fontWeight: 750, cursor: busy ? "wait" : "pointer" }}>
           {busy ? "Analizando con Gemini…" : "Analizar documento"}
         </button>
       </section>
