@@ -91,7 +91,6 @@ export default function FinancialGoalsView() {
   const [editingRule, setEditingRule] = useState<RecurringRule | null>(null);
   const [ruleType, setRuleType] = useState<"income" | "expense">("income");
   const [ruleAmount, setRuleAmount] = useState("");
-  const [ruleCurrency, setRuleCurrency] = useState("ARS");
   const [ruleCategory, setRuleCategory] = useState("Ahorro");
   const [ruleDescription, setRuleDescription] = useState("");
   const [ruleFrequency, setRuleFrequency] = useState("monthly");
@@ -207,7 +206,6 @@ export default function FinancialGoalsView() {
     setEditingRule(rule ?? null);
     setRuleType(rule?.type ?? "income");
     setRuleAmount(rule ? String(rule.amount) : "");
-    setRuleCurrency(goal.currency);
     setRuleCategory(rule?.category ?? "Ahorro");
     setRuleDescription(rule?.description ?? "");
     setRuleFrequency(rule?.frequency ?? "monthly");
@@ -236,7 +234,7 @@ export default function FinancialGoalsView() {
     }
     setSaving(true); setNotice("");
     const payload = {
-      action: "recurring_rule", goalId: recurringGoal.id, type: ruleType, amount, currency: ruleCurrency,
+      action: "recurring_rule", goalId: recurringGoal.id, type: ruleType, amount, currency: recurringGoal.currency,
       category: ruleCategory.trim(), description: ruleDescription.trim(),
       frequency: ruleFrequency, mode: ruleMode, startDate: ruleStartDate,
       endDate: ruleEndDate || null, scheduleDay: ruleFrequency === "monthly" ? scheduleDay : null,
