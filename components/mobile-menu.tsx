@@ -8,6 +8,7 @@ const navigation = [
   { label: "Movimientos", href: "/movimientos" },
   { label: "Mis cuentas", href: "/cuentas" },
   { label: "Objetivos", href: "/objetivos" },
+  { label: "Simulador · GOLD", href: "/simulador" },
   { label: "Transferencias", href: "/transferencias" },
   { label: "Conversor", href: "/conversor" },
   { label: "VERA", href: "/vera" },
