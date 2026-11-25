@@ -10,15 +10,13 @@ const categories = ["Alimentación", "Transporte", "Vivienda", "Servicios", "Sal
 type AccountOption = { id: string; name: string; currency: string };
 type GoalOption = { id: string; title: string; currency: string; status: string };
 
-export default function QuickMovement() {
+export default function QuickMovement({ showButton = true }: { showButton?: boolean }) {
   const [open, setOpen] = useState(false);
   const [compactButton, setCompactButton] = useState(false);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setCompactButton(true), 2700);
-    const openFromMovementsPage = () => { void openModal(); };
-    window.addEventListener("finance:open-quick-movement", openFromMovementsPage);
-    return () => { window.clearTimeout(timeout); window.removeEventListener("finance:open-quick-movement", openFromMovementsPage); };
+    return () => window.clearTimeout(timeout);
   }, []);
   const today = new Date();
   const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -42,6 +40,12 @@ export default function QuickMovement() {
   const [message, setMessage] = useState("");
 
   const matchingAccounts = accounts.filter((account) => account.currency === currency);
+
+  useEffect(() => {
+    const openFromMovementsPage = () => { void openModal(); };
+    window.addEventListener("finance:open-quick-movement", openFromMovementsPage);
+    return () => window.removeEventListener("finance:open-quick-movement", openFromMovementsPage);
+  }, [currency]);
 
   async function openModal() {
     setMessage("");
@@ -132,9 +136,9 @@ export default function QuickMovement() {
 
   return (
     <>
-      <button id="registrar-movimiento" className={`quick-add-button${compactButton ? " is-compact" : ""}`} aria-label="Registrar movimiento" title="Registrar movimiento" onClick={() => void openModal()}>
+      {showButton && <button id="registrar-movimiento" className={`quick-add-button${compactButton ? " is-compact" : ""}`} aria-label="Registrar movimiento" title="Registrar movimiento" onClick={() => void openModal()}>
         <span className="quick-add-icon" aria-hidden="true">＋</span><span className="quick-add-label">Registrar movimiento</span>
-      </button>
+      </button>}
       {open && (
         <div className="quick-modal-backdrop" onMouseDown={(event) => {
           if (event.target === event.currentTarget && !saving) setOpen(false);
