@@ -158,7 +158,7 @@ export default function QuickMovement({ showButton = true }: { showButton?: bool
               </div>
               <label>Cuenta<select value={accountId} onChange={(event) => setAccountId(event.target.value)} disabled={loadingAccounts || matchingAccounts.length === 0}><option value="">{loadingAccounts ? "Cargando cuentas..." : matchingAccounts.length ? "Seleccionar cuenta" : "No hay cuentas en esta moneda"}</option>{matchingAccounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
               <label>Vincular a un objetivo (opcional)<select value={goalId} onChange={(event) => setGoalId(event.target.value)}><option value="">Sin objetivo</option>{goals.map((goal) => <option key={goal.id} value={goal.id}>{goal.title} · {goal.currency}</option>)}</select></label>
-              {goalId && goals.find((goal) => goal.id === goalId)?.currency !== currency && <p className="quick-modal-hint">El importe se convertirá de {currency} a {goals.find((goal) => goal.id === goalId)?.currency} usando la cotización disponible al registrar.</p>}
+              {goalId && goals.find((goal) => goal.id === goalId)?.currency !== currency && <p className="quick-modal-error">El importe se convertirá de {currency} a {goals.find((goal) => goal.id === goalId)?.currency} usando la cotización disponible al registrar.</p>}
 
               {matchingAccounts.length === 0 && !loadingAccounts && <p className="quick-modal-error">Necesitás una cuenta activa en {currency} para registrar este movimiento. <a href="/cuentas">Crear una cuenta</a>.</p>}
               <div className="quick-form-row">
