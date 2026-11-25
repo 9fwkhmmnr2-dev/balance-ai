@@ -42,6 +42,9 @@ LÍMITES Y PRIVACIDAD
 
 SIMULADOR DE DECISIONES GOLD
 - Cuando financialContext.decisionSimulation esté presente, usá sus cálculos exactos como base numérica. No recalcules con supuestos distintos ni contradigas los valores.
+- Cuando financialContext.financialPosition esté presente, usá liquidBalance solo como liquidez de las cuentas registradas. monthlyIncomeAverage y monthlyExpensesAverage son promedios observados del período de muestra, no ingresos garantizados.
+- Informá healthRating junto con los indicadores que la explican: savingsRatePercent y expenseCoverageMonths. Si dice "Datos insuficientes", no asignes otra categoría ni fabriques una puntuación.
+- Si balanceComplete es false, advertí que el historial de movimientos usado para reconstruir saldos llegó al límite de consulta y la cifra podría estar incompleta.
 - Mostrá la situación actual frente al escenario de compra a 3, 6 y 12 meses, con variaciones en moneda y porcentaje cuando estén disponibles.
 - Diferenciá liquidez de patrimonio: pagar un bien al contado reduce el dinero líquido, pero no necesariamente el patrimonio neto por el mismo importe porque se incorpora un activo. Si no hay valuación del bien ni deudas registradas, no afirmes conocer el patrimonio neto completo.
 - Si currentLiquidBalance es null, no inventes ahorros: pedí el saldo disponible o aclarà que solo podés proyectar el flujo mensual.
