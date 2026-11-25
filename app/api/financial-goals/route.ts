@@ -375,10 +375,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ goal: data }, { status: 201 });
   } catch (error) {
     const dbError = error as { code?: unknown; message?: unknown };
+    const errorCode = typeof dbError?.code === "string" ? dbError.code : null;
+    const errorMessage = typeof dbError?.message === "string" ? dbError.message : "Unknown error";
     console.error("[financial-goals][POST] request failed", {
-      code: typeof dbError?.code === "string" ? dbError.code : null,
-      message: typeof dbError?.message === "string" ? dbError.message : "Unknown error",
+      code: errorCode,
+      message: errorMessage,
     });
+    const schemaMismatch = ["42703", "42883", "PGRST202", "PGRST204"].includes(errorCode ?? "") ||
+      /column .* does not exist|could not find the .* column|function .* does not exist/i.test(errorMessage);
+    if (schemaMismatch) {
+      return NextResponse.json({
+        error: "La estructura de objetivos de Supabase Preview no está actualizada. No se registró el movimiento; hay que revisar la migración antes de volver a intentar.",
+      }, { status: 409 });
+    }
     return NextResponse.json({ error: "No pude guardar el movimiento. Revisá los datos e intentá nuevamente." }, { status: 500 });
   }
 }
