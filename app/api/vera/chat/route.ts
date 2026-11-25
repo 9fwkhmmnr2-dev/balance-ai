@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getVeraProvider } from "@/lib/vera/provider";
 import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { isGoldEnabledForUser } from "@/lib/server/gold-access";
 import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
 
 export const runtime = "nodejs";
@@ -65,6 +66,38 @@ function summarizeMovements(movements: MovementRow[]) {
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 8),
   };
+}
+
+function detectPurchase(messages: VeraMessage[]) {
+  const userMessages = messages.filter((message) => message.role === "user").map((message) => message.content);
+  const combined = userMessages.join("\\n");
+  const intent = /\\b(compr(?:a|ar|é|o)|adquirir|heladera|notebook|televisor|celular|mueble|electrodoméstico)\\b/i.test(combined);
+  if (!intent) return null;
+  const match = combined.match(/(?:compr(?:a|ar|é|o)|adquirir|heladera|notebook|televisor|celular|mueble|electrodoméstico)[^$\\d]{0,100}(?:\\$\\s*)?(\\d{1,3}(?:[.,]\\d{3})+|\\d{6,})(?:,\\d{1,2})?/i);
+  if (!match?.[1]) return null;
+  const amount = Number(match[1].replace(/\\D/g, ""));
+  if (!Number.isSafeInteger(amount) || amount <= 0) return null;
+  const itemMatch = combined.match(/(?:compra de|comprar|adquirir)\\s+(?:un|una|el|la)?\\s*([^$,.\\n]{2,48}?)(?:\\s+(?:por|de)\\s+\\$?\\s*\\d|[,.\\n]|$)/i);
+  return { amount, item: itemMatch?.[1]?.trim() || "compra indicada" };
+}
+
+function rateFinancialHealth(input: {
+  income: number; expenses: number; liquidBalance: number | null; sampleDays: number; movementCount: number;
+}) {
+  if (input.sampleDays < 60 || input.movementCount < 6 || input.income <= 0) return {
+    label: "Datos insuficientes" as const, savingsRatePercent: null, expenseCoverageMonths: null,
+  };
+  const surplus = input.income - input.expenses;
+  const savingsRatePercent = (surplus / input.income) * 100;
+  const expenseCoverageMonths = input.liquidBalance !== null && input.expenses > 0
+    ? input.liquidBalance / input.expenses : null;
+  let label: "Excelente" | "Saludable" | "Estable" | "Ajustada" | "Crítica";
+  if (surplus < 0 && (expenseCoverageMonths === null || expenseCoverageMonths < 1)) label = "Crítica";
+  else if (surplus < 0 || savingsRatePercent < 5 || (expenseCoverageMonths !== null && expenseCoverageMonths < 1)) label = "Ajustada";
+  else if (savingsRatePercent >= 25 && expenseCoverageMonths !== null && expenseCoverageMonths >= 6) label = "Excelente";
+  else if (savingsRatePercent >= 15 && expenseCoverageMonths !== null && expenseCoverageMonths >= 3) label = "Saludable";
+  else label = "Estable";
+  return { label, savingsRatePercent, expenseCoverageMonths };
 }
 
 function isPeriod(value: unknown): value is Period {
@@ -232,6 +265,96 @@ export async function POST(request: Request) {
       : [];
     const previousSummary = isGold ? summarizeMovements(previousMovements) : null;
 
+    let financialPosition: VeraFinancialContext["financialPosition"];
+    let decisionSimulation: VeraFinancialContext["decisionSimulation"];
+    if (isGold) {
+      const sixMonthsAgo = new Date(`${today}T00:00:00.000Z`);
+      sixMonthsAgo.setUTCDate(sixMonthsAgo.getUTCDate() - 179);
+      const positionFrom = sixMonthsAgo.toISOString().slice(0, 10);
+      const [{ data: accountRows, error: accountError }, { data: balanceRows, error: balanceError }, { data: transferRows, error: transferError }] = await Promise.all([
+        supabase.from("financial_accounts").select("id, currency, initial_balance, is_archived").eq("user_id", authData.user.id).eq("currency", currency).eq("is_archived", false),
+        supabase.from("movements").select("account_id, type, amount, movement_date").eq("user_id", authData.user.id).eq("currency", currency).gte("movement_date", "2000-01-01").lte("movement_date", today).order("movement_date", { ascending: true }).limit(10000),
+        supabase.from("account_transfers").select("from_account_id, to_account_id, amount").eq("user_id", authData.user.id),
+      ]);
+      if (accountError) throw accountError;
+      if (balanceError) throw balanceError;
+      if (transferError) throw transferError;
+
+      const accounts = accountRows ?? [];
+      const accountIds = new Set(accounts.map((account) => account.id));
+      const balances = new Map<string, number>(accounts.map((account) => [account.id, Number(account.initial_balance)]));
+      const accountMovements = balanceRows ?? [];
+      accountMovements.forEach((movement) => {
+        if (!movement.account_id || !balances.has(movement.account_id)) return;
+        balances.set(movement.account_id, (balances.get(movement.account_id) ?? 0) + (movement.type === "income" ? 1 : -1) * Number(movement.amount));
+      });
+      (transferRows ?? []).forEach((transfer) => {
+        if (accountIds.has(transfer.from_account_id)) balances.set(transfer.from_account_id, (balances.get(transfer.from_account_id) ?? 0) - Number(transfer.amount));
+        if (accountIds.has(transfer.to_account_id)) balances.set(transfer.to_account_id, (balances.get(transfer.to_account_id) ?? 0) + Number(transfer.amount));
+      });
+      const liquidBalance = accounts.length ? Array.from(balances.values()).reduce((sum, value) => sum + value, 0) : null;
+      const recentMovements = accountMovements.filter((movement) => movement.movement_date >= positionFrom);
+      const oldest = recentMovements[0]?.movement_date;
+      const sampleDays = oldest
+        ? Math.max(1, Math.min(180, Math.ceil((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${oldest}T00:00:00Z`)) / 86400000) + 1))
+        : 0;
+      const sampleMonths = Math.max(1, sampleDays / 30);
+      const recentIncome = recentMovements.filter((movement) => movement.type === "income").reduce((sum, movement) => sum + Number(movement.amount), 0);
+      const recentExpenses = recentMovements.filter((movement) => movement.type === "expense").reduce((sum, movement) => sum + Number(movement.amount), 0);
+      const monthlyIncomeAverage = recentIncome / sampleMonths;
+      const monthlyExpensesAverage = recentExpenses / sampleMonths;
+      const health = rateFinancialHealth({
+        income: monthlyIncomeAverage,
+        expenses: monthlyExpensesAverage,
+        liquidBalance,
+        sampleDays,
+        movementCount: recentMovements.length,
+      });
+      financialPosition = {
+        currency,
+        liquidBalance,
+        monthlyIncomeAverage,
+        monthlyExpensesAverage,
+        monthlySurplusAverage: monthlyIncomeAverage - monthlyExpensesAverage,
+        sampleDays,
+        accountsCount: accounts.length,
+        balanceComplete: accountMovements.length < 10000,
+        healthRating: health.label,
+        savingsRatePercent: health.savingsRatePercent,
+        expenseCoverageMonths: health.expenseCoverageMonths,
+      };
+
+      const purchase = detectPurchase(input.messages);
+      if (purchase) {
+        decisionSimulation = {
+          type: "purchase",
+          item: purchase.item,
+          amount: purchase.amount,
+          currency,
+          currentLiquidBalance: liquidBalance,
+          liquidBalanceAfterCashPurchase: liquidBalance === null ? null : liquidBalance - purchase.amount,
+          monthlySurplusAverage: monthlyIncomeAverage - monthlyExpensesAverage,
+          projections: ([3, 6, 12] as const).map((months) => {
+            const baseline = liquidBalance === null ? null : liquidBalance + (monthlyIncomeAverage - monthlyExpensesAverage) * months;
+            const scenario = liquidBalance === null ? null : liquidBalance - purchase.amount + (monthlyIncomeAverage - monthlyExpensesAverage) * months;
+            return {
+              months,
+              baselineLiquidBalance: baseline,
+              purchaseScenarioLiquidBalance: scenario,
+              difference: baseline === null || scenario === null ? null : scenario - baseline,
+              differencePercent: baseline === null || scenario === null || baseline === 0 ? null : ((scenario - baseline) / Math.abs(baseline)) * 100,
+            };
+          }),
+          assumptions: [
+            "Compra pagada al contado en el momento inicial.",
+            "El promedio mensual de ingresos y gastos recientes se mantiene durante la proyección.",
+            "No se incluyen intereses, cuotas, inflación, depreciación, deudas ni costos adicionales no informados.",
+            "El saldo de cuentas no representa el patrimonio neto completo: no incluye efectivo externo, bienes ni pasivos no registrados.",
+          ],
+        };
+      }
+    }
+
     let goalContext: NonNullable<VeraFinancialContext["goals"]> | undefined;
     const { data: goalRows, error: goalRowsError } = await supabase
       .from("financial_goals")
@@ -281,6 +404,8 @@ export async function POST(request: Request) {
       ...currentSummary,
       ...(goalContext ? { goals: goalContext } : {}),
       experience: isGold ? "gold" : "standard",
+      ...(financialPosition ? { financialPosition } : {}),
+      ...(decisionSimulation ? { decisionSimulation } : {}),
       ...(previousSummary ? {
         previousPeriod: {
           from: previousFrom,
