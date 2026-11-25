@@ -13,6 +13,7 @@ type RowInput = {
   type: "income" | "expense";
   category: string;
   accountId: string;
+  allowPossibleDuplicate: boolean;
 };
 
 export async function POST(request: Request) {
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
           typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) ||
           (row.type !== "income" && row.type !== "expense") ||
           typeof row.category !== "string" || !row.category.trim() ||
-          typeof row.accountId !== "string") {
+          typeof row.accountId !== "string" || typeof row.allowPossibleDuplicate !== "boolean") {
         return NextResponse.json({ error: "Hay movimientos con datos inválidos. Revisalos e intentá nuevamente." }, { status: 400 });
       }
       rows.push({
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
         type: row.type,
         category: row.category.trim().slice(0, 60),
         accountId: row.accountId,
+        allowPossibleDuplicate: row.allowPossibleDuplicate,
       });
     }
 
@@ -88,7 +90,7 @@ export async function POST(request: Request) {
       .limit(5000);
     if (existingError) throw existingError;
 
-    const fresh = rows.filter((row) => !(existing ?? []).some((saved) =>
+    const fresh = rows.filter((row) => row.allowPossibleDuplicate || !(existing ?? []).some((saved) =>
       saved.movement_date === row.date &&
       saved.currency === row.currency &&
       saved.type === row.type &&
