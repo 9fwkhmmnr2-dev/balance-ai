@@ -470,6 +470,9 @@ export async function PATCH(request: Request) {
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
         recurringGoalCurrency = goal.currency;
         const ruleCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
+        if (ruleCurrency !== goal.currency) {
+          return NextResponse.json({ error: "Las reglas recurrentes deben usar la moneda del objetivo por ahora. Los movimientos individuales sí admiten conversión multidivisa." }, { status: 400 });
+        }
         const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
         if (accountId) {
           const access = await requirePremium(supabase, userId);
