@@ -466,3 +466,51 @@ grant execute on function public.confirm_goal_movement_multi_currency(uuid, uuid
 grant execute on function public.correct_goal_movement_multi_currency(uuid, uuid, numeric, text, text, date) to authenticated;
 grant execute on function public.delete_goal_movement_multi_currency(uuid, uuid) to authenticated;
 grant execute on function public.process_financial_goal_recurring_rules_multi_currency() to service_role;
+
+-- Mantiene sincronizado el objetivo cuando un movimiento vinculado cambia
+-- desde cualquier pantalla/API y elimina el registro del objetivo al borrar
+-- el movimiento del libro general. La operación completa es transaccional.
+create or replace function public.sync_goal_movement_with_ledger()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if TG_OP = 'UPDATE' then
+    if NEW.currency is distinct from OLD.currency then
+      raise exception 'A linked movement currency cannot be changed without a new exchange-rate snapshot';
+    end if;
+    update public.financial_goal_movements
+    set type = NEW.type,
+        amount = NEW.amount,
+        goal_amount = round(NEW.amount * exchange_rate, 8),
+        category = NEW.category,
+        description = NEW.description,
+        movement_date = NEW.movement_date,
+        updated_at = now()
+    where movement_id = NEW.id and user_id = NEW.user_id;
+    return NEW;
+  elsif TG_OP = 'DELETE' then
+    delete from public.financial_goal_movements
+    where movement_id = OLD.id and user_id = OLD.user_id;
+    return OLD;
+  end if;
+  return null;
+end;
+$$;
+
+revoke all on function public.sync_goal_movement_with_ledger() from public, anon, authenticated;
+
+drop trigger if exists sync_goal_movement_after_ledger_update on public.movements;
+create trigger sync_goal_movement_after_ledger_update
+after update of type, amount, category, description, movement_date, currency
+on public.movements
+for each row
+execute function public.sync_goal_movement_with_ledger();
+
+drop trigger if exists sync_goal_movement_before_ledger_delete on public.movements;
+create trigger sync_goal_movement_before_ledger_delete
+before delete on public.movements
+for each row
+execute function public.sync_goal_movement_with_ledger();
