@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import styles from "./vera-gold.module.css";
 
 const features = [
@@ -15,6 +17,37 @@ const features = [
 ] as const;
 
 export default function VeraGoldView() {
+  const [isPreview, setIsPreview] = useState(false);
+  const [isGold, setIsGold] = useState(false);
+  const [accountId, setAccountId] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      const response = await fetch("/api/vera/entitlement", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const result = await response.json() as { isGold?: boolean; accountId?: string; previewOnly?: boolean };
+      if (!active) return;
+      setIsPreview(Boolean(result.previewOnly));
+      setIsGold(Boolean(result.isGold));
+      setAccountId(result.accountId ?? "");
+    })();
+    return () => { active = false; };
+  }, []);
+
+  function requestPreviewAccess() {
+    if (!accountId) return;
+    void navigator.clipboard?.writeText(accountId);
+    setNotice("ID de cuenta copiado. Enviálo para habilitar GOLD temporalmente en esta Preview. No se realiza ningún cobro.");
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
@@ -60,8 +93,15 @@ export default function VeraGoldView() {
             <strong>Medios de pago previstos</strong>
             <p>Tarjeta y PayPal. La disponibilidad final, moneda de cobro e impuestos se confirmarán antes de habilitar la compra.</p>
           </div>
-          <button className={styles.buyButton} type="button" disabled aria-disabled="true">Comprar GOLD · Próximamente</button>
-          <p className={styles.note}>Todavía no se realizan cobros. Estamos terminando de integrar y verificar el sistema de pago. Los precios son orientativos y las funciones marcadas “En preparación” aún no están disponibles.</p>
+          {isPreview ? (
+            <button className={styles.buyButton} type="button" onClick={requestPreviewAccess} disabled={isGold || !accountId}>
+              {isGold ? "VERA GOLD de prueba activo" : "Solicitar acceso GOLD de prueba"}
+            </button>
+          ) : (
+            <button className={styles.buyButton} type="button" disabled aria-disabled="true">Comprar GOLD · Próximamente</button>
+          )}
+          {notice && <p role="status" className={styles.note}>{notice}</p>}
+          <p className={styles.note}>Todavía no se realizan cobros ni se solicitan tarjetas. En Preview, el acceso de prueba se habilita individualmente. Los precios son orientativos y las funciones marcadas “En preparación” aún no están disponibles.</p>
           <a className={styles.backToVera} href="/vera">Volver a VERA</a>
         </section>
       </main>
