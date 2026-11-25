@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getVeraProvider } from "@/lib/vera/provider";
 import { isGoldEnabledForUser } from "@/lib/server/gold-access";
-import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+
 import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
 
 export const runtime = "nodejs";
