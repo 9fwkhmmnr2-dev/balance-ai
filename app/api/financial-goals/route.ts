@@ -281,6 +281,9 @@ export async function POST(request: Request) {
       if (goalError) throw goalError;
       if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
       const movementCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
+      if (movementCurrency !== goal.currency) {
+        return NextResponse.json({ error: "Por ahora, el objetivo y el movimiento deben estar en la misma moneda." }, { status: 400 });
+      }
       const movementDate = typeof input.movementDate === "string" && validDateKey(input.movementDate)
         ? input.movementDate : new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
@@ -297,19 +300,19 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: "La cuenta debe usar la misma moneda del movimiento." }, { status: 400 });
         }
       }
-      const { data: movementId, error } = await supabase.rpc("create_goal_movement_multi_currency", {
+      const { data: movementId, error } = await supabase.rpc("create_linked_goal_movement", {
         p_goal_id: input.goalId, p_user_id: userId, p_type: input.type,
-        p_amount: input.amount, p_currency: movementCurrency, p_category: category,
-        p_description: description || null, p_occurred_at: movementDate, p_account_id: accountId,
-        p_source: "manual", p_recurring_rule_id: null, p_scheduled_for_date: null,
+        p_amount: input.amount, p_category: category, p_description: description || null,
+        p_movement_date: movementDate, p_account_id: accountId, p_source: "manual",
+        p_recurring_rule_id: null, p_scheduled_for_date: null,
         p_status: "posted", p_verification_status: "not_required",
       });
       if (error) {
         const missingFunction = error.code === "42883" || error.code === "PGRST202" ||
-          /create_goal_movement_multi_currency/i.test(error.message ?? "");
+          /create_linked_goal_movement/i.test(error.message ?? "");
         if (missingFunction) {
           return NextResponse.json({
-            error: "La migración de objetivos todavía no está aplicada en Supabase Preview. No se guardó el movimiento.",
+            error: "La función de vinculación de objetivos no está disponible en Supabase. No se guardó el movimiento.",
           }, { status: 409 });
         }
         throw error;
