@@ -87,13 +87,13 @@ export async function GET(request: Request) {
       diagnosticStage = "financial_goal_movements";
       const modernMovements = await supabase
         .from("financial_goal_movements")
-        .select("id, goal_id, type, amount, currency, category, description, movement_date:occurred_at, status, source, recurring_rule_id, verification_status, verified_at, created_at")
-        .eq("user_id", userId).in("goal_id", ids).order("occurred_at", { ascending: false });
+        .select("id, goal_id, type, amount, currency, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
+        .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false });
       if (modernMovements.error) {
         const legacyMovements = await supabase
           .from("financial_goal_movements")
-          .select("id, goal_id, type, amount, category, description, movement_date:occurred_at, status, source, recurring_rule_id, created_at")
-          .eq("user_id", userId).in("goal_id", ids).order("occurred_at", { ascending: false });
+          .select("id, goal_id, type, amount, category, description, movement_date, status, source, recurring_rule_id, created_at")
+          .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false });
         if (legacyMovements.error) {
           console.error("[financial-goals][GET] movements query failed", { code: legacyMovements.error.code ?? null, message: legacyMovements.error.message ?? "Unknown Supabase error" });
         } else {
