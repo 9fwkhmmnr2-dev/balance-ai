@@ -97,7 +97,7 @@ export async function GET(request: Request) {
         if (legacyMovements.error) {
           console.error("[financial-goals][GET] movements query failed", { code: legacyMovements.error.code ?? null, message: legacyMovements.error.message ?? "Unknown Supabase error" });
         } else {
-          movements = (legacyMovements.data ?? []).map((entry) => ({ ...entry, currency: goalCurrencyById.get(entry.goal_id) ?? "ARS", verification_status: "not_required" as const, verified_at: null })) as typeof movements;
+          movements = (legacyMovements.data ?? []).map((entry) => ({ ...entry, currency: goalCurrencyById.get(entry.goal_id) ?? "ARS", goal_amount: Number(entry.amount), exchange_rate: 1, rate_source: "historical_legacy", rate_at: entry.created_at, verification_status: "not_required" as const, verified_at: null })) as typeof movements;
         }
       } else {
         movements = (modernMovements.data ?? []).map((entry) => ({ ...entry, currency: entry.currency ?? goalCurrencyById.get(entry.goal_id) ?? "ARS", goal_amount: Number(entry.goal_amount ?? entry.amount), exchange_rate: Number(entry.exchange_rate ?? 1), rate_source: entry.rate_source ?? "historical_legacy", rate_at: entry.rate_at ?? entry.created_at, verification_status: entry.verification_status ?? "not_required", verified_at: entry.verified_at ?? null })) as typeof movements;
@@ -230,6 +230,9 @@ export async function POST(request: Request) {
       if (!category) return NextResponse.json({ error: "Elegí una categoría." }, { status: 400 });
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
       const ruleCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
+      if (ruleCurrency !== goal.currency) {
+        return NextResponse.json({ error: "Las reglas recurrentes deben usar la moneda del objetivo por ahora. Los movimientos individuales sí admiten conversión multidivisa." }, { status: 400 });
+      }
       const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
       if (accountId) {
         const access = await requirePremium(supabase, userId);
