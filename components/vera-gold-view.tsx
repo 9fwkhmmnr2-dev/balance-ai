@@ -11,7 +11,7 @@ const features = [
   ["Mayor capacidad para conversar", false, true],
   ["Análisis financieros más profundos", false, true],
   ["Análisis avanzado de documentos", false, "En preparación"],
-  ["Simulador de decisiones financieras", false, true],
+  ["Simulación conversacional de decisiones", false, true],
 ] as const;
 
 export default function VeraGoldView() {
