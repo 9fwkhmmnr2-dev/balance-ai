@@ -79,7 +79,7 @@ export async function GET(request: Request) {
 
     const ids = (goals ?? []).map((goal) => goal.id);
     const goalCurrencyById = new Map((goals ?? []).map((goal) => [goal.id, goal.currency]));
-    let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; currency: string; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
+    let movements: Array<{ id: string; goal_id: string; type: "income" | "expense"; amount: number; currency: string; goal_amount: number; exchange_rate: number; rate_source: string; rate_at: string; category: string; description: string | null; movement_date: string; status: "pending" | "posted" | "cancelled"; source: string; recurring_rule_id: string | null; verification_status: "not_required" | "pending" | "verified"; verified_at: string | null; created_at: string }> = [];
     let rules: Array<{ id: string; goal_id: string; currency: string; account_id: string | null; type: "income" | "expense"; amount: number; category: string; description: string | null; frequency: string; interval_days: number | null; schedule_day: number | null; start_date: string; end_date: string | null; next_run_date: string; mode: "confirmation" | "automatic"; status: string }> = [];
     let accounts: Array<{ id: string; name: string; currency: string; is_archived: boolean }> = [];
 
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       diagnosticStage = "financial_goal_movements";
       const modernMovements = await supabase
         .from("financial_goal_movements")
-        .select("id, goal_id, type, amount, currency, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
+        .select("id, goal_id, type, amount, currency, goal_amount, exchange_rate, rate_source, rate_at, category, description, movement_date, status, source, recurring_rule_id, verification_status, verified_at, created_at")
         .eq("user_id", userId).in("goal_id", ids).order("movement_date", { ascending: false });
       if (modernMovements.error) {
         const legacyMovements = await supabase
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
           movements = (legacyMovements.data ?? []).map((entry) => ({ ...entry, currency: goalCurrencyById.get(entry.goal_id) ?? "ARS", verification_status: "not_required" as const, verified_at: null })) as typeof movements;
         }
       } else {
-        movements = (modernMovements.data ?? []).map((entry) => ({ ...entry, currency: entry.currency ?? goalCurrencyById.get(entry.goal_id) ?? "ARS", verification_status: entry.verification_status ?? "not_required", verified_at: entry.verified_at ?? null })) as typeof movements;
+        movements = (modernMovements.data ?? []).map((entry) => ({ ...entry, currency: entry.currency ?? goalCurrencyById.get(entry.goal_id) ?? "ARS", goal_amount: Number(entry.goal_amount ?? entry.amount), exchange_rate: Number(entry.exchange_rate ?? 1), rate_source: entry.rate_source ?? "historical_legacy", rate_at: entry.rate_at ?? entry.created_at, verification_status: entry.verification_status ?? "not_required", verified_at: entry.verified_at ?? null })) as typeof movements;
       }
 
       // account_id is not part of the deployed recurring-rules schema.
@@ -143,27 +143,22 @@ export async function GET(request: Request) {
 
     const result = await Promise.all((goals ?? []).map(async (goal) => {
       const goalMovements = movements.filter((entry) => entry.goal_id === goal.id);
-      const netByCurrency = new Map<string, number>();
+      const totalsByCurrency = new Map<string, { amount: number; equivalent_amount: number }>();
       for (const entry of goalMovements) {
         if (entry.status !== "posted") continue;
         const code = entry.currency || goal.currency;
-        const signed = entry.type === "income" ? Number(entry.amount) : -Number(entry.amount);
-        netByCurrency.set(code, (netByCurrency.get(code) ?? 0) + signed);
+        const sign = entry.type === "income" ? 1 : -1;
+        const current = totalsByCurrency.get(code) ?? { amount: 0, equivalent_amount: 0 };
+        current.amount += sign * Number(entry.amount);
+        current.equivalent_amount += sign * Number(entry.goal_amount);
+        totalsByCurrency.set(code, current);
       }
-      const foreignCurrencies = [...netByCurrency.keys()].filter((code) => code !== goal.currency);
-      const rateData = await getReferenceRates(goal.currency, foreignCurrencies);
-      const convertedByCurrency = [...netByCurrency.entries()].map(([code, amount]) => {
-        const quotedRate = code === goal.currency ? 1 : rateData?.rates?.[code];
-        const stale = code !== goal.currency && rateData?.stale?.[code] === true;
-        const conversionFactor = code === goal.currency ? 1 : typeof quotedRate === "number" && quotedRate > 0 ? 1 / quotedRate : null;
-        return { currency: code, amount, rate: conversionFactor !== null && !stale ? conversionFactor : null };
-      });
-      const saved = convertedByCurrency.reduce((sum, item) => sum + (item.rate === null ? 0 : item.amount * item.rate), 0);
-      const unconvertedCurrencies = new Set(convertedByCurrency.filter((item) => item.rate === null).map((item) => item.currency));
-      const unconvertedMovementsCount = goalMovements.filter((entry) => entry.status === "posted" && unconvertedCurrencies.has(entry.currency || goal.currency)).length;
-      const positiveBreakdown = convertedByCurrency.filter((item) => item.rate !== null && item.amount > 0).map((item) => ({
-        currency: item.currency, amount: item.amount, equivalent_amount: item.amount * (item.rate ?? 1),
+      const convertedByCurrency = [...totalsByCurrency.entries()].map(([currency, totals]) => ({
+        currency, amount: totals.amount, equivalent_amount: totals.equivalent_amount,
       }));
+      const saved = convertedByCurrency.reduce((sum, item) => sum + item.equivalent_amount, 0);
+      const unconvertedMovementsCount = 0;
+      const positiveBreakdown = convertedByCurrency.filter((item) => item.amount > 0 && item.equivalent_amount > 0);
       const breakdownTotal = positiveBreakdown.reduce((sum, item) => sum + item.equivalent_amount, 0);
       const currencyBreakdown = positiveBreakdown.map((item) => ({
         ...item, percentage: breakdownTotal > 0 ? Math.round((item.equivalent_amount / breakdownTotal) * 1000) / 10 : 0,
@@ -178,8 +173,8 @@ export async function GET(request: Request) {
         progress_percent: target > 0 ? Math.min(100, Math.max(0, Math.round((saved / target) * 1000) / 10)) : 0,
         currency_breakdown: currencyBreakdown,
         unconverted_movements_count: unconvertedMovementsCount,
-        currency_rates_updated_at: rateData?.data_updated_at ?? null,
-        currency_rates_source: rateData ? `ExchangeRate.dev (${rateData.source ?? "reference"})` : null,
+        currency_rates_updated_at: goalMovements.filter((entry) => entry.status === "posted").map((entry) => entry.rate_at).sort().at(-1) ?? null,
+        currency_rates_source: "Cotización indicativa guardada por movimiento",
         movements: goalMovements.map((movement) => ({
           ...movement,
           recurring_mode: rules.find((rule) => rule.id === movement.recurring_rule_id)?.mode ?? null,
@@ -281,9 +276,21 @@ export async function POST(request: Request) {
       if (goalError) throw goalError;
       if (!goal || goal.status !== "active") return NextResponse.json({ error: "El objetivo no existe o no está activo." }, { status: 404 });
       const movementCurrency = typeof input.currency === "string" && /^[A-Z]{3}$/.test(input.currency) ? input.currency : goal.currency;
+      let exchangeRate = 1;
+      let rateSource = "same_currency";
+      let rateAt = new Date().toISOString();
       if (movementCurrency !== goal.currency) {
-        return NextResponse.json({ error: "Por ahora, el objetivo y el movimiento deben estar en la misma moneda." }, { status: 400 });
+        const rateData = await getReferenceRates(goal.currency, [movementCurrency]);
+        const quotedRate = rateData?.rates?.[movementCurrency];
+        if (!rateData || typeof quotedRate !== "number" || !Number.isFinite(quotedRate) || quotedRate <= 0 || rateData.stale?.[movementCurrency] === true) {
+          return NextResponse.json({ error: "No hay una cotización vigente para convertir este movimiento. No se guardó; intentá nuevamente más tarde." }, { status: 503 });
+        }
+        exchangeRate = 1 / quotedRate;
+        rateSource = "ExchangeRate.dev (" + (rateData.source ?? "indicative") + ")";
+        rateAt = rateData.data_updated_at && Number.isFinite(Date.parse(rateData.data_updated_at))
+          ? new Date(rateData.data_updated_at).toISOString() : new Date().toISOString();
       }
+      const goalAmount = Number((Number(input.amount) * exchangeRate).toFixed(8));
       const movementDate = typeof input.movementDate === "string" && validDateKey(input.movementDate)
         ? input.movementDate : new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" });
       const category = typeof input.category === "string" ? input.category.trim().slice(0, 60) : "";
@@ -298,19 +305,21 @@ export async function POST(request: Request) {
           return NextResponse.json({ error: "La cuenta debe usar la misma moneda del movimiento." }, { status: 400 });
         }
       }
-      const { data: movementId, error } = await supabase.rpc("create_linked_goal_movement", {
+      const { data: movementId, error } = await supabase.rpc("create_goal_movement_multi_currency", {
         p_goal_id: input.goalId, p_user_id: userId, p_type: input.type,
-        p_amount: input.amount, p_category: category, p_description: description || null,
-        p_movement_date: movementDate, p_account_id: accountId, p_source: "manual",
-        p_recurring_rule_id: null, p_scheduled_for_date: null,
-        p_status: "posted", p_verification_status: "not_required",
+        p_amount: input.amount, p_currency: movementCurrency, p_category: category,
+        p_description: description || null, p_occurred_at: movementDate,
+        p_account_id: accountId, p_source: "manual", p_recurring_rule_id: null,
+        p_scheduled_for_date: null, p_status: "posted",
+        p_verification_status: "not_required", p_goal_amount: goalAmount,
+        p_exchange_rate: exchangeRate, p_rate_source: rateSource, p_rate_at: rateAt,
       });
       if (error) {
         const missingFunction = error.code === "42883" || error.code === "PGRST202" ||
-          /create_linked_goal_movement/i.test(error.message ?? "");
+          /create_goal_movement_multi_currency/i.test(error.message ?? "");
         if (missingFunction) {
           return NextResponse.json({
-            error: "La función de vinculación de objetivos no está disponible en Supabase. No se guardó el movimiento.",
+            error: "La migración multidivisa de objetivos todavía no está aplicada en Supabase. No se guardó el movimiento.",
           }, { status: 409 });
         }
         throw error;
