@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import { supabase } from "@/lib/supabase";
 
 type Mode = "purchase" | "decision" | "planning";
 type Snapshot = { currency: string; movementsCount: number; monthlyIncome: number; monthlyExpenses: number; monthlyNet: number; topExpenses: Array<{category:string;monthlyAmount:number}> };
 
-const field: React.CSSProperties = { width:"100%", padding:"12px", borderRadius:10, border:"1px solid rgba(200,169,107,.24)", background:"#111018", color:"#f5f0e5", fontSize:14, outline:"none" };
+const field: CSSProperties = { width:"100%", padding:"12px", borderRadius:10, border:"1px solid rgba(200,169,107,.24)", background:"#111018", color:"#f5f0e5", fontSize:14, outline:"none" };
 const labelStyle: React.CSSProperties = { display:"grid", gap:7, color:"#c8c0b1", fontSize:12, marginBottom:14 };
 const button: React.CSSProperties = { border:0, borderRadius:11, padding:"12px 16px", background:"linear-gradient(135deg,#e0c58e,#b28b4e)", color:"#17130d", fontWeight:750, cursor:"pointer" };
 
