@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { requirePremium } from "@/lib/server/plan-access";
+import { isGoldEnabledForUser } from "@/lib/server/gold-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,8 +22,7 @@ export async function GET(request: Request) {
     const { data: auth, error: authError } = await supabase.auth.getUser(token);
     if (authError || !auth.user) return NextResponse.json({ error: "Tu sesión venció." }, { status: 401 });
 
-    const access = await requirePremium(supabase, auth.user.id);
-    if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+    if (!isGoldEnabledForUser(auth.user)) return NextResponse.json({ error: "Esta herramienta requiere VERA GOLD." }, { status: 403 });
 
     const { data: profile, error: profileError } = await supabase
       .from("financial_profiles").select("currency").eq("user_id", auth.user.id).maybeSingle();
