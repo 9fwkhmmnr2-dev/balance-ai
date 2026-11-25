@@ -1,7 +1,7 @@
 -- VERA · Soporte de monedas mixtas en objetivos.
 -- Preparada para Preview. NO ejecutar en Supabase hasta revisar y aprobar la aplicación.
 -- Los importes originales se conservan; cada movimiento y regla registra su propia moneda.
--- Incluye las funciones de vinculación y verificación adaptadas al campo occurred_at.
+-- Las funciones usan movement_date, que es el campo real de la tabla desplegada.
 -- No ejecutar las migraciones antiguas 202611230006/007/008 sin adaptar: usan movement_date.
 
 alter table public.financial_goals
@@ -182,7 +182,7 @@ begin
   end if;
 
   insert into public.financial_goal_movements (
-    goal_id, user_id, type, amount, currency, category, description, occurred_at,
+    goal_id, user_id, type, amount, currency, category, description, movement_date,
     status, source, recurring_rule_id, scheduled_for_date,
     verification_status, movement_id, created_at, updated_at
   ) values (
@@ -242,7 +242,7 @@ begin
   ) values (
     p_user_id, coalesce(nullif(trim(goal_movement.description), ''), goal_movement.category),
     goal_movement.type, goal_movement.amount, goal_movement.currency,
-    goal_movement.category, goal_movement.occurred_at, rule_account_id
+    goal_movement.category, goal_movement.movement_date, rule_account_id
   ) returning id into ledger_movement_id;
 
   update public.financial_goal_movements
@@ -296,7 +296,7 @@ begin
   update public.financial_goal_movements
   set amount = p_amount, category = trim(p_category),
       description = nullif(trim(p_description), ''),
-      occurred_at = p_occurred_at,
+      movement_date = p_occurred_at,
       verification_status = 'pending', verified_at = null, updated_at = now()
   where id = p_goal_movement_id and user_id = p_user_id;
   return p_goal_movement_id;
