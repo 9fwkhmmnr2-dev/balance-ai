@@ -46,6 +46,30 @@ export type VeraFinancialContext = {
     contributionCount: number;
   }>;
   experience?: "standard" | "gold";
+  financialPosition?: {
+    currency: string;
+    liquidBalance: number | null;
+    monthlyIncomeAverage: number;
+    monthlyExpensesAverage: number;
+    monthlySurplusAverage: number;
+    sampleDays: number;
+    accountsCount: number;
+    balanceComplete: boolean;
+    healthRating: "Excelente" | "Saludable" | "Estable" | "Ajustada" | "Crítica" | "Datos insuficientes";
+    savingsRatePercent: number | null;
+    expenseCoverageMonths: number | null;
+  };
+  decisionSimulation?: {
+    type: "purchase";
+    item: string;
+    amount: number;
+    currency: string;
+    currentLiquidBalance: number | null;
+    liquidBalanceAfterCashPurchase: number | null;
+    monthlySurplusAverage: number;
+    projections: Array<{ months: 3 | 6 | 12; baselineLiquidBalance: number | null; purchaseScenarioLiquidBalance: number | null; difference: number | null; differencePercent: number | null }>;
+    assumptions: string[];
+  };
 };
 
 export type VeraProviderResponse = {
