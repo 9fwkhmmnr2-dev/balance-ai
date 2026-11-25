@@ -309,36 +309,42 @@ export async function POST(request: Request) {
         if (missingFunction && input.requireLedgerLink === true) {
           return NextResponse.json({ error: "La vinculación con objetivos necesita que se aplique primero la migración de movimientos multidivisa en Supabase Preview. No se guardó el movimiento." }, { status: 409 });
         }
-        if (missingFunction && movementCurrency === goal.currency) {
-          // Same-currency manual contributions must work before the optional
-          // multi-currency migration is applied. Without an account, write
-          // directly to the deployed goal-movements schema.
-          if (!accountId) {
-            const legacyMovement = await supabase.from("financial_goal_movements").insert({
-              goal_id: input.goalId,
-              user_id: userId,
-              type: input.type,
-              amount: input.amount,
-              category,
-              description: description || null,
-              source: "manual",
-              recurring_rule_id: null,
-              status: "posted",
-              occurred_at: movementDate,
-            }).select("id").single();
-            if (legacyMovement.error) throw legacyMovement.error;
-            return NextResponse.json({ movementId: legacyMovement.data.id }, { status: 201 });
+        if (missingFunction && movementCurrency === goal.currency && !accountId) {
+          // Legacy schema fallback: include currency when the multi-currency
+          // column exists, and retry without it only when the schema is older.
+          const payload = {
+            goal_id: input.goalId,
+            user_id: userId,
+            type: input.type,
+            amount: input.amount,
+            currency: movementCurrency,
+            category,
+            description: description || null,
+            source: "manual",
+            recurring_rule_id: null,
+            status: "posted",
+            occurred_at: movementDate,
+          };
+          let legacyMovement = await supabase.from("financial_goal_movements")
+            .insert(payload).select("id").single();
+          const legacyError = legacyMovement.error as { code?: string; message?: string } | null;
+          const currencyColumnMissing = legacyError?.code === "42703" || legacyError?.code === "PGRST204" ||
+            /column.*currency|currency.*column/i.test(legacyError?.message ?? "");
+          if (legacyMovement.error && currencyColumnMissing) {
+            const { currency: _currency, ...olderPayload } = payload;
+            legacyMovement = await supabase.from("financial_goal_movements")
+              .insert(olderPayload).select("id").single();
           }
-          const legacy = await supabase.rpc("create_linked_goal_movement", {
-            p_goal_id: input.goalId, p_user_id: userId, p_type: input.type, p_amount: input.amount,
-            p_category: category, p_description: description || null, p_movement_date: movementDate,
-            p_account_id: accountId, p_source: "manual", p_recurring_rule_id: null,
-            p_scheduled_for_date: null, p_status: "posted", p_verification_status: "not_required",
-          });
-          if (legacy.error) throw legacy.error;
-          return NextResponse.json({ movementId: legacy.data }, { status: 201 });
+          if (legacyMovement.error) throw legacyMovement.error;
+          return NextResponse.json({ movementId: legacyMovement.data.id }, { status: 201 });
         }
-        if (missingFunction) return NextResponse.json({ error: "Para registrar aportes en varias monedas primero hay que aplicar la migración de objetivos en Supabase Preview." }, { status: 409 });
+        if (missingFunction) {
+          return NextResponse.json({
+            error: accountId
+              ? "La vinculación con la cuenta necesita la migración de objetivos multidivisa en Supabase Preview. No se guardó el movimiento."
+              : "Para registrar aportes en varias monedas primero hay que aplicar la migración de objetivos en Supabase Preview.",
+          }, { status: 409 });
+        }
         throw error;
       }
       return NextResponse.json({ movementId }, { status: 201 });
