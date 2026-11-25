@@ -8,6 +8,7 @@ import { useProfileCurrency } from "../lib/use-profile-currency";
 
 const categories = ["Alimentación", "Transporte", "Vivienda", "Servicios", "Salud", "Educación", "Entretenimiento", "Trabajo", "Ventas", "Otros"];
 type AccountOption = { id: string; name: string; currency: string };
+type GoalOption = { id: string; title: string; currency: string; status: string };
 
 export default function QuickMovement() {
   const [open, setOpen] = useState(false);
@@ -15,7 +16,9 @@ export default function QuickMovement() {
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setCompactButton(true), 2700);
-    return () => window.clearTimeout(timeout);
+    const openFromMovementsPage = () => { void openModal(); };
+    window.addEventListener("finance:open-quick-movement", openFromMovementsPage);
+    return () => { window.clearTimeout(timeout); window.removeEventListener("finance:open-quick-movement", openFromMovementsPage); };
   }, []);
   const today = new Date();
   const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -27,6 +30,8 @@ export default function QuickMovement() {
   useEffect(() => { setCurrency(profileCurrency); }, [profileCurrency]);
   const [category, setCategory] = useState("Otros");
   const [accountId, setAccountId] = useState("");
+  const [goals, setGoals] = useState<GoalOption[]>([]);
+  const [goalId, setGoalId] = useState("");
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [date, setDate] = useState(() => {
@@ -50,6 +55,15 @@ export default function QuickMovement() {
       const available = (data ?? []) as AccountOption[];
       setAccounts(available);
       setAccountId(available.find((account) => account.currency === currency)?.id ?? "");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (token) {
+        const goalsResponse = await fetch("/api/financial-goals", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (goalsResponse.ok) {
+          const goalsPayload = await goalsResponse.json();
+          setGoals((goalsPayload.goals ?? []).filter((goal: GoalOption) => goal.status === "active"));
+        }
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No pudimos cargar tus cuentas.");
     } finally {
@@ -65,6 +79,11 @@ export default function QuickMovement() {
       setMessage("Completá la descripción, ingresá un importe válido y elegí una fecha que no sea futura.");
       return;
     }
+    const selectedGoal = goals.find((goal) => goal.id === goalId);
+    if (selectedGoal && selectedGoal.currency !== currency) {
+      setMessage("El objetivo y el movimiento deben usar la misma moneda.");
+      return;
+    }
     const selectedAccount = accounts.find((account) => account.id === accountId && account.currency === currency);
     if (!selectedAccount) {
       setMessage("Elegí una cuenta activa que use la misma moneda del movimiento.");
@@ -74,21 +93,35 @@ export default function QuickMovement() {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
-      const { error } = await supabase.from("movements").insert({
-        user_id: user.id,
-        description: description.trim(),
-        type,
-        amount: numericAmount,
-        currency,
-        category,
-        movement_date: date,
-        account_id: selectedAccount.id
-      });
-      if (error) throw error;
+      if (goalId) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+        const response = await fetch("/api/financial-goals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ action: "movement", goalId, type, amount: numericAmount, currency, category, description: description.trim(), movementDate: date, accountId: selectedAccount.id })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "No pudimos vincular el movimiento con el objetivo.");
+      } else {
+        const { error } = await supabase.from("movements").insert({
+          user_id: user.id,
+          description: description.trim(),
+          type,
+          amount: numericAmount,
+          currency,
+          category,
+          movement_date: date,
+          account_id: selectedAccount.id
+        });
+        if (error) throw error;
+      }
       window.dispatchEvent(new Event("finance:movement-saved"));
       setDescription("");
       setAmount("");
       setCategory("Otros");
+      setGoalId("");
       setOpen(false);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No pudimos guardar el movimiento.");
@@ -122,9 +155,12 @@ export default function QuickMovement() {
               <label>Descripción<input value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Ej. Supermercado" maxLength={100} required /></label>
               <div className="quick-form-row">
                 <label>Importe<input type="text" inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="Ej. 160.000,50" required /></label>
-                <label>Moneda<CurrencyPicker value={currency} onChange={(next) => { setCurrency(next); setAccountId(accounts.find((account) => account.currency === next)?.id ?? ""); }} label="Moneda del movimiento" variant="light" /></label>
+                <label>Moneda<CurrencyPicker value={currency} onChange={(next) => { setCurrency(next); setAccountId(accounts.find((account) => account.currency === next)?.id ?? ""); }} label="Moneda del movimiento" variant="dark" /></label>
               </div>
               <label>Cuenta<select value={accountId} onChange={(event) => setAccountId(event.target.value)} disabled={loadingAccounts || matchingAccounts.length === 0}><option value="">{loadingAccounts ? "Cargando cuentas..." : matchingAccounts.length ? "Seleccionar cuenta" : "No hay cuentas en esta moneda"}</option>{matchingAccounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label>
+              <label>Vincular a un objetivo (opcional)<select value={goalId} onChange={(event) => setGoalId(event.target.value)}><option value="">Sin objetivo</option>{goals.map((goal) => <option key={goal.id} value={goal.id}>{goal.title} · {goal.currency}</option>)}</select></label>
+              {goalId && goals.find((goal) => goal.id === goalId)?.currency !== currency && <p className="quick-modal-error">Para vincularlo, el objetivo y el movimiento deben usar la misma moneda.</p>}
+
               {matchingAccounts.length === 0 && !loadingAccounts && <p className="quick-modal-error">Necesitás una cuenta activa en {currency} para registrar este movimiento. <a href="/cuentas">Crear una cuenta</a>.</p>}
               <div className="quick-form-row">
                 <label>Categoría<select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.map((item) => <option key={item}>{item}</option>)}</select></label>
