@@ -354,7 +354,7 @@ export async function POST(request: Request) {
       /column .* does not exist|could not find the .* column|function .* does not exist/i.test(errorMessage);
     if (schemaMismatch) {
       return NextResponse.json({
-        error: "La estructura de objetivos de Supabase Preview no está actualizada. No se registró el movimiento; hay que revisar la migración antes de volver a intentar.",
+        error: "La estructura multidivisa de objetivos de Supabase no está disponible. No se registró el movimiento; contactá al soporte.",
       }, { status: 409 });
     }
     return NextResponse.json({ error: "No pude guardar el movimiento. Revisá los datos e intentá nuevamente." }, { status: 500 });
@@ -529,26 +529,14 @@ export async function PATCH(request: Request) {
           .select("id, target_amount, currency").eq("id", input.id).eq("user_id", userId).maybeSingle();
         if (goalError) throw goalError;
         if (!goal) return NextResponse.json({ error: "No encontré ese objetivo." }, { status: 404 });
-        const modernEntries = await supabase.from("financial_goal_movements")
-          .select("type, amount, currency, status").eq("goal_id", input.id).eq("user_id", userId);
-        let completionEntries: Array<{ type: string; amount: number | string; currency: string; status: string }>;
-        if (modernEntries.error && (modernEntries.error.code === "42703" || modernEntries.error.code === "PGRST204")) {
-          const legacyEntries = await supabase.from("financial_goal_movements")
-            .select("type, amount, status").eq("goal_id", input.id).eq("user_id", userId);
-          if (legacyEntries.error) throw legacyEntries.error;
-          completionEntries = (legacyEntries.data ?? []).map((entry) => ({ ...entry, currency: goal.currency }));
-        } else {
-          if (modernEntries.error) throw modernEntries.error;
-          completionEntries = (modernEntries.data ?? []).map((entry) => ({ ...entry, currency: entry.currency ?? goal.currency }));
-        }
-        const codes = [...new Set(completionEntries.filter((entry) => entry.currency !== goal.currency).map((entry) => entry.currency))];
-        const completionRates = await getReferenceRates(goal.currency, codes);
-        const completionTotal = completionEntries.reduce((sum, entry) => {
+        const { data: completionEntries, error: completionEntriesError } = await supabase
+          .from("financial_goal_movements")
+          .select("type, goal_amount, status")
+          .eq("goal_id", input.id).eq("user_id", userId);
+        if (completionEntriesError) throw completionEntriesError;
+        const completionTotal = (completionEntries ?? []).reduce((sum, entry) => {
           if (entry.status !== "posted") return sum;
-          const quotedRate = entry.currency === goal.currency ? 1 : completionRates?.rates?.[entry.currency];
-          const factor = entry.currency === goal.currency ? 1 : typeof quotedRate === "number" && quotedRate > 0 ? 1 / quotedRate : null;
-          if (factor === null || completionRates?.stale?.[entry.currency]) return sum;
-          return sum + (entry.type === "income" ? 1 : -1) * Number(entry.amount) * factor;
+          return sum + (entry.type === "income" ? 1 : -1) * Number(entry.goal_amount);
         }, 0);
         if (completionTotal < Number(goal.target_amount)) {
           return NextResponse.json({ error: "Solo podés completar un objetivo cuando los ingresos confirmados, descontando los gastos, alcanzan el importe objetivo." }, { status: 400 });
