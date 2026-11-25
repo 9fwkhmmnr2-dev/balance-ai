@@ -384,13 +384,7 @@ export async function PATCH(request: Request) {
       if (error) {
         const missingFunction = error.code === "42883" || error.code === "PGRST202" || /correct_goal_movement_multi_currency/i.test(error.message ?? "");
         if (!missingFunction) throw error;
-        const legacy = await supabase.rpc("correct_linked_goal_movement", {
-          p_goal_movement_id: input.movementId, p_user_id: userId, p_amount: input.amount,
-          p_category: input.category.trim().slice(0, 60), p_description: description || null,
-          p_movement_date: input.movementDate,
-        });
-        if (legacy.error) throw legacy.error;
-        return NextResponse.json({ movementId: legacy.data });
+        return NextResponse.json({ error: "La función de corrección multidivisa no está disponible. No se modificó el movimiento." }, { status: 409 });
       }
       return NextResponse.json({ movementId: data });
     }
@@ -421,9 +415,7 @@ export async function PATCH(request: Request) {
         if (error) {
           const missingFunction = error.code === "42883" || error.code === "PGRST202" || /confirm_goal_movement_multi_currency/i.test(error.message ?? "");
           if (!missingFunction) throw error;
-          const legacy = await supabase.rpc("confirm_linked_goal_movement", { p_goal_movement_id: input.movementId, p_user_id: userId });
-          if (legacy.error) throw legacy.error;
-          return NextResponse.json({ movementId: legacy.data });
+          return NextResponse.json({ error: "La función de confirmación multidivisa no está disponible. No se confirmó el movimiento." }, { status: 409 });
         }
         return NextResponse.json({ movementId: data });
       }
@@ -577,10 +569,7 @@ export async function DELETE(request: Request) {
       if (error) {
         const missingFunction = error.code === "42883" || error.code === "PGRST202" || /delete_goal_movement_multi_currency/i.test(error.message ?? "");
         if (!missingFunction) throw error;
-        const legacy = await supabase.rpc("delete_linked_manual_goal_movement", { p_goal_movement_id: input.movementId, p_user_id: userId });
-        if (legacy.error) throw legacy.error;
-        if (!legacy.data) return NextResponse.json({ error: "No encontré ese movimiento manual." }, { status: 404 });
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ error: "La función de eliminación multidivisa no está disponible. No se eliminó el movimiento." }, { status: 409 });
       }
       if (!data) return NextResponse.json({ error: "No encontré ese movimiento manual." }, { status: 404 });
       return NextResponse.json({ success: true });
