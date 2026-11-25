@@ -95,8 +95,7 @@ export default function DocumentIntelligence() {
       const response = await fetch("/api/vera/documents/import", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ transactions: selectedRows.map(({ date, description, amount, currency, type, category, accountId }) =>
-          ({ date, description, amount, currency, type, category, accountId, allowPossibleDuplicate: row.possibleDuplicate })) }),
+        body: JSON.stringify({ transactions: selectedRows.map((row) => ({ date: row.date, description: row.description, amount: row.amount, currency: row.currency, type: row.type, category: row.category, accountId: row.accountId, allowPossibleDuplicate: row.possibleDuplicate })) }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "No pudimos importar los movimientos.");
