@@ -114,6 +114,13 @@ create unique index if not exists financial_goal_movements_recurring_date_uidx
   on public.financial_goal_movements (recurring_rule_id, scheduled_for_date)
   where recurring_rule_id is not null and scheduled_for_date is not null;
 
+create index if not exists financial_goal_recurring_rules_account_id_idx
+  on public.financial_goal_recurring_rules (account_id)
+  where account_id is not null;
+
+create index if not exists financial_goal_recurring_rules_goal_id_idx
+  on public.financial_goal_recurring_rules (goal_id);
+
 create or replace function public.create_goal_movement_multi_currency(
   p_goal_id uuid,
   p_user_id uuid,
