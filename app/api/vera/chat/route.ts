@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getVeraProvider } from "@/lib/vera/provider";
+import { isGoldEnabledForUser } from "@/lib/server/gold-access";
 import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
 
 export const runtime = "nodejs";
@@ -206,8 +207,7 @@ export async function POST(request: Request) {
     const currency = typeof profile?.currency === "string" ? profile.currency : "ARS";
     const today = buenosAiresToday();
     const from = startDate(input.period, today);
-    const isGold = authData.user.app_metadata?.plan === "gold" &&
-      authData.user.app_metadata?.gold_active === true;
+    const isGold = isGoldEnabledForUser(authData.user);
     const previousFrom = previousStartDate(input.period, from);
     const previousToDate = new Date(`${from}T00:00:00.000Z`);
     previousToDate.setUTCDate(previousToDate.getUTCDate() - 1);
