@@ -162,7 +162,8 @@ begin
      or p_rate_source is null or length(trim(p_rate_source)) = 0
      or p_rate_at is null
      or (p_currency = (select currency from public.financial_goals where id = p_goal_id and user_id = p_user_id)
-         and p_goal_amount is not null and abs(p_goal_amount - p_amount * p_exchange_rate) > 0.00000002)
+         and (p_exchange_rate <> 1
+              or (p_goal_amount is not null and abs(p_goal_amount - p_amount) > 0.00000002)))
      or (p_currency <> (select currency from public.financial_goals where id = p_goal_id and user_id = p_user_id)
          and (p_goal_amount is null or p_goal_amount <= 0
               or abs(p_goal_amount - p_amount * p_exchange_rate) > 0.00000002)) then
