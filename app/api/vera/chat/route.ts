@@ -271,14 +271,12 @@ export async function POST(request: Request) {
       const sixMonthsAgo = new Date(`${today}T00:00:00.000Z`);
       sixMonthsAgo.setUTCDate(sixMonthsAgo.getUTCDate() - 179);
       const positionFrom = sixMonthsAgo.toISOString().slice(0, 10);
-      const [{ data: accountRows, error: accountError }, { data: balanceRows, error: balanceError }, { data: transferRows, error: transferError }] = await Promise.all([
+      const [{ data: accountRows, error: accountError }, { data: balanceRows, error: balanceError }] = await Promise.all([
         supabase.from("financial_accounts").select("id, currency, initial_balance, is_archived").eq("user_id", authData.user.id).eq("currency", currency).eq("is_archived", false),
         supabase.from("movements").select("account_id, type, amount, movement_date").eq("user_id", authData.user.id).eq("currency", currency).gte("movement_date", "2000-01-01").lte("movement_date", today).order("movement_date", { ascending: true }).limit(10000),
-        supabase.from("account_transfers").select("from_account_id, to_account_id, amount").eq("user_id", authData.user.id),
       ]);
       if (accountError) throw accountError;
       if (balanceError) throw balanceError;
-      if (transferError) throw transferError;
 
       const accounts = accountRows ?? [];
       const accountIds = new Set(accounts.map((account) => account.id));
@@ -287,10 +285,6 @@ export async function POST(request: Request) {
       accountMovements.forEach((movement) => {
         if (!movement.account_id || !balances.has(movement.account_id)) return;
         balances.set(movement.account_id, (balances.get(movement.account_id) ?? 0) + (movement.type === "income" ? 1 : -1) * Number(movement.amount));
-      });
-      (transferRows ?? []).forEach((transfer) => {
-        if (accountIds.has(transfer.from_account_id)) balances.set(transfer.from_account_id, (balances.get(transfer.from_account_id) ?? 0) - Number(transfer.amount));
-        if (accountIds.has(transfer.to_account_id)) balances.set(transfer.to_account_id, (balances.get(transfer.to_account_id) ?? 0) + Number(transfer.amount));
       });
       const liquidBalance = accounts.length ? Array.from(balances.values()).reduce((sum, value) => sum + value, 0) : null;
       const recentMovements = accountMovements.filter((movement) => movement.movement_date >= positionFrom);
