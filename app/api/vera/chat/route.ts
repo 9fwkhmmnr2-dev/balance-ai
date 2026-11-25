@@ -70,14 +70,14 @@ function summarizeMovements(movements: MovementRow[]) {
 
 function detectPurchase(messages: VeraMessage[]) {
   const userMessages = messages.filter((message) => message.role === "user").map((message) => message.content);
-  const combined = userMessages.join("\\n");
-  const intent = /\\b(compr(?:a|ar|é|o)|adquirir|heladera|notebook|televisor|celular|mueble|electrodoméstico)\\b/i.test(combined);
+  const combined = userMessages.join("\n");
+  const intent = /\b(compr(?:a|ar|é|o)|adquirir|heladera|notebook|televisor|celular|mueble|electrodoméstico)\b/i.test(combined);
   if (!intent) return null;
-  const match = combined.match(/(?:compr(?:a|ar|é|o)|adquirir|heladera|notebook|televisor|celular|mueble|electrodoméstico)[^$\\d]{0,100}(?:\\$\\s*)?(\\d{1,3}(?:[.,]\\d{3})+|\\d{6,})(?:,\\d{1,2})?/i);
+  const match = combined.match(/(?:compr(?:a|ar|é|o)|adquirir|heladera|notebook|televisor|celular|mueble|electrodoméstico)[^$\d]{0,100}(?:\$\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{6,})(?:,\d{1,2})?/i);
   if (!match?.[1]) return null;
-  const amount = Number(match[1].replace(/\\D/g, ""));
+  const amount = Number(match[1].replace(/\D/g, ""));
   if (!Number.isSafeInteger(amount) || amount <= 0) return null;
-  const itemMatch = combined.match(/(?:compra de|comprar|adquirir)\\s+(?:un|una|el|la)?\\s*([^$,.\\n]{2,48}?)(?:\\s+(?:por|de)\\s+\\$?\\s*\\d|[,.\\n]|$)/i);
+  const itemMatch = combined.match(/(?:compra de|comprar|adquirir)\s+(?:un|una|el|la)?\s*([^$,\.\n]{2,48}?)(?:\s+(?:por|de)\s+\$?\s*\d|[,\.\n]|$)/i);
   return { amount, item: itemMatch?.[1]?.trim() || "compra indicada" };
 }
 
