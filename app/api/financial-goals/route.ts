@@ -291,8 +291,6 @@ export async function POST(request: Request) {
       const description = typeof input.description === "string" ? input.description.trim().slice(0, 240) : "";
       const accountId = typeof input.accountId === "string" && input.accountId ? input.accountId : null;
       if (accountId) {
-        const access = await requirePremium(supabase, userId);
-        if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
         const { data: account, error: accountError } = await supabase.from("financial_accounts")
           .select("id, currency, is_archived").eq("id", accountId).eq("user_id", userId).maybeSingle();
         if (accountError) throw accountError;
