@@ -4,7 +4,7 @@ import OnboardingGate from "../components/onboarding-gate";
 import DashboardStats from "../components/dashboard-stats";
 import QuickMovement from "../components/quick-movement";
 
-const navigation = [{ label: "Inicio", href: "/" }, { label: "Movimientos", href: "/movimientos" }, { label: "Mis cuentas", href: "/cuentas" }, { label: "Transferencias", href: "/transferencias" }, { label: "Conversor", href: "/conversor" }, { label: "Documentos · GOLD", href: "/documentos" }];
+const navigation = [{ label: "Inicio", href: "/" }, { label: "Movimientos", href: "/movimientos" }, { label: "Mis cuentas", href: "/cuentas" }, { label: "Transferencias", href: "/transferencias" }, { label: "Conversor", href: "/conversor" }, { label: "Documentos · GOLD", href: "/documentos" }, { label: "Simulador · GOLD", href: "/simulador" }];
 
 export default function Home() {
   return (
