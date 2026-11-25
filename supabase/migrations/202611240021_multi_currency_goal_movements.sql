@@ -14,6 +14,10 @@ alter table public.financial_goals
 
 alter table public.financial_goal_movements
   add column if not exists currency text,
+  add column if not exists goal_amount numeric(20,8),
+  add column if not exists exchange_rate numeric(24,12),
+  add column if not exists rate_source text,
+  add column if not exists rate_at timestamptz,
   add column if not exists movement_id uuid,
   add column if not exists scheduled_for_date date,
   add column if not exists verification_status text not null default 'not_required',
@@ -31,10 +35,16 @@ alter table public.financial_goal_recurring_rules
   add column if not exists account_id uuid;
 
 update public.financial_goal_movements m
-set currency = g.currency
+set currency = coalesce(nullif(m.currency, ''), g.currency),
+    goal_amount = coalesce(m.goal_amount, m.amount),
+    exchange_rate = coalesce(m.exchange_rate, 1),
+    rate_source = coalesce(m.rate_source, 'historical_legacy'),
+    rate_at = coalesce(m.rate_at, m.created_at, now())
 from public.financial_goals g
 where g.id = m.goal_id
-  and (m.currency is null or m.currency = '');
+  and (m.currency is null or m.currency = ''
+       or m.goal_amount is null or m.exchange_rate is null
+       or m.rate_source is null or m.rate_at is null);
 
 update public.financial_goal_recurring_rules r
 set currency = g.currency
@@ -44,6 +54,19 @@ where g.id = r.goal_id
 
 alter table public.financial_goal_movements
   alter column currency set not null;
+alter table public.financial_goal_movements
+  alter column goal_amount set not null,
+  alter column exchange_rate set not null,
+  alter column rate_source set not null,
+  alter column rate_at set not null;
+alter table public.financial_goal_movements
+  drop constraint if exists financial_goal_movements_goal_amount_check;
+alter table public.financial_goal_movements
+  add constraint financial_goal_movements_goal_amount_check check (goal_amount >= 0);
+alter table public.financial_goal_movements
+  drop constraint if exists financial_goal_movements_exchange_rate_check;
+alter table public.financial_goal_movements
+  add constraint financial_goal_movements_exchange_rate_check check (exchange_rate > 0);
 alter table public.financial_goal_recurring_rules
   alter column currency set not null;
 
@@ -105,7 +128,11 @@ create or replace function public.create_goal_movement_multi_currency(
   p_recurring_rule_id uuid,
   p_scheduled_for_date date,
   p_status text,
-  p_verification_status text
+  p_verification_status text,
+  p_goal_amount numeric default null,
+  p_exchange_rate numeric default 1,
+  p_rate_source text default 'same_currency',
+  p_rate_at timestamptz default now()
 )
 returns uuid
 language plpgsql
@@ -130,7 +157,14 @@ begin
      or p_source is null or p_source not in ('manual', 'recurring')
      or p_verification_status is null
      or p_verification_status not in ('not_required', 'pending', 'verified')
-     or p_occurred_at is null then
+     or p_occurred_at is null
+     or p_exchange_rate is null or p_exchange_rate <= 0
+     or p_rate_source is null or length(trim(p_rate_source)) = 0
+     or p_rate_at is null
+     or (p_currency = (select currency from public.financial_goals where id = p_goal_id and user_id = p_user_id)
+         and p_goal_amount is not null and abs(p_goal_amount - p_amount) > 0.00000001)
+     or (p_currency <> (select currency from public.financial_goals where id = p_goal_id and user_id = p_user_id)
+         and (p_goal_amount is null or p_goal_amount <= 0)) then
     raise exception 'Invalid goal movement data';
   end if;
 
@@ -182,13 +216,14 @@ begin
   end if;
 
   insert into public.financial_goal_movements (
-    goal_id, user_id, type, amount, currency, category, description, movement_date,
-    status, source, recurring_rule_id, scheduled_for_date,
+    goal_id, user_id, type, amount, currency, goal_amount, exchange_rate, rate_source, rate_at,
+    category, description, movement_date, status, source, recurring_rule_id, scheduled_for_date,
     verification_status, movement_id, created_at, updated_at
   ) values (
-    p_goal_id, p_user_id, p_type, p_amount, p_currency, p_category, p_description, p_occurred_at,
-    p_status, p_source, p_recurring_rule_id, p_scheduled_for_date,
-    p_verification_status, movement_row_id, now(), now()
+    p_goal_id, p_user_id, p_type, p_amount, p_currency,
+    coalesce(p_goal_amount, p_amount), p_exchange_rate, p_rate_source, p_rate_at,
+    p_category, p_description, p_occurred_at, p_status, p_source, p_recurring_rule_id,
+    p_scheduled_for_date, p_verification_status, movement_row_id, now(), now()
   ) returning id into goal_movement_id;
 
   return goal_movement_id;
@@ -294,7 +329,8 @@ begin
   end if;
 
   update public.financial_goal_movements
-  set amount = p_amount, category = trim(p_category),
+  set amount = p_amount, goal_amount = p_amount * goal_movement.exchange_rate,
+      category = trim(p_category),
       description = nullif(trim(p_description), ''),
       movement_date = p_occurred_at,
       verification_status = 'pending', verified_at = null, updated_at = now()
@@ -418,12 +454,12 @@ begin
 end;
 $$;
 
-revoke all on function public.create_goal_movement_multi_currency(uuid, uuid, text, numeric, text, text, text, date, uuid, text, uuid, date, text, text) from public, anon;
+revoke all on function public.create_goal_movement_multi_currency(uuid, uuid, text, numeric, text, text, text, date, uuid, text, uuid, date, text, text, numeric, numeric, text, timestamptz) from public, anon;
 revoke all on function public.confirm_goal_movement_multi_currency(uuid, uuid) from public, anon;
 revoke all on function public.correct_goal_movement_multi_currency(uuid, uuid, numeric, text, text, date) from public, anon;
 revoke all on function public.delete_goal_movement_multi_currency(uuid, uuid) from public, anon;
 revoke all on function public.process_financial_goal_recurring_rules_multi_currency() from public, anon, authenticated;
-grant execute on function public.create_goal_movement_multi_currency(uuid, uuid, text, numeric, text, text, text, date, uuid, text, uuid, date, text, text) to authenticated, service_role;
+grant execute on function public.create_goal_movement_multi_currency(uuid, uuid, text, numeric, text, text, text, date, uuid, text, uuid, date, text, text, numeric, numeric, text, timestamptz) to authenticated, service_role;
 grant execute on function public.confirm_goal_movement_multi_currency(uuid, uuid) to authenticated;
 grant execute on function public.correct_goal_movement_multi_currency(uuid, uuid, numeric, text, text, date) to authenticated;
 grant execute on function public.delete_goal_movement_multi_currency(uuid, uuid) to authenticated;
