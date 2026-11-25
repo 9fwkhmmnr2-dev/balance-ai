@@ -73,7 +73,7 @@ export default function QuickMovement({ showButton = true }: { showButton?: bool
     const openFromMovementsPage = () => { void openModal(); };
     window.addEventListener("finance:open-quick-movement", openFromMovementsPage);
     return () => window.removeEventListener("finance:open-quick-movement", openFromMovementsPage);
-  }, [currency]);
+  }, [openModal]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
