@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "../lib/supabase";
+import VeraGoldWorkspace from "./vera-gold-workspace";
 const VeraCore3D = dynamic(() => import("./vera-core-3d"), {
   ssr: false,
   loading: () => <span className="vera-core-3d"><span className="vera-core-fallback" aria-hidden="true" /></span>,
@@ -151,6 +152,7 @@ export default function VeraView() {
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
   const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "nucleus-gold" | "focus" | "transform" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
+  const [goldWorkspaceMode, setGoldWorkspaceMode] = useState<"purchase" | "decision" | "planning" | null>(null);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -772,6 +774,7 @@ export default function VeraView() {
           </div>
         </section>
       </section>
+      {goldWorkspaceMode && <VeraGoldWorkspace mode={goldWorkspaceMode} onClose={() => setGoldWorkspaceMode(null)} onSend={(text) => { setGoldWorkspaceMode(null); void sendMessage(text); }} />}
     </div>
   );
 }
