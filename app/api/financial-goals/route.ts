@@ -305,55 +305,11 @@ export async function POST(request: Request) {
         p_status: "posted", p_verification_status: "not_required",
       });
       if (error) {
-        const missingFunction = error.code === "42883" || error.code === "PGRST202" || /create_goal_movement_multi_currency/i.test(error.message ?? "");
-        if (missingFunction && input.requireLedgerLink === true) {
-          return NextResponse.json({ error: "La vinculación con objetivos necesita que se aplique primero la migración de movimientos multidivisa en Supabase Preview. No se guardó el movimiento." }, { status: 409 });
-        }
-        if (missingFunction && movementCurrency === goal.currency && !accountId) {
-          // Legacy schema fallback: include currency when the multi-currency
-          // column exists, and retry without it only when the schema is older.
-          const payload = {
-            goal_id: input.goalId,
-            user_id: userId,
-            type: input.type,
-            amount: input.amount,
-            currency: movementCurrency,
-            category,
-            description: description || null,
-            source: "manual",
-            recurring_rule_id: null,
-            status: "posted",
-            occurred_at: movementDate,
-          };
-          let legacyMovement = await supabase.from("financial_goal_movements")
-            .insert(payload).select("id").single();
-          const legacyError = legacyMovement.error as { code?: string; message?: string } | null;
-          const currencyColumnMissing = legacyError?.code === "42703" || legacyError?.code === "PGRST204" ||
-            /column.*currency|currency.*column/i.test(legacyError?.message ?? "");
-          if (legacyMovement.error && currencyColumnMissing) {
-            const olderPayload = {
-              goal_id: input.goalId,
-              user_id: userId,
-              type: input.type,
-              amount: input.amount,
-              category,
-              description: description || null,
-              source: "manual",
-              recurring_rule_id: null,
-              status: "posted",
-              occurred_at: movementDate,
-            };
-            legacyMovement = await supabase.from("financial_goal_movements")
-              .insert(olderPayload).select("id").single();
-          }
-          if (legacyMovement.error) throw legacyMovement.error;
-          return NextResponse.json({ movementId: legacyMovement.data.id }, { status: 201 });
-        }
+        const missingFunction = error.code === "42883" || error.code === "PGRST202" ||
+          /create_goal_movement_multi_currency/i.test(error.message ?? "");
         if (missingFunction) {
           return NextResponse.json({
-            error: accountId
-              ? "La vinculación con la cuenta necesita la migración de objetivos multidivisa en Supabase Preview. No se guardó el movimiento."
-              : "Para registrar aportes en varias monedas primero hay que aplicar la migración de objetivos en Supabase Preview.",
+            error: "La migración de objetivos todavía no está aplicada en Supabase Preview. No se guardó el movimiento.",
           }, { status: 409 });
         }
         throw error;
