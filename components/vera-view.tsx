@@ -147,6 +147,7 @@ export default function VeraView() {
   const [showCorePanel, setShowCorePanel] = useState(false);
   const [showGoldPanel, setShowGoldPanel] = useState(false);
   const [isGold, setIsGold] = useState(false);
+  const [accountId, setAccountId] = useState("");
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
   const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "nucleus-gold" | "focus" | "transform" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
@@ -188,26 +189,33 @@ export default function VeraView() {
 
   useEffect(() => () => { speechRecognitionRef.current?.stop(); }, []);
 
-  // GOLD solo se reconoce desde app_metadata, que Supabase administra del lado servidor.
-  // El usuario no puede activar este estado modificando datos locales o su perfil público.
+  // El estado GOLD se consulta al servidor para usar el mismo criterio de acceso que protege la API.
   useEffect(() => {
     let active = true;
-    void supabase.auth.getUser().then(({ data, error: userError }) => {
-      if (!active || userError || !data.user) return;
-      const metadata = data.user.app_metadata as Record<string, unknown> | undefined;
-      const verifiedGold = metadata?.plan === "gold" && metadata?.gold_active === true;
-      if (!verifiedGold) return;
+    void (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const response = await fetch("/api/vera/entitlement", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const entitlement = await response.json() as { isGold?: boolean; accountId?: string };
+      if (!active) return;
+      setAccountId(entitlement.accountId ?? "");
+      if (!entitlement.isGold) return;
       setIsGold(true);
       let welcomeSeen = false;
       try {
-        const key = `vera-gold-welcome-seen:${data.user.id}`;
+        const key = `vera-gold-welcome-seen:${entitlement.accountId}`;
         welcomeSeen = window.localStorage.getItem(key) === "true";
         if (!welcomeSeen) window.localStorage.setItem(key, "true");
       } catch {
         // Si el almacenamiento está bloqueado, la experiencia sigue funcionando.
       }
       if (!welcomeSeen) setShowGoldWelcome(true);
-    });
+    })();
     return () => { active = false; };
   }, []);
 
@@ -744,7 +752,9 @@ export default function VeraView() {
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); void sendMessage("Quiero simular una decisión financiera con VERA. Usá mis movimientos registrados como punto de partida y guiame dentro de esta conversación. Primero resumí brevemente los datos reales disponibles (ingresos, gastos y margen mensual); después preguntame solo los datos que falten, como qué decisión quiero evaluar, importe, ahorro inicial y plazo. Cuando tengas lo necesario, generá aquí mismo una simulación clara con escenario actual y escenario propuesto, evolución mensual, resultado al final del plazo y cuánto cambia mi margen. No inventes datos ni tasas, separá hechos de supuestos, aclarame que es una proyección y no registres ni modifiques movimientos o cuentas."); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular una decisión con VERA</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); void sendMessage("Abrí mi Planificación GOLD. Analizá mis ingresos, gastos, balance y categorías del período seleccionado. Prepará un plan realista basado únicamente en mis movimientos registrados. Si falta mi objetivo, monto o plazo, preguntame lo imprescindible. Separá datos observados de escenarios hipotéticos y no presentes una proyección como dinero ya ahorrado."); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
                       <a className="vera-tools-action gold" href="/documentos"><span className="vera-tool-icon" aria-hidden="true">▤</span>Analizar documentos</a>
-                    </> : <p className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con GOLD.</p>}
+                    </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con GOLD.
+                        {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar GOLD de prueba solo en Preview."); }}>Copiar ID para habilitar prueba GOLD</button>}
+                      </div>}
                   </section>
                   <label className="vera-tools-label" htmlFor="vera-compose-period">Período para el análisis</label>
                   <select id="vera-compose-period" className="vera-tools-period" value={period} onChange={(event) => setPeriod(event.target.value as Period)}>
