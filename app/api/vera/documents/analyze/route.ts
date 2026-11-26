@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -83,6 +84,8 @@ export async function POST(request: Request) {
     });
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authData.user) return NextResponse.json({ error: "Tu sesión venció. Volvé a iniciar sesión." }, { status: 401 });
+    const eligibility = await checkVeraAiEligibility(supabase, authData.user.id);
+    if (!eligibility.allowed) return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
 
     if (!isGoldEnabledForUser(authData.user)) return NextResponse.json({ error: "Esta herramienta requiere VERA GOLD." }, { status: 403 });
 
