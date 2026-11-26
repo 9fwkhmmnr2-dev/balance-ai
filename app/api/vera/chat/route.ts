@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getVeraProvider } from "@/lib/vera/provider";
 import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
 
@@ -177,6 +178,8 @@ export async function POST(request: Request) {
     if (authError || !authData.user) {
       return NextResponse.json({ error: "Tu sesión venció. Volvé a iniciar sesión." }, { status: 401 });
     }
+    const eligibility = await checkVeraAiEligibility(supabase, authData.user.id);
+    if (!eligibility.allowed) return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
 
     const body: unknown = await request.json();
     if (!body || typeof body !== "object") {
