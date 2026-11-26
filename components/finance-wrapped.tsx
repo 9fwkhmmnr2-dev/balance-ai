@@ -25,10 +25,9 @@ export default function FinanceWrapped(){
  const [slide, setSlide] = useState(0);
  const [vera, setVera] = useState(true);
  const [gold, setGold] = useState(false);
- const [voiceLoading, setVoiceLoading] = useState(false);
  const [voicePlaying, setVoicePlaying] = useState(false);
  const [voiceError, setVoiceError] = useState("");
- const audioRef=useRef<HTMLAudioElement|null>(null),audioUrlRef=useRef<string|null>(null);
+ const speechRef=useRef<SpeechSynthesisUtterance|null>(null);
  useEffect(()=>{let active=true;(async()=>{try{const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("Iniciá sesión para ver tu Wrapped.");const {data,error}=await supabase.from("movements").select("id,type,amount,currency,movement_date,description,category").eq("user_id",user.id).order("movement_date",{ascending:true});if(error)throw error;if(active)setRows((data??[]) as Movement[]);const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;if(token){const goalsResponse=await fetch("/api/financial-goals",{headers:{Authorization:"Bearer "+token},cache:"no-store"});if(goalsResponse.ok){const goalPayload=await goalsResponse.json();if(active)setGoals((goalPayload.goals??[]) as GoalSummary[])}const r=await fetch("/api/vera/entitlement",{headers:{Authorization:"Bearer "+token},cache:"no-store"});if(r.ok){const e=await r.json();if(active)setGold(Boolean(e.isGold))}}}catch(e){if(active)setError(e instanceof Error?e.message:"No pudimos preparar FINANCE WRAPPED.")}finally{if(active)setLoading(false)}})();return()=>{active=false}},[]);
  const currencies=useMemo(()=>Array.from(new Set(rows.map(x=>x.currency))).sort(),[rows]);
  useEffect(()=>{if(currencies.length&&!currencies.includes(currency))setCurrency(currencies[0])},[currencies,currency]);
@@ -61,25 +60,24 @@ export default function FinanceWrapped(){
  const dates=new Set(expenses.map(x=>x.movement_date.slice(0,10)));let streak=0,longest=0;for(let d=new Date(s);d<=e&&d<=new Date();d.setDate(d.getDate()+1)){if(dates.has(key(d)))streak=0;else{streak++;longest=Math.max(longest,streak)}}
  const slides=[["FINANCE WRAPPED","Tu período, en perspectiva.","Una mirada a tus movimientos registrados."],["EL RESUMEN","Así se movió tu dinero.","Ingresos, gastos y resultado neto del período."],["TUS INGRESOS","¿De dónde vino el dinero?","Tus principales categorías de ingresos registrados."],["TU ARQUETIPO",archetype,archetypeText],["TUS TOP","¿A dónde fue tu dinero?","Las categorías que concentraron más gastos."],["TUS COMERCIOS","Los nombres que más se repitieron.","Agrupación aproximada por descripción registrada."],["TU MOMENTO PICO",peak?"Tu día más activo fue el "+peak[0]+".":"Todavía no hay un día destacado.","Usamos la fecha del movimiento; no inferimos horarios de compra."],["TUS RACHAS",longest+" días sin gastos registrados.","Es una racha de registros, no una garantía de que no existieron gastos fuera de la app."],["TUS OBJETIVOS",goalProgress.length?goalProgress.length+" objetivos para seguir avanzando.":"Tus próximas metas pueden empezar acá.",goalEncouragement],["EL PLOT TWIST",biggest?"Tu movimiento más alto fue de "+money(Number(biggest.amount),currency):"Todavía no hay un gran plot twist.",small.length?"Los gastos pequeños seleccionados sumaron "+money(smallSum,currency)+".":"Aún no hay suficientes gastos pequeños para calcular un acumulado."],["TU FINANCE WRAPPED","Tu progreso merece continuidad.","FINANCE.TRACK te ayuda a registrar movimientos, entender hábitos, anticipar compromisos y seguir tus objetivos con información cada vez más completa."]];
  const current=slides[slide];
- useEffect(()=>{return()=>{audioRef.current?.pause();if(audioUrlRef.current)URL.revokeObjectURL(audioUrlRef.current)}},[]);
- useEffect(()=>{audioRef.current?.pause();setVoicePlaying(false);setVoiceError("")},[slide]);
- async function playVeraVoice(){
-  if(voicePlaying&&audioRef.current){audioRef.current.pause();setVoicePlaying(false);return}
-  if(audioRef.current&&audioRef.current.paused&&audioUrlRef.current){try{await audioRef.current.play();setVoicePlaying(true);return}catch{audioRef.current=null}}
-  if(voiceLoading)return;
-  setVoiceLoading(true);setVoiceError("");
-  try{
-   const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;
-   if(!token)throw new Error("Tu sesión no está disponible.");
-   const spokenText=[current[0],current[1],current[2]].filter(Boolean).join(". ");
-   const response=await fetch("/api/vera/tts",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({text:spokenText.slice(0,1800)})});
-   if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error||"No pudimos generar la voz de VERA.")}
-   const blob=await response.blob();if(audioUrlRef.current)URL.revokeObjectURL(audioUrlRef.current);
-   const url=URL.createObjectURL(blob);audioUrlRef.current=url;
-   const audio=new Audio(url);audioRef.current=audio;audio.onended=()=>setVoicePlaying(false);audio.onerror=()=>{setVoicePlaying(false);setVoiceError("No pudimos reproducir este audio.")};
-   await audio.play();setVoicePlaying(true);
-  }catch(error){setVoiceError(error instanceof Error?error.message:"No pudimos reproducir la voz de VERA.")}
-  finally{setVoiceLoading(false)}
+ useEffect(()=>{return()=>{if(typeof window!=="undefined"&&"speechSynthesis" in window)window.speechSynthesis.cancel()}},[]);
+ useEffect(()=>{if(typeof window!=="undefined"&&"speechSynthesis" in window)window.speechSynthesis.cancel();speechRef.current=null;setVoicePlaying(false);setVoiceError("")},[slide]);
+ useEffect(()=>{if(!vera){if(typeof window!=="undefined"&&"speechSynthesis" in window)window.speechSynthesis.cancel();speechRef.current=null;setVoicePlaying(false);setVoiceError("")}},[vera]);
+ function playVeraVoice(){
+  if(typeof window==="undefined"||!("speechSynthesis" in window)){setVoiceError("Este navegador no admite narración por voz.");return}
+  const synth=window.speechSynthesis;
+  if(voicePlaying){synth.pause();setVoicePlaying(false);return}
+  if(synth.paused&&speechRef.current){synth.resume();setVoicePlaying(true);return}
+  synth.cancel();setVoiceError("");
+  const spokenText=[current[0],current[1],current[2]].filter(Boolean).join(". ");
+  const utterance=new SpeechSynthesisUtterance(spokenText);
+  utterance.lang="es-AR";utterance.rate=0.96;utterance.pitch=1;
+  const voices=synth.getVoices();const voice=voices.find(v=>v.lang.toLowerCase()==="es-ar")||voices.find(v=>v.lang.toLowerCase().startsWith("es-"));
+  if(voice)utterance.voice=voice;
+  utterance.onstart=()=>setVoicePlaying(true);
+  utterance.onend=()=>{setVoicePlaying(false);speechRef.current=null};
+  utterance.onerror=()=>{setVoicePlaying(false);setVoiceError("No pudimos reproducir la narración en este dispositivo.");speechRef.current=null};
+  speechRef.current=utterance;synth.speak(utterance);
  }
  async function share(){const text="Mi FINANCE WRAPPED · "+label+"\nIngresos: "+money(totalIn,currency)+" · Gastos: "+money(totalOut,currency)+" · Resultado neto: "+money(net,currency)+"\nArquetipo: "+archetype;if(navigator.share){try{await navigator.share({title:"Mi FINANCE WRAPPED",text})}catch{}}else if(navigator.clipboard)await navigator.clipboard.writeText(text)}
  if(loading)return <FinanceTrackLoader message="Preparando tu FINANCE WRAPPED"/>;
@@ -102,8 +100,8 @@ export default function FinanceWrapped(){
    </div>
    {slide===8&&<div className="wrapped-goals-grid">{goalProgress.length?goalProgress.map(goal=><article key={goal.id}><div><strong>{goal.title}</strong><b>{goal.progress_percent.toLocaleString("es-AR")}%</b></div><i><em style={{width:Math.min(100,goal.progress_percent)+"%"}}/></i><small>{money(goal.saved_amount,goal.currency)} de {money(goal.target_amount,goal.currency)}{goal.target_date?" · Fecha objetivo "+new Date(goal.target_date+"T12:00:00").toLocaleDateString("es-AR"):""}</small><p>{goal.progress_percent>=75?"Estás cerca. Cada aporte confirmado cuenta.":goal.progress_percent>=35?"Buen avance. La constancia sostiene el progreso.":"Un paso a la vez: registrar tus aportes te permite ver el camino."}</p></article>):<p>Creá una meta en Objetivos y registrá aportes para ver tu progreso en próximos Wrapped.</p>}</div>}
    {vera&&<aside className="wrapped-vera"><div className={gold?"wrapped-vera-icon gold":"wrapped-vera-icon"}><VeraIsotype/></div><p><b>VERA</b> {slide===3?archetypeText:slide===8?goalEncouragement:slide===10?"Seguir usando FINANCE.TRACK te permite construir un historial confiable, detectar cambios y medir tus objetivos con más claridad.":current[2]}</p></aside>}
-   <div className="wrapped-voice-controls"><button onClick={playVeraVoice} disabled={voiceLoading}>{voiceLoading?"Preparando narración…":voicePlaying?"Pausar narración":"Escuchar narración de VERA"}</button>{voiceError&&<small role="status">{voiceError}</small>}</div>
-   <p className="wrapped-voice-disclosure">Al escuchar, el texto de esta historia se envía a Google Gemini para generar el audio. No se envía el historial completo de movimientos.</p>
+   {vera&&<><div className="wrapped-voice-controls"><button onClick={playVeraVoice}>{voicePlaying?"Pausar narración":"Escuchar narración de VERA"}</button>{voiceError&&<small role="status">{voiceError}</small>}</div>
+   <p className="wrapped-voice-disclosure">La narración se reproduce con una voz disponible en tu dispositivo. El texto de esta historia no se envía a Google Gemini.</p></>}
    <div className="wrapped-nav"><button disabled={slide===0} onClick={()=>setSlide(v=>Math.max(0,v-1))}>Anterior</button><button disabled={slide===slides.length-1} onClick={()=>setSlide(v=>Math.min(slides.length-1,v+1))}>Siguiente</button></div>
   </section>
   <footer className="wrapped-footer"><button onClick={()=>setVera(v=>!v)}>{vera?"Ocultar narración de VERA":"Mostrar narración de VERA"}</button><button onClick={share}>Compartir resumen</button><a href="/">Volver a FINANCETRACK</a></footer>
