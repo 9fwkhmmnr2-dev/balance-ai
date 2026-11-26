@@ -132,10 +132,7 @@ export default function DashboardStats() {
   const activeAccountIds = useMemo(() => new Set(activeAccounts.map((account) => account.id)), [activeAccounts]);
   const accountTotal = activeAccounts.reduce((sum, account) => sum + (accountBalances[account.id] ?? Number(account.initial_balance)), 0);
   const allActiveAccounts = accounts.filter((account) => !account.is_archived);
-  const accountTotalsByCurrency = allActiveAccounts.reduce((totals, account) => {
-    totals[account.currency] = (totals[account.currency] ?? 0) + (accountBalances[account.id] ?? Number(account.initial_balance));
-    return totals;
-  }, {} as Record<string, number>);
+  
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const todayKey = dateKey(today);
@@ -405,7 +402,7 @@ export default function DashboardStats() {
       </section>
 
       {((period === "monthly" || period === "yearly") && periodMovements.length >= 6 && categoryData.length >= 2) && (
-        <VeraGoldContextPromo plan="free" />
+        <VeraGoldContextPromo plan={isGold ? "gold" : "free"} />
       )}
 
       <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en tus movimientos registrados. Las transferencias entre tus cuentas no se cuentan como ingresos ni gastos.</p>
