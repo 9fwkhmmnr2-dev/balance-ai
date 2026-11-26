@@ -13,7 +13,11 @@ const avatars = [
   { id: "avatar-05", emoji: "🐯", label: "Tigre" }, { id: "avatar-06", emoji: "🐙", label: "Pulpo" },
   { id: "avatar-07", emoji: "🐧", label: "Pingüino" }, { id: "avatar-08", emoji: "🐻", label: "Oso" },
   { id: "avatar-09", emoji: "🦁", label: "León" }, { id: "avatar-10", emoji: "🐨", label: "Koala" },
-  { id: "avatar-11", emoji: "🦋", label: "Mariposa" }, { id: "avatar-12", emoji: "🐬", label: "Delfín" }
+  { id: "avatar-11", emoji: "🦋", label: "Mariposa" }, { id: "avatar-12", emoji: "🐬", label: "Delfín" },
+  { id: "avatar-13", emoji: "🐶", label: "Perro" }, { id: "avatar-14", emoji: "🐱", label: "Gato" },
+  { id: "avatar-15", emoji: "🐭", label: "Ratón" }, { id: "avatar-16", emoji: "🐹", label: "Hámster" },
+  { id: "avatar-17", emoji: "🫎", label: "Alce" }, { id: "avatar-18", emoji: "🦧", label: "Orangután" },
+  { id: "avatar-19", emoji: "🦭", label: "Foca" }
 ];
 
 const tierLabels = { bronze: "Bronce", silver: "Plata", gold: "Oro" };
