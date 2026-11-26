@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import MobileMenu from "./mobile-menu";
 import VeraGoldContextPromo from "./vera-gold-context-promo";
 import VeraIsotype from "./vera-isotype";
+import FinanceTrackLoader from "./finance-track-loader";
 
 type Movement = {
   id: string;
@@ -231,7 +232,7 @@ export default function DashboardStats() {
   }).join(" ");
   const comparisonMax = Math.max(1, income, expenses);
 
-  if (loading) return <section className="card">Preparando tu panorama financiero...</section>;
+  if (loading) return <FinanceTrackLoader message="Preparando tu panorama financiero" />;
   if (error) return <section className="card"><p>{error}</p><button className="text-button" onClick={() => { setLoading(true); void loadData(); }}>Reintentar</button></section>;
 
   return (
