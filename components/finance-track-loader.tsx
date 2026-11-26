@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 export default function FinanceTrackLoader({ message = "Preparando tu espacio" }: { message?: string }) {
   return (
     <main className="financetrack-loading" aria-live="polite" aria-busy="true">
