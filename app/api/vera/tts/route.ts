@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: body.text.trim(), speech_metadata: { style: "Narración profesional, serena y cercana. Español rioplatense natural, ritmo moderado, dicción clara y cálida. Pronunciá importes y porcentajes con claridad. No agregues palabras." } }] }],
+        contents: [{ parts: [{ text: body.text.trim(), speechMetadata: { style: "Narración profesional, serena y cercana. Español rioplatense natural, ritmo moderado, dicción clara y cálida. Pronunciá importes y porcentajes con claridad. No agregues palabras." } }] }],
         generationConfig: {
           responseModalities: ["AUDIO"],
           speechConfig: { languageCode: "es-US", voiceConfig: { prebuiltVoiceConfig: { voiceName: "Kore" } } },
