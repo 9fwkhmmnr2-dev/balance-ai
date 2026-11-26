@@ -108,7 +108,7 @@ export default function LoginPage() {
           <div style={{ display: "grid", gap: 12, marginBottom: 18 }}>
             <label style={{ display: "flex", gap: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" required checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)} /> <span>Acepto los <Link href="/terminos" target="_blank" style={{ color: "#D8B66A" }}>Términos y Condiciones</Link>.</span></label>
             <label style={{ display: "flex", gap: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" required checked={acceptedPrivacy} onChange={e => setAcceptedPrivacy(e.target.checked)} /> <span>Acepto la <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A" }}>Política de Privacidad</Link>.</span></label>
-            <label style={{ display: "flex", gap: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" checked={aiDataConsent} onChange={e => setAiDataConsent(e.target.checked)} /> <span>Autorizo por separado el procesamiento de mis mensajes, contexto financiero y documentos por proveedores externos de IA cuando VERA esté habilitada. Esta autorización es opcional y revocable; sin ella, VERA no estará disponible.</span></label>
+            <label style={{ display: "flex", gap: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" checked={aiDataConsent} onChange={e => setAiDataConsent(e.target.checked)} /> <span>Autorizo por separado el procesamiento de mis mensajes, contexto financiero y documentos por proveedores externos de IA únicamente cuando el proveedor y el tipo de servicio permitan tratar datos financieros y VERA esté habilitada. Esta autorización es opcional y revocable; sin ella, VERA no estará disponible.</span></label>
           </div>
         </>}
 
