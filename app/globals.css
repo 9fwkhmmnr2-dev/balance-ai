@@ -2437,3 +2437,57 @@ body{background:#090A0D;color:#F2F0EB}
 /* FINANCE.TRACK loading lockup: preserve the original logo aspect ratio */
 .financetrack-loading-lockup{width:min(420px,84vw);display:flex;align-items:center;justify-content:center}
 .financetrack-loading-lockup img{display:block;width:100%;height:auto;max-height:220px;object-fit:contain;object-position:center}
+
+
+/* FINANCE FRIENDS */
+.social-profile-panel { overflow: hidden; }
+.social-heading { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:22px; }
+.social-eyebrow { color:#7C3AED; font-size:10px; font-weight:800; letter-spacing:1.5px; margin-bottom:7px; }
+.social-heading .section-title { margin-bottom:5px; }
+.social-avatar-preview,.social-person-avatar { display:grid; place-items:center; flex:0 0 auto; width:58px; height:58px; border-radius:18px; background:linear-gradient(145deg,#F3E8FF,#EDE9FE); font-size:30px; }
+.social-profile-form { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-bottom:20px; }
+.social-field { display:flex; flex-direction:column; gap:7px; margin-bottom:16px; min-width:0; }
+.social-field label { font-size:13px; font-weight:700; }
+.social-field input,.social-search-row input,.social-username-input { min-height:43px; width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:9px; background:#fff; color:var(--graphite); outline:none; }
+.social-field input:focus,.social-search-row input:focus,.social-username-input:focus-within { border-color:#8B5CF6; box-shadow:0 0 0 3px rgba(139,92,246,.1); }
+.social-field small { color:var(--muted); font-size:11px; line-height:1.5; }
+.social-username-input { display:flex; align-items:center; gap:7px; }
+.social-username-input span { color:#7C3AED; font-weight:800; }
+.social-username-input input { border:0; padding:0; min-height:unset; outline:none; box-shadow:none!important; }
+.social-avatar-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:9px; }
+.social-avatar-option { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; min-height:76px; padding:8px 3px; border:1px solid var(--border); border-radius:10px; background:#fff; }
+.social-avatar-option span { font-size:25px; }
+.social-avatar-option small { font-size:10px; color:var(--gray); }
+.social-avatar-option.selected { border:2px solid #8B5CF6; background:#F5F3FF; }
+.social-save { margin-top:2px; background:#7C3AED; }
+.social-save:hover { background:#6D28D9; }
+.social-privacy-note { margin-top:18px; padding:13px 15px; border:1px solid #DDD6FE; border-radius:10px; background:#F5F3FF; color:#4C1D95; font-size:12px; line-height:1.6; }
+.social-privacy-note strong { display:block; margin-bottom:3px; }
+.social-error,.social-notice { margin-top:12px; font-size:13px; }
+.social-error { color:#B42318; }.social-notice { color:#15803D; }
+.social-divider { height:1px; background:var(--border); margin:24px 0; }
+.social-section-title { display:flex; align-items:center; gap:8px; margin:0 0 12px; font-size:15px; font-weight:800; }
+.social-section-title span { display:inline-grid; place-items:center; min-width:22px; height:22px; padding:0 6px; border-radius:20px; background:#F3E8FF; color:#6D28D9; font-size:11px; }
+.social-search-row { display:flex; gap:9px; }
+.social-search-row input { flex:1; min-width:0; }
+.social-secondary-button,.social-text-button { border:1px solid #DDD6FE; border-radius:8px; padding:8px 12px; background:#F5F3FF; color:#6D28D9; font-size:12px; font-weight:700; white-space:nowrap; }
+.social-text-button { border-color:transparent; background:transparent; color:#6B7280; }
+.social-secondary-button:disabled,.social-text-button:disabled { opacity:.5; cursor:not-allowed; }
+.social-person-row { display:flex; align-items:center; gap:11px; padding:12px 0; border-bottom:1px solid rgba(148,163,184,.18); }
+.social-person-avatar { width:42px; height:42px; border-radius:13px; font-size:22px; }
+.social-person-info { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+.social-person-info strong { font-size:13px; }.social-person-info small { color:var(--muted); font-size:11px; }
+.social-section-block { margin-top:22px; }
+.social-achievements-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.social-achievement { display:flex; gap:10px; padding:13px; border:1px solid var(--border); border-radius:10px; }
+.social-achievement > span { font-size:24px; }
+.social-achievement div { display:flex; flex-direction:column; gap:4px; }
+.social-achievement strong { font-size:12px; }.social-achievement small { color:var(--gray); font-size:11px; line-height:1.4; }
+.social-achievement em { color:#7C3AED; font-size:10px; font-style:normal; font-weight:800; }
+@media(max-width:600px) {
+ .social-profile-form { grid-template-columns:1fr; gap:0; }
+ .social-avatar-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+ .social-achievements-grid { grid-template-columns:1fr; }
+ .social-person-row { flex-wrap:wrap; }
+ .social-person-info { min-width:100px; }
+}
