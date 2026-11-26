@@ -61,20 +61,17 @@ export default function DashboardStats() {
       const preferred = profile?.currency || "ARS";
       const [
         { data: movementRows, error: movementError },
-        { data: accountRows, error: accountError },
-        { data: transferRows, error: transferError }
+        { data: accountRows, error: accountError }
       ] = await Promise.all([
         supabase.from("movements").select("id, account_id, type, amount, currency, movement_date, description, category").eq("user_id", userData.user.id).order("movement_date", { ascending: false }).order("created_at", { ascending: false }),
-        supabase.from("financial_accounts").select("id, name, currency, initial_balance, is_archived").eq("user_id", userData.user.id).order("created_at", { ascending: true }),
-        supabase.from("account_transfers").select("from_account_id, to_account_id, amount").eq("user_id", userData.user.id)
+        supabase.from("financial_accounts").select("id, name, currency, initial_balance, is_archived").eq("user_id", userData.user.id).order("created_at", { ascending: true })
       ]);
       if (movementError) throw movementError;
       if (accountError) throw accountError;
-      if (transferError) throw transferError;
       const rows = (movementRows ?? []) as Movement[];
       setMovements(rows);
       setAccounts((accountRows ?? []) as Account[]);
-      setTransfers((transferRows ?? []) as Transfer[]);
+      setTransfers([]);
       setCurrencies(Array.from(new Set([preferred, ...(accountRows ?? []).map((row) => row.currency), ...rows.map((row) => row.currency)])));
       setCurrency((current) => current || preferred);
     } catch {
@@ -204,13 +201,31 @@ export default function DashboardStats() {
         <p>Entendé qué está pasando con tu dinero.</p>
       </header>
 
+      <section className="dashboard-accounts-section dashboard-accounts-top">
+        <div className="section-heading">
+          <div><p className="eyebrow">PATRIMONIO POR CUENTAS</p><h3>Tu dinero disponible</h3></div>
+          <div className="dashboard-account-total"><label className="currency-picker">Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><strong>{money(accountTotal, currency)}</strong></div>
+        </div>
+        {activeAccounts.length === 0 ? <p className="empty-state">Todavía no tenés cuentas activas en {currency}. Podés agregarlas desde Mis cuentas.</p> : (
+          <div className="dashboard-account-grid">
+            {activeAccounts.map((account) => (
+              <article className="dashboard-account-card" key={account.id}>
+                <span>{account.name}</span>
+                <strong>{money(accountBalances[account.id] ?? Number(account.initial_balance), currency)}</strong>
+                <small>{account.currency}</small>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="dashboard-balance-card dashboard-balance-compact">
         <div className="dashboard-balance-heading">
           <div>
             <p className="eyebrow">RESUMEN PERSONAL</p>
             <h2>Tu dinero, en perspectiva.</h2>
           </div>
-          <label className="currency-picker">Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+
         </div>
         <div className="dashboard-balance-controls">
           <span>Período</span>
@@ -236,6 +251,16 @@ export default function DashboardStats() {
         <article className="card stat-card movements-stat-card"><p className="card-label">Movimientos {periodLabel}</p><h3 className="card-value">{periodMovements.length}</h3></article>
       </section>
 
+
+      <section className="card dashboard-chart-card">
+        <div className="section-heading"><div><p className="eyebrow">COMPARACIÓN</p><h3>Ingresos vs. gastos</h3></div></div>
+        <div className="dashboard-comparison">
+      <div className="dashboard-comparison-row"><div><span>Ingresos</span><strong>{money(income, currency)}</strong></div><div className="dashboard-progress-track"><span className="comparison-income-fill" style={{ width: (income / comparisonMax * 100) + "%" }} /></div></div>
+      <div className="dashboard-comparison-row"><div><span>Gastos</span><strong>{money(expenses, currency)}</strong></div><div className="dashboard-progress-track"><span className="comparison-expense-fill" style={{ width: (expenses / comparisonMax * 100) + "%" }} /></div></div>
+      <div className="dashboard-comparison-result"><span>Resultado del período</span><strong className={periodNet >= 0 ? "amount-income" : "amount-expense"}>{periodNet > 0 ? "+" : periodNet < 0 ? "−" : ""}{money(Math.abs(periodNet), currency)}</strong></div>
+        </div>
+      </section>
+
       <section className="card dashboard-recent-top">
         <div className="section-heading">
           <div><p className="eyebrow">ACTIVIDAD RECIENTE</p><h3>Últimos movimientos</h3></div>
@@ -250,23 +275,7 @@ export default function DashboardStats() {
         ))}
       </section>
 
-      <section className="dashboard-accounts-section dashboard-accounts-top">
-        <div className="section-heading">
-          <div><p className="eyebrow">PATRIMONIO POR CUENTAS</p><h3>Tu dinero disponible</h3></div>
-          <strong>{money(accountTotal, currency)}</strong>
-        </div>
-        {activeAccounts.length === 0 ? <p className="empty-state">Todavía no tenés cuentas activas en {currency}. Podés agregarlas desde Mis cuentas.</p> : (
-          <div className="dashboard-account-grid">
-            {activeAccounts.map((account) => (
-              <article className="dashboard-account-card" key={account.id}>
-                <span>{account.name}</span>
-                <strong>{money(accountBalances[account.id] ?? Number(account.initial_balance), currency)}</strong>
-                <small>{account.currency}</small>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+
 
       <section className="vera-insight-card vera-insight-compact">
         <div className="vera-insight-top">
@@ -275,6 +284,18 @@ export default function DashboardStats() {
           <span className="insight-status">Básico</span>
         </div>
         <p>{periodMovements.length === 0 ? "Cuando registres ingresos y gastos, voy a poder mostrarte una lectura basada en tus movimientos." : periodNet > 0 ? "En " + periodLabel + " registraste " + money(periodNet, currency) + " más en ingresos que en gastos." : periodNet < 0 ? "La diferencia entre ingresos y gastos " + periodLabel + " es de " + money(Math.abs(periodNet), currency) + "." : "Tus ingresos y gastos registrados " + periodLabel + " tienen el mismo total."}</p>
+      </section>
+
+      <section className="card dashboard-financial-status">
+        <div className="section-heading"><div><p className="eyebrow">ESTADO FINANCIERO</p><h3>Descripción rápida de tu situación</h3></div><span className="dashboard-status-tag">Lectura basada en registros</span></div>
+        <p>{periodMovements.length===0?"Todavía no hay movimientos suficientes en este período para describir el resultado.":periodNet>0?"En "+periodLabel+" tus ingresos superan tus gastos por "+money(periodNet,currency)+".":periodNet<0?"En "+periodLabel+" tus gastos superan tus ingresos por "+money(Math.abs(periodNet),currency)+".":"En "+periodLabel+" tus ingresos y gastos registrados están equilibrados."}</p>
+        <div className="dashboard-financial-status-grid">
+          <div><span>Ingresos del período</span><strong>{money(income,currency)}</strong></div>
+          <div><span>Gastos del período</span><strong>{money(expenses,currency)}</strong></div>
+          <div><span>Gastos sobre ingresos</span><strong>{income>0?(expenses/income*100).toLocaleString("es-AR",{maximumFractionDigits:1})+"%":"Sin base para calcular"}</strong></div>
+          <div><span>Dinero disponible en cuentas ({currency})</span><strong>{money(accountTotal,currency)}</strong></div>
+        </div>
+        <small>Es una descripción de los datos registrados, no una calificación integral de salud financiera. Las categorías Excelente, Saludable, Estable, Ajustada y Crítica todavía requieren umbrales definidos.</small>
       </section>
 
       <section className="dashboard-charts-section">
@@ -323,14 +344,6 @@ export default function DashboardStats() {
               </div>}
           </section>
 
-          <section className="card dashboard-chart-card">
-            <div className="section-heading"><div><p className="eyebrow">COMPARACIÓN</p><h3>Ingresos vs. gastos</h3></div></div>
-            <div className="dashboard-comparison">
-              <div className="dashboard-comparison-row"><div><span>Ingresos</span><strong>{money(income, currency)}</strong></div><div className="dashboard-progress-track"><span className="comparison-income-fill" style={{ width: (income / comparisonMax * 100) + "%" }} /></div></div>
-              <div className="dashboard-comparison-row"><div><span>Gastos</span><strong>{money(expenses, currency)}</strong></div><div className="dashboard-progress-track"><span className="comparison-expense-fill" style={{ width: (expenses / comparisonMax * 100) + "%" }} /></div></div>
-              <div className="dashboard-comparison-result"><span>Resultado del período</span><strong className={periodNet >= 0 ? "amount-income" : "amount-expense"}>{periodNet > 0 ? "+" : periodNet < 0 ? "−" : ""}{money(Math.abs(periodNet), currency)}</strong></div>
-            </div>
-          </section>
 
           <section className="card dashboard-chart-card dashboard-timeline-card">
             <div className="section-heading"><div><p className="eyebrow">TENDENCIA</p><h3>Ingresos y gastos en el tiempo</h3></div><span className="chart-legend"><i className="legend-income" /> Ingresos <i className="legend-expense" /> Gastos</span></div>
