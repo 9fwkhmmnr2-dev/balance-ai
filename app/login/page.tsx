@@ -53,7 +53,6 @@ export default function LoginPage() {
         } else {
           await saveAcceptance(data.session.access_token, acceptance);
           await supabase.auth.updateUser({ data: {
-            registration_birth_date: null,
             registration_terms_accepted: null,
             registration_privacy_accepted: null,
             registration_ai_data_consent: null,
