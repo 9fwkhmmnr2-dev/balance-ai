@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import MobileMenu from "./mobile-menu";
 import VeraGoldContextPromo from "./vera-gold-context-promo";
+import VeraIsotype from "./vera-isotype";
 
 type Movement = {
   id: string;
@@ -50,6 +51,7 @@ export default function DashboardStats() {
   const [period, setPeriod] = useState<Period>("monthly");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isGold, setIsGold] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -79,6 +81,22 @@ export default function DashboardStats() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      try {
+        const response = await fetch("/api/vera/entitlement", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+        if (!response.ok) return;
+        const entitlement = await response.json() as { isGold?: boolean };
+        if (active) setIsGold(Boolean(entitlement.isGold));
+      } catch { /* La identidad Free es el valor seguro por defecto. */ }
+    })();
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
@@ -169,6 +187,27 @@ export default function DashboardStats() {
   const maxCategory = Math.max(1, ...categoryData.map((item) => item.amount));
   const accountPositiveTotal = activeAccounts.reduce((sum, account) => sum + Math.max(0, accountBalances[account.id] ?? 0), 0);
 
+  // Diagnóstico orientativo de los últimos tres meses, siempre en una sola moneda.
+  const healthStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  const healthStartKey = dateKey(healthStart);
+  const healthMovements = selected.filter((item) => item.movement_date?.slice(0, 10) >= healthStartKey && item.movement_date?.slice(0, 10) <= todayKey);
+  const healthIncome = healthMovements.filter((item) => item.type === "income").reduce((sum, item) => sum + Number(item.amount), 0);
+  const healthExpenses = healthMovements.filter((item) => item.type === "expense").reduce((sum, item) => sum + Number(item.amount), 0);
+  const healthNet = healthIncome - healthExpenses;
+  const healthMargin = healthIncome > 0 ? healthNet / healthIncome * 100 : null;
+  const healthExpenseRatio = healthIncome > 0 ? healthExpenses / healthIncome * 100 : null;
+  const healthMonths = new Set(healthMovements.map((item) => item.movement_date.slice(0, 7))).size;
+  const averageMonthlyExpenses = healthExpenses / 3;
+  const liquidityMonths = averageMonthlyExpenses > 0 ? accountTotal / averageMonthlyExpenses : null;
+  const healthHasEnoughData = healthMonths >= 2 && healthIncome > 0 && healthExpenses > 0 && activeAccounts.length > 0;
+  const marginScore = healthMargin === null ? 0 : healthMargin >= 20 ? 40 : healthMargin >= 10 ? 35 : healthMargin > 0 ? 30 : healthMargin === 0 ? 24 : healthMargin >= -10 ? 15 : healthMargin >= -20 ? 8 : 0;
+  const expenseScore = healthExpenseRatio === null ? 0 : healthExpenseRatio <= 70 ? 25 : healthExpenseRatio <= 85 ? 20 : healthExpenseRatio <= 100 ? 14 : healthExpenseRatio <= 115 ? 7 : 0;
+  const liquidityScore = liquidityMonths === null ? 0 : liquidityMonths >= 3 ? 25 : liquidityMonths >= 2 ? 21 : liquidityMonths >= 1 ? 16 : liquidityMonths >= .5 ? 10 : liquidityMonths >= 0 ? 4 : 0;
+  const consistencyScore = healthMovements.length >= 12 ? 10 : healthMovements.length >= 6 ? 7 : 4;
+  const healthScore = Math.round(marginScore + expenseScore + liquidityScore + consistencyScore);
+  const healthGrade = !healthHasEnoughData ? "Datos insuficientes" : healthScore >= 90 ? "Excelente" : healthScore >= 75 ? "Saludable" : healthScore >= 60 ? "Estable" : healthScore >= 40 ? "Ajustada" : "Crítica";
+  const growthLabel = healthMargin === null ? "Sin datos" : healthMargin > 20 ? "Crecimiento alto" : healthMargin >= 10 ? "Crecimiento medio" : healthMargin > 0 ? "Crecimiento ligero" : healthMargin === 0 ? "Estabilidad" : healthMargin >= -10 ? "Decrecimiento ligero" : healthMargin >= -20 ? "Decrecimiento medio" : "Decrecimiento alto";
+
   const openingBalanceAtRange = activeAccounts.reduce((sum, account) => sum + Number(account.initial_balance), 0)
     + selected.filter((item) => item.account_id && activeAccountIds.has(item.account_id) && item.movement_date?.slice(0, 10) < startKey)
       .reduce((sum, item) => sum + (item.type === "income" ? 1 : -1) * Number(item.amount), 0);
@@ -209,7 +248,7 @@ export default function DashboardStats() {
       <section className="dashboard-accounts-section dashboard-accounts-top">
         <div className="section-heading">
           <div><p className="eyebrow">PATRIMONIO POR CUENTAS</p><h3>Tu dinero disponible</h3></div>
-          <div className="dashboard-account-total">{Object.entries(accountTotalsByCurrency).map(([code,total])=><strong key={code}>{money(total,code)}</strong>)}</div>
+          
         </div>
         {allActiveAccounts.length === 0 ? <p className="empty-state">Todavía no tenés cuentas activas. Podés agregarlas desde Mis cuentas.</p> : (
           <div className="dashboard-account-grid">
@@ -283,7 +322,8 @@ export default function DashboardStats() {
 
 
 
-      <section className="vera-insight-card vera-insight-compact">
+      <section className={`vera-insight-card vera-insight-compact vera-membership-card ${isGold ? "is-gold" : "is-free"}`}>
+        <VeraIsotype className="vera-card-isotype" />
         <div className="vera-insight-top">
           <span className="vera-mark">V</span>
           <div><p className="eyebrow">VERA · LECTURA RÁPIDA</p><h3>{periodMovements.length === 0 ? "Todavía no hay datos para este período." : periodNet > 0 ? "Tu balance está en positivo." : periodNet < 0 ? "Tus gastos superan tus ingresos." : "Tu balance está equilibrado."}</h3></div>
@@ -292,16 +332,22 @@ export default function DashboardStats() {
         <p>{periodMovements.length === 0 ? "Cuando registres ingresos y gastos, voy a poder mostrarte una lectura basada en tus movimientos." : periodNet > 0 ? "En " + periodLabel + " registraste " + money(periodNet, currency) + " más en ingresos que en gastos." : periodNet < 0 ? "La diferencia entre ingresos y gastos " + periodLabel + " es de " + money(Math.abs(periodNet), currency) + "." : "Tus ingresos y gastos registrados " + periodLabel + " tienen el mismo total."}</p>
       </section>
 
-      <section className="card dashboard-financial-status">
-        <div className="section-heading"><div><p className="eyebrow">ESTADO FINANCIERO</p><h3>Descripción rápida de tu situación</h3></div><span className="dashboard-status-tag">Lectura basada en registros</span></div>
-        <p>{periodMovements.length===0?"Todavía no hay movimientos suficientes en este período para describir el resultado.":periodNet>0?"En "+periodLabel+" tus ingresos superan tus gastos por "+money(periodNet,currency)+".":periodNet<0?"En "+periodLabel+" tus gastos superan tus ingresos por "+money(Math.abs(periodNet),currency)+".":"En "+periodLabel+" tus ingresos y gastos registrados están equilibrados."}</p>
-        <div className="dashboard-financial-status-grid">
-          <div><span>Ingresos del período</span><strong>{money(income,currency)}</strong></div>
-          <div><span>Gastos del período</span><strong>{money(expenses,currency)}</strong></div>
-          <div><span>Gastos sobre ingresos</span><strong>{income>0?(expenses/income*100).toLocaleString("es-AR",{maximumFractionDigits:1})+"%":"Sin base para calcular"}</strong></div>
-          <div><span>Dinero disponible en cuentas ({currency})</span><strong>{money(accountTotal,currency)}</strong></div>
-        </div>
-        <small>Es una descripción de los datos registrados, no una calificación integral de salud financiera. No se asigna una categoría automática hasta validar los criterios de evaluación.</small>
+      <section className={`card dashboard-financial-status vera-membership-card ${isGold ? "is-gold" : "is-free"}`}>
+        <VeraIsotype className="vera-card-isotype" />
+        <div className="section-heading"><div><p className="eyebrow">VERA · DIAGNÓSTICO INTEGRAL</p><h3>Salud financiera</h3></div><span className="dashboard-status-tag">Últimos 3 meses · {currency}</span></div>
+        {healthHasEnoughData ? <>
+          <div className="health-score-heading"><strong>{healthGrade}</strong><span>{healthScore}/100</span></div>
+          <div className="health-score-track"><span style={{width: `${healthScore}%`}} /></div>
+          <p>Tu margen neto del período es {healthMargin!.toLocaleString("es-AR",{maximumFractionDigits:1})}%. La calificación combina margen, proporción de gastos, liquidez registrada y continuidad de los movimientos.</p>
+          <div className="dashboard-financial-status-grid">
+            <div><span>Calificación integral</span><strong>{healthGrade}</strong></div>
+            <div><span>Resultado / ingresos</span><strong>{healthMargin!.toLocaleString("es-AR",{maximumFractionDigits:1})}%</strong></div>
+            <div><span>Gastos / ingresos</span><strong>{healthExpenseRatio!.toLocaleString("es-AR",{maximumFractionDigits:1})}%</strong></div>
+            <div><span>Liquidez estimada</span><strong>{liquidityMonths === null ? "Sin base" : `${liquidityMonths.toLocaleString("es-AR",{maximumFractionDigits:1})} meses`}</strong></div>
+          </div>
+          <div className="health-trend-label"><span>Evolución del flujo</span><strong>{growthLabel}</strong></div>
+        </> : <p>Para calificar tu salud financiera necesitamos movimientos de al menos dos meses distintos, ingresos y gastos registrados, y una cuenta activa en {currency}. Por ahora no asignamos una nota para evitar conclusiones incompletas.</p>}
+        <small>Calificación orientativa, no asesoramiento financiero. Se calcula solo con registros de esta moneda y no incluye deudas, activos externos ni compromisos que todavía no estén cargados. Excelente: 90–100; Saludable: 75–89; Estable: 60–74; Ajustada: 40–59; Crítica: 0–39.</small>
       </section>
 
       <section className="dashboard-charts-section">
