@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
+import FinanceTrackLoader from "./finance-track-loader";
 
 type Frequency = "monthly" | "biweekly" | "weekly" | "daily" | "variable" | "none";
 type Commitment = {
@@ -387,7 +388,7 @@ export default function OnboardingGate({
     setCommitments((current) => current.filter((item) => item.id !== id));
   }
 
-  if (loading) return <main className="financetrack-loading" aria-live="polite"><div className="financetrack-loading-mark">F<span>.</span></div><p>Preparando tu espacio</p><span className="financetrack-loading-line" /></main>;
+  if (loading) return <FinanceTrackLoader message="Preparando tu espacio" />;
   if (completed) return <>{children}</>;
 
   const progressWidth = ((step + 1) / steps.length) * 100;
