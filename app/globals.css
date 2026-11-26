@@ -2385,3 +2385,8 @@ body{background:#090A0D;color:#F2F0EB}
 .vera-page.is-gold-active .vera-tools-group-title{color:#D9BD83}
 .vera-page.is-gold-active .vera-tools-group{border-color:rgba(200,169,107,.16)}
 .vera-page.is-gold-active .vera-tools-action.gold{color:#F0D9A6}
+
+/* Identidad global de carga FINANCE.TRACK */
+.financetrack-loading-lockup{width:min( min(78vw, 410px), 410px);display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 8px 28px rgba(200,169,107,.12))}
+.financetrack-loading-lockup svg{display:block;width:100%;height:auto;overflow:visible}
+.financetrack-loading{gap:18px}
