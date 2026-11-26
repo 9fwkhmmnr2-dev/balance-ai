@@ -1,0 +1,1 @@
+ALTER TABLE public.registration_acceptances DROP CONSTRAINT IF EXISTS registration_acceptances_age_eligible_check;
