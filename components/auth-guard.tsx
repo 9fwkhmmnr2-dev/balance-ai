@@ -11,18 +11,35 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) router.replace("/login");
-      else if (active) setChecking(false);
-    });
-    supabase.auth.getSession().then(({ data }) => {
+    let checkingUser = false;
+
+    async function verify(session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) {
+      if (checkingUser || !active) return;
+      checkingUser = true;
+      if (!session) {
+        router.replace("/login");
+        return;
+      }
+      const { data: acceptance, error } = await supabase
+        .from("registration_acceptances")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
       if (!active) return;
-      if (!data.session) router.replace("/login");
-      else setChecking(false);
+      if (error || !acceptance) {
+        router.replace("/legal/accept");
+        return;
+      }
+      setChecking(false);
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      void verify(session);
     });
+    supabase.auth.getSession().then(({ data }) => { void verify(data.session); });
     return () => { active = false; subscription.unsubscribe(); };
   }, [router]);
 
-  if (checking) return <FinanceTrackLoader message="Preparando tu espacio" />;
+  if (checking) return <FinanceTrackLoader message="Verificando tu cuenta" />;
   return <>{children}</>;
 }
