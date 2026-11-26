@@ -72,7 +72,28 @@ export default function FinanceWrapped(){
  const dates=new Set(expenses.map(x=>x.movement_date.slice(0,10)));let streak=0,longest=0;for(let d=new Date(s);d<=e&&d<=new Date();d.setDate(d.getDate()+1)){if(dates.has(key(d)))streak=0;else{streak++;longest=Math.max(longest,streak)}}
  const slides=[["FINANCE WRAPPED","Tu período, en perspectiva.","Una mirada a tus movimientos registrados."],["TU ARQUETIPO",archetype,"Tu patrón destacado en este período."],["EL RESUMEN","Así se movió tu dinero.","Ingresos, gastos y resultado neto."],["TUS INGRESOS","¿De dónde vino el dinero?","Tus principales fuentes de ingresos."],["TUS TOP","¿A dónde fue tu dinero?","Las categorías con más gastos."],["TUS COMERCIOS","Los nombres que más se repitieron.","Tus descripciones más frecuentes."],["TU MOMENTO PICO",peak?"Tu día con más gastos fue el "+peak.label+".":"Todavía no hay un día destacado.","Según los movimientos registrados."],["TUS RACHAS",longest+" días sin gastos registrados.","Una pausa en tus registros de gastos."],["TUS OBJETIVOS",goalProgress.length?goalProgress.length+" objetivos en seguimiento.":"Tus próximas metas pueden empezar acá.",goalEncouragement],["GASTOS HORMIGA",biggest?"Tu gasto más alto fue de "+money(Number(biggest.amount),currency):"Todavía no hay un gasto destacado.", smallThreshold!==null?(small.length?small.length+" compras por debajo del equivalente aproximado a $30.000 ARS sumaron "+money(smallSum,currency)+".":"No aparecen compras por debajo del equivalente aproximado a $30.000 ARS."):"No hay una cotización disponible para calcular el equivalente a $30.000 ARS."],["TU FINANCE WRAPPED","Tu progreso merece continuidad.","Seguí registrando tus movimientos y objetivos en FINANCE.TRACK."]];
  const current=slides[slide];
- async function share(){const text="Mi FINANCE WRAPPED · "+label+"\nIngresos: "+money(totalIn,currency)+" · Gastos: "+money(totalOut,currency)+" · Resultado neto: "+money(net,currency)+"\nArquetipo: "+archetype;if(navigator.share){try{await navigator.share({title:"Mi FINANCE WRAPPED",text})}catch{}}else if(navigator.clipboard)await navigator.clipboard.writeText(text)}
+ async function createWrappedImage(){
+  const width=1080,cardHeight=720,canvas=document.createElement("canvas");canvas.width=width;canvas.height=cardHeight*slides.length;
+  const ctx=canvas.getContext("2d");if(!ctx)throw new Error("No se pudo preparar la imagen.");
+  const line=(text:string,x:number,y:number,font:string,color:string)=>{ctx.font=font;ctx.fillStyle=color;ctx.fillText(text,x,y)};
+  const metric=(name:string,value:string,x:number,y:number)=>{ctx.fillStyle="#211F28";ctx.fillRect(x,y-34,900,64);line(name,x+22,y,"22px Arial","#BDB6AA");ctx.textAlign="right";line(value,x+875,y,"bold 27px Arial","#E6CB87");ctx.textAlign="left"};
+  slides.forEach((item,i)=>{const y=i*cardHeight;const grad=ctx.createLinearGradient(0,y,width,y+cardHeight);grad.addColorStop(0,"#111219");grad.addColorStop(1,i%2?"#29213A":"#29251F");ctx.fillStyle=grad;ctx.fillRect(0,y,width,cardHeight);line("FINANCE.TRACK  ·  FINANCE WRAPPED",72,y+70,"bold 24px Arial","#D8B96F");ctx.fillRect(72,y+95,936,2);line(item[0],72,y+165,"bold 26px Arial","#D8B96F");line(item[1].slice(0,48),72,y+255,"bold 48px Arial","#F5F1E8");line(item[2].slice(0,90),72,y+315,"25px Arial","#C8C2B8");let yy=y+405;
+   if(i===2){metric("Ingresos",money(totalIn,currency),72,yy);yy+=78;metric("Gastos",money(totalOut,currency),72,yy);yy+=78;metric("Resultado neto",money(net,currency),72,yy)}
+   if(i===3)incomeCats.forEach(([n,v])=>{metric(n,money(v,currency),72,yy);yy+=70});
+   if(i===4)cats.forEach(([n,v])=>{metric(n,money(v,currency),72,yy);yy+=70});
+   if(i===5)shops.forEach(([,v])=>{metric(v.name,money(v.total,currency),72,yy);yy+=70});
+   if(i===6&&peak)metric(peak.label,money(peak.total,currency),72,yy);
+   if(i===7)metric("Días sin gastos registrados",String(longest),72,yy);
+   if(i===8)goalProgress.forEach(g=>{metric(g.title,g.progress_percent.toLocaleString("es-AR")+"%",72,yy);yy+=70});
+   if(i===9){metric("Mayor gasto",biggest?money(Number(biggest.amount),currency):"—",72,yy);yy+=70;metric("Gastos hormiga",money(smallSum,currency),72,yy);yy+=70;metric("Compras menores",String(small.length),72,yy)}
+   if(i===10){metric("Ingresos",money(totalIn,currency),72,yy);yy+=70;metric("Gastos",money(totalOut,currency),72,yy);yy+=70;metric("Resultado neto",money(net,currency),72,yy)}
+   line(label+"  ·  "+(i+1)+"/"+slides.length,72,y+cardHeight-32,"18px Arial","#8D877D");
+  });
+  const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,"image/png"));if(!blob)throw new Error("No se pudo generar el PNG.");return new File([blob],"finance-wrapped-"+start+".png",{type:"image/png"});
+ }
+ function downloadWrapped(file:File){const url=URL.createObjectURL(file);const a=document.createElement("a");a.href=url;a.download=file.name;a.click();URL.revokeObjectURL(url)}
+ async function share(){try{const file=await createWrappedImage();if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title:"Mi FINANCE WRAPPED",text:"Mi resumen financiero del período "+label,files:[file]})}else downloadWrapped(file)}catch(e){if(e instanceof Error&&e.name==="AbortError")return;setError("No pudimos compartir el Wrapped. Probá exportarlo como imagen.")}}
+ async function exportImage(){try{downloadWrapped(await createWrappedImage())}catch{setError("No pudimos generar la imagen del Wrapped.")}}
  if(loading)return <FinanceTrackLoader message="Preparando tu FINANCE WRAPPED"/>;
  if(error)return <main className="wrapped-page"><section className="wrapped-card">{error}</section></main>;
  return <main className="wrapped-page">
@@ -96,7 +117,7 @@ export default function FinanceWrapped(){
    {vera&&<aside className={gold?"wrapped-vera wrapped-vera-gold":"wrapped-vera wrapped-vera-free"}><div className={gold?"wrapped-vera-icon gold":"wrapped-vera-icon"}><VeraIsotype/></div><p><b>VERA</b> {slide===1? "Tu arquetipo es una pista para reconocer hábitos, no una etiqueta.":slide===2?(net<0?"Revisá qué categoría está presionando más tu balance.":"Podés destinar parte de tu resultado a uno de tus objetivos."):slide===3?"Identificá tu fuente de ingresos principal y cómo sostenerla.":slide===4?"Elegí una categoría para revisar esta semana.":slide===5?"Compará tus comercios frecuentes antes de repetir una compra.":slide===6?"La constancia en los registros ayuda a detectar cambios.":slide===7?"Una pausa en los gastos registrados puede ser una oportunidad para revisar prioridades.":slide===8?goalEncouragement:slide===9?"Los gastos pequeños también suman: observá cuáles se repiten.":"Seguí registrando tus movimientos para tomar decisiones con más claridad."}</p></aside>}
    <div className="wrapped-nav"><button disabled={slide===0} onClick={()=>setSlide(v=>Math.max(0,v-1))}>Anterior</button><button disabled={slide===slides.length-1} onClick={()=>setSlide(v=>Math.min(slides.length-1,v+1))}>Siguiente</button></div>
   </section>
-  <footer className="wrapped-footer"><button onClick={()=>setVera(v=>!v)}>{vera?"Ocultar opinión de VERA":"Mostrar opinión de VERA"}</button><button onClick={share}>Compartir resumen</button></footer>
+  <footer className="wrapped-footer"><button onClick={()=>setVera(v=>!v)}>{vera?"Ocultar opinión de VERA":"Mostrar opinión de VERA"}</button><button onClick={share}>Compartir Wrapped completo</button><button onClick={exportImage}>Exportar PNG</button></footer>
   {data.length===0&&<p className="wrapped-note">No hay movimientos registrados para este período y moneda. Probá otro período o registrá movimientos.</p>}
  </main>
 }
