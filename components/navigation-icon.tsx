@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { SVGProps, ReactNode } from "react";
 
 export type NavigationIconName = "home" | "activity" | "wallet" | "target" | "transfer" | "exchange" | "file" | "vera" | "user";
 
@@ -9,7 +9,7 @@ const common: SVGProps<SVGSVGElement> = {
 };
 
 export default function NavigationIcon({ name, className }: { name: NavigationIconName; className?: string }) {
-  const paths: Record<NavigationIconName, React.ReactNode> = {
+  const paths: Record<NavigationIconName, ReactNode> = {
     home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /></>,
     activity: <><path d="M3 12h4l3-8 4 16 3-8h4" /></>,
     wallet: <><rect x="3" y="5" width="18" height="15" rx="2" /><path d="M3 9h18M16 14h2" /><path d="M7 5V3h11" /></>,
