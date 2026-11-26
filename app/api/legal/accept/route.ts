@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const serviceKey = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.NEXT_SUPABASE_SECRET_KEY || process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !anonKey || !serviceKey) {
       return NextResponse.json({ error: "No pudimos verificar el registro en este momento." }, { status: 503 });
     }
@@ -73,7 +73,7 @@ export async function DELETE(request: Request) {
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const serviceKey = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.NEXT_SUPABASE_SECRET_KEY || process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
     if (!url || !anonKey || !serviceKey) return NextResponse.json({ error: "Servicio no disponible." }, { status: 503 });
     const authClient = createClient(url, anonKey, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
     const { data: auth, error: authError } = await authClient.auth.getUser(token);
