@@ -15,7 +15,19 @@ function periodLabel(p:Period,s:Date){return p==="month"?s.toLocaleDateString("e
 const clean=(s:string)=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 
 export default function FinanceWrapped(){
- const [rows,setRows]=useState<Movement[]>([]),[goals,setGoals]=useState<GoalSummary[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(""),[period,setPeriod]=useState<Period>("month"),[offset,setOffset]=useState(0),[currency,setCurrency]=useState("ARS"),[slide,setSlide]=useState(0),[vera,setVera]=useState(true),[gold,setGold]=useState(false),[voiceLoading,setVoiceLoading]=useState(false),[voicePlaying,setVoicePlaying]=useState(false),[voiceError,setVoiceError]=useState("");
+ const [rows, setRows] = useState<Movement[]>([]);
+ const [goals, setGoals] = useState<GoalSummary[]>([]);
+ const [loading, setLoading] = useState(true);
+ const [error, setError] = useState("");
+ const [period, setPeriod] = useState<Period>("month");
+ const [offset, setOffset] = useState(0);
+ const [currency, setCurrency] = useState("ARS");
+ const [slide, setSlide] = useState(0);
+ const [vera, setVera] = useState(true);
+ const [gold, setGold] = useState(false);
+ const [voiceLoading, setVoiceLoading] = useState(false);
+ const [voicePlaying, setVoicePlaying] = useState(false);
+ const [voiceError, setVoiceError] = useState("");
  const audioRef=useRef<HTMLAudioElement|null>(null),audioUrlRef=useRef<string|null>(null);
  useEffect(()=>{let active=true;(async()=>{try{const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error("Iniciá sesión para ver tu Wrapped.");const {data,error}=await supabase.from("movements").select("id,type,amount,currency,movement_date,description,category").eq("user_id",user.id).order("movement_date",{ascending:true});if(error)throw error;if(active)setRows((data??[]) as Movement[]);const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;if(token){const goalsResponse=await fetch("/api/financial-goals",{headers:{Authorization:"Bearer "+token},cache:"no-store"});if(goalsResponse.ok){const goalPayload=await goalsResponse.json();if(active)setGoals((goalPayload.goals??[]) as GoalSummary[])}const r=await fetch("/api/vera/entitlement",{headers:{Authorization:"Bearer "+token},cache:"no-store"});if(r.ok){const e=await r.json();if(active)setGold(Boolean(e.isGold))}}}catch(e){if(active)setError(e instanceof Error?e.message:"No pudimos preparar FINANCE WRAPPED.")}finally{if(active)setLoading(false)}})();return()=>{active=false}},[]);
  const currencies=useMemo(()=>Array.from(new Set(rows.map(x=>x.currency))).sort(),[rows]);
