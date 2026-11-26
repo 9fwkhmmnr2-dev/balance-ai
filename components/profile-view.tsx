@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import SocialProfilePanel from "./social-profile-panel";
 
 type Profile = {
   pay_frequency: string;
@@ -190,6 +191,8 @@ export default function ProfileView() {
           </a>
         </div>
       </header>
+
+      <SocialProfilePanel />
 
       <section className="card" style={{ marginBottom: 20 }}>
         <h2 className="section-title">Información de la cuenta</h2>
