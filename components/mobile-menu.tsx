@@ -11,6 +11,7 @@ const navigation = [
   { label: "Objetivos", href: "/objetivos", icon: "target" },
   { label: "Transferencias", href: "/transferencias", icon: "transfer" },
   { label: "Conversor", href: "/conversor", icon: "exchange" },
+  { label: "FINANCE WRAPPED", href: "/wrapped", icon: "activity" },
   { label: "VERA", href: "/vera", icon: "vera" },
   { label: "Perfil", href: "/perfil", icon: "user" }
 ];
