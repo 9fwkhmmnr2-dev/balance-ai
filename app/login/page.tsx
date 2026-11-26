@@ -1,21 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { MINIMUM_AGE_YEARS, PRIVACY_VERSION, TERMS_VERSION } from "../../lib/legal-versions";
+import { PRIVACY_VERSION, TERMS_VERSION } from "../../lib/legal-versions";
 
-function isAdultDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  const now = new Date();
-  let age = now.getFullYear() - year;
-  if (now.getMonth() + 1 < month || (now.getMonth() + 1 === month && now.getDate() < day)) age--;
-  return age >= MINIMUM_AGE_YEARS;
-}
-
-async function saveAcceptance(accessToken: string, input: { birthDate: string; acceptedTerms: boolean; acceptedPrivacy: boolean; aiDataConsent: boolean }) {
+async function saveAcceptance(accessToken: string, input: { acceptedTerms: boolean; acceptedPrivacy: boolean; aiDataConsent: boolean }) {
   const response = await fetch("/api/legal/accept", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
@@ -30,18 +21,11 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [birthDate, setBirthDate] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [aiDataConsent, setAiDataConsent] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("blocked") === "age") {
-      setMessage("No se puede acceder a FINANCE.TRACK porque requiere tener al menos 18 años.");
-    }
-  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,16 +33,14 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (mode === "register") {
-        if (!isAdultDate(birthDate)) throw new Error("FINANCE.TRACK está disponible únicamente para personas de 18 años o más.");
         if (!acceptedTerms || !acceptedPrivacy) throw new Error("Tenés que aceptar los Términos y la Política de Privacidad.");
-        const acceptance = { birthDate, acceptedTerms, acceptedPrivacy, aiDataConsent };
+        const acceptance = { acceptedTerms, acceptedPrivacy, aiDataConsent };
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
             data: {
-              registration_birth_date: birthDate,
               registration_terms_accepted: acceptedTerms,
               registration_privacy_accepted: acceptedPrivacy,
               registration_ai_data_consent: aiDataConsent,
@@ -111,15 +93,13 @@ export default function LoginPage() {
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#090A0D", padding: 20 }}>
       <form onSubmit={handleSubmit} style={{ width: "100%", maxWidth: 440, maxHeight: "94vh", overflowY: "auto", background: "#17191F", color: "#F2F0EB", padding: 28, borderRadius: 18, border: "1px solid #34363D", boxShadow: "0 24px 80px rgba(0,0,0,.38)" }}>
         <h1 className="login-brand">FINANCE<span>TRACK</span></h1>
-        <p style={{ color: "#A7A7AD", marginBottom: 24 }}>{mode === "login" ? "Iniciá sesión en tu cuenta" : "Creá tu cuenta para mayores de 18 años"}</p>
+        <p style={{ color: "#A7A7AD", marginBottom: 24 }}>{mode === "login" ? "Iniciá sesión en tu cuenta" : "Creá tu cuenta"}</p>
         <label className="login-label">Correo electrónico</label>
         <input type="email" required value={email} onChange={e => setEmail(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: 12, border: "1px solid #3B3D45", borderRadius: 9, background: "#101116", color: "#F2F0EB", marginBottom: 18 }} />
         <label style={{ display: "block", marginBottom: 8 }}>Contraseña</label>
         <input type="password" required minLength={6} value={password} onChange={e => setPassword(e.target.value)} style={{ width: "100%", boxSizing: "border-box", padding: 12, border: "1px solid #3B3D45", borderRadius: 9, background: "#101116", color: "#F2F0EB", marginBottom: 18 }} />
 
         {mode === "register" && <>
-          <label style={{ display: "block", marginBottom: 8, fontSize: 13 }}>Fecha de nacimiento</label>
-          <input type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0,10)} style={{ width: "100%", boxSizing: "border-box", padding: 12, border: "1px solid #3B3D45", borderRadius: 9, background: "#101116", color: "#F2F0EB", marginBottom: 14 }} />
           <div style={{ display: "grid", gap: 12, marginBottom: 18 }}>
             <label style={{ display: "flex", gap: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" required checked={acceptedTerms} onChange={e => setAcceptedTerms(e.target.checked)} /> <span>Acepto los <Link href="/terminos" target="_blank" style={{ color: "#D8B66A" }}>Términos y Condiciones</Link>.</span></label>
             <label style={{ display: "flex", gap: 9, fontSize: 12, lineHeight: 1.5 }}><input type="checkbox" required checked={acceptedPrivacy} onChange={e => setAcceptedPrivacy(e.target.checked)} /> <span>Acepto la <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A" }}>Política de Privacidad</Link>.</span></label>
