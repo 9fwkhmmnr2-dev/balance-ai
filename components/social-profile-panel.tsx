@@ -27,6 +27,9 @@ export default function SocialProfilePanel() {
   const [userId, setUserId] = useState("");
   const [profile, setProfile] = useState<SocialProfile | null>(null);
   const [friends, setFriends] = useState<SocialProfile[]>([]);
+  const [friendAliases, setFriendAliases] = useState<Record<string, string>>({});
+  const [editingAliasFor, setEditingAliasFor] = useState<string | null>(null);
+  const [aliasDraft, setAliasDraft] = useState("");
   const [incoming, setIncoming] = useState<(Friendship & { profile: SocialProfile | null })[]>([]);
   const [outgoing, setOutgoing] = useState<(Friendship & { profile: SocialProfile | null })[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
@@ -74,7 +77,11 @@ export default function SocialProfilePanel() {
       ? await supabase.from("social_profiles").select("user_id,username,display_name,avatar_id,bio").in("user_id", otherIds)
       : { data: [] as SocialProfile[] };
     const peopleMap = new Map(((people ?? []) as SocialProfile[]).map(person => [person.user_id, person]));
-    setFriends(rows.filter(row => row.status === "accepted").map(row => peopleMap.get(row.requester_id === id ? row.addressee_id : row.requester_id)).filter(Boolean) as SocialProfile[]);
+    const acceptedFriends = rows.filter(row => row.status === "accepted").map(row => peopleMap.get(row.requester_id === id ? row.addressee_id : row.requester_id)).filter(Boolean) as SocialProfile[];
+    setFriends(acceptedFriends);
+    const { data: aliases, error: aliasesError } = await supabase.from("friend_aliases").select("friend_id,alias").eq("user_id", id);
+    if (aliasesError) { setError("No pudimos cargar los nombres personalizados de tus amigos."); return; }
+    setFriendAliases(Object.fromEntries((aliases ?? []).map((item: { friend_id: string; alias: string }) => [item.friend_id, item.alias])));
     setIncoming(rows.filter(row => row.status === "pending" && row.addressee_id === id).map(row => ({ ...row, profile: peopleMap.get(row.requester_id) ?? null })));
     setOutgoing(rows.filter(row => row.status === "pending" && row.requester_id === id).map(row => ({ ...row, profile: peopleMap.get(row.addressee_id) ?? null })));
 
@@ -138,6 +145,29 @@ export default function SocialProfilePanel() {
     setNotice("Ahora son amigos."); setConsentAction(null); await load();
   }
 
+  async function saveFriendAlias(friendId: string) {
+    const alias = aliasDraft.trim();
+    if (!alias || alias.length > 32) { setError("El nombre personalizado debe tener entre 1 y 32 caracteres."); return; }
+    setBusy(true); setError(""); setNotice("");
+    const { error: aliasError } = await supabase.from("friend_aliases").upsert(
+      { user_id: userId, friend_id: friendId, alias, updated_at: new Date().toISOString() },
+      { onConflict: "user_id,friend_id" }
+    );
+    setBusy(false);
+    if (aliasError) { setError("No pudimos guardar el nombre personalizado."); return; }
+    setFriendAliases(current => ({ ...current, [friendId]: alias }));
+    setEditingAliasFor(null); setAliasDraft(""); setNotice("Nombre personalizado guardado.");
+  }
+
+  async function clearFriendAlias(friendId: string) {
+    setBusy(true); setError(""); setNotice("");
+    const { error: aliasError } = await supabase.from("friend_aliases").delete().eq("user_id", userId).eq("friend_id", friendId);
+    setBusy(false);
+    if (aliasError) { setError("No pudimos quitar el nombre personalizado."); return; }
+    setFriendAliases(current => { const next = { ...current }; delete next[friendId]; return next; });
+    setEditingAliasFor(null); setAliasDraft(""); setNotice("Se restauró el nombre del perfil.");
+  }
+
   async function removeRequestFromFriend(friendId: string) {
     const { data } = await supabase.from("friendships").select("id").or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`).eq("status", "accepted").maybeSingle();
     if (data?.id) await removeRequest(data.id);
@@ -191,7 +221,7 @@ export default function SocialProfilePanel() {
     {activeTab === "friends" && <>
       {selectedFriend ? <div className="social-friend-detail">
         <button type="button" className="social-text-button" onClick={() => setSelectedFriend(null)}>← Volver a amigos</button>
-        <div className="social-friend-detail-head"><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === selectedFriend.avatar_id)?.emoji ?? "👤"}</span><div><strong>{selectedFriend.display_name}</strong><small>@{selectedFriend.username}</small></div></div>
+        <div className="social-friend-detail-head"><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === selectedFriend.avatar_id)?.emoji ?? "👤"}</span><div><strong>{friendAliases[selectedFriend.user_id] ?? selectedFriend.display_name}</strong><small>{friendAliases[selectedFriend.user_id] ? `${selectedFriend.display_name} · ` : ""}@{selectedFriend.username}</small></div></div>
         {selectedFriend.bio && <p>{selectedFriend.bio}</p>}
         <h4>Logros</h4>
         {friendAchievements.length === 0 ? <small>Este perfil todavía no tiene logros desbloqueados.</small> : <div className="social-achievements-grid">{friendAchievements.map(item => item.catalog && <article className="social-achievement" key={item.achievement_id}><span style={{ color: tierColors[item.catalog.tier] }}>✦</span><div><strong>{item.catalog.name}</strong><small>{item.catalog.description}</small><em>{tierLabels[item.catalog.tier]}</em></div></article>)}</div>}
@@ -206,7 +236,7 @@ export default function SocialProfilePanel() {
           {outgoing.length === 0 ? <p className="card-note">No tenés solicitudes enviadas.</p> : outgoing.map(item => <div className="social-person-row" key={item.id}><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === item.profile?.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{item.profile?.display_name ?? "Usuario"}</strong><small>@{item.profile?.username ?? "sin_usuario"} · Pendiente</small></div><button className="social-text-button" onClick={() => removeRequest(item.id)} disabled={busy}>Cancelar</button></div>)}
         </div>
         <div className="social-section-block"><h3 className="social-section-title">Mis amigos <span>{friends.length}</span></h3>
-          {friends.length === 0 ? <p className="card-note">Cuando acepten tus solicitudes, van a aparecer acá.</p> : friends.map(friend => <div className="social-person-row" key={friend.user_id}><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === friend.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{friend.display_name}</strong><small>@{friend.username}</small></div><button className="social-text-button" onClick={() => void viewFriend(friend)}>Ver perfil</button><button className="social-text-button" onClick={() => void removeRequestFromFriend(friend.user_id)} disabled={busy}>Eliminar</button></div>)}
+          {friends.length === 0 ? <p className="card-note">Cuando acepten tus solicitudes, van a aparecer acá.</p> : friends.map(friend => <div className="social-person-row" key={friend.user_id}><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === friend.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{friendAliases[friend.user_id] ?? friend.display_name}</strong><small>{friendAliases[friend.user_id] ? `${friend.display_name} · ` : ""}@{friend.username}</small></div><button className="social-text-button" onClick={() => { setEditingAliasFor(friend.user_id); setAliasDraft(friendAliases[friend.user_id] ?? friend.display_name); }}>Agendar</button><button className="social-text-button" onClick={() => void viewFriend(friend)}>Ver perfil</button><button className="social-text-button" onClick={() => void removeRequestFromFriend(friend.user_id)} disabled={busy}>Eliminar</button>{editingAliasFor === friend.user_id && <div className="social-alias-editor"><input aria-label="Nombre personalizado del amigo" value={aliasDraft} onChange={e => setAliasDraft(e.target.value.slice(0,32))} maxLength={32} placeholder="Ej. Mamá"/><button className="primary-button" onClick={() => void saveFriendAlias(friend.user_id)} disabled={busy}>Guardar</button>{friendAliases[friend.user_id] && <button className="social-text-button" onClick={() => void clearFriendAlias(friend.user_id)} disabled={busy}>Restaurar</button>}<button className="social-text-button" onClick={() => setEditingAliasFor(null)}>Cancelar</button></div>}</div>)}
         </div>
       </>}
     </>}
