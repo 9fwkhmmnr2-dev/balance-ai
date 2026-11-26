@@ -25,7 +25,7 @@ export default function SocialProfilePanel() {
   const [friends, setFriends] = useState<SocialProfile[]>([]);
   const [incoming, setIncoming] = useState<(Friendship & { profile: SocialProfile | null })[]>([]);
   const [outgoing, setOutgoing] = useState<(Friendship & { profile: SocialProfile | null })[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);\n  const [selectedFriend, setSelectedFriend] = useState<SocialProfile | null>(null);\n  const [friendAchievements, setFriendAchievements] = useState<Achievement[]>([]);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -118,7 +118,7 @@ export default function SocialProfilePanel() {
     setNotice("Ahora son amigos."); await load();
   }
 
-  async function removeRequest(id: string) {
+  async function removeRequestFromFriend(friendId: string) {\n    const { data } = await supabase.from("friendships").select("id").or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`).eq("status", "accepted").maybeSingle();\n    if (data?.id) await removeRequest(data.id);\n  }\n\n  async function viewFriend(friend: SocialProfile) {\n    setSelectedFriend(friend); setFriendAchievements([]);\n    const { data } = await supabase.from("user_achievements").select("achievement_id,unlocked_at,catalog:achievement_catalog(id,name,description,tier)").eq("user_id", friend.user_id).order("unlocked_at", { ascending: false });\n    setFriendAchievements((data ?? []) as unknown as Achievement[]);\n  }\n\n  async function removeRequest(id: string) {
     setBusy(true);
     const { error: actionError } = await supabase.from("friendships").delete().eq("id", id);
     setBusy(false);
@@ -155,7 +155,7 @@ export default function SocialProfilePanel() {
       {outgoing.length === 0 ? <p className="card-note">No tenés solicitudes enviadas.</p> : outgoing.map(item => <div className="social-person-row" key={item.id}><span className="social-person-avatar">{avatars.find(a => a.id === item.profile?.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{item.profile?.display_name ?? "Usuario"}</strong><small>@{item.profile?.username ?? "sin_usuario"} · Pendiente</small></div><button className="social-text-button" onClick={() => removeRequest(item.id)} disabled={busy}>Cancelar</button></div>)}
     </div>
     <div className="social-section-block"><h3 className="social-section-title">Mis amigos <span>{friends.length}</span></h3>
-      {friends.length === 0 ? <p className="card-note">Cuando acepten tus solicitudes, van a aparecer acá.</p> : friends.map(friend => <div className="social-person-row" key={friend.user_id}><span className="social-person-avatar">{avatars.find(a => a.id === friend.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{friend.display_name}</strong><small>@{friend.username}</small></div><button className="social-text-button" onClick={() => removeRequest("")} disabled={busy} title="Próximamente">Ver perfil</button></div>)}
+      {friends.length === 0 ? <p className="card-note">Cuando acepten tus solicitudes, van a aparecer acá.</p> : friends.map(friend => <div className="social-person-row" key={friend.user_id}><span className="social-person-avatar">{avatars.find(a => a.id === friend.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{friend.display_name}</strong><small>@{friend.username}</small></div><button className="social-text-button" onClick={() => void viewFriend(friend)}>Ver perfil</button><button className="social-text-button" onClick={() => void removeRequestFromFriend(friend.user_id)} disabled={busy}>Eliminar</button></div>)}
     </div>
 
     <div className="social-divider"/>
