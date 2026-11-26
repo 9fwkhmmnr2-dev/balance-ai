@@ -250,7 +250,7 @@ export default function VeraView() {
     return () => window.clearTimeout(timeout);
   }, [showGoldWelcome]);
 
-  function toggleDictation() {
+  async function toggleDictation() {
     if (listening) {
       speechRecognitionRef.current?.stop();
       setListening(false);
@@ -266,6 +266,11 @@ export default function VeraView() {
       return;
     }
     try {
+      // Request microphone permission only after the user taps the dictation button.
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+      }
       const recognition = new Recognition();
       recognition.lang = "es-AR";
       recognition.interimResults = true;
@@ -289,9 +294,12 @@ export default function VeraView() {
       setError("");
       recognition.start();
       setListening(true);
-    } catch {
+    } catch (cause) {
       setListening(false);
-      setError("No pude iniciar el dictado. Probá nuevamente.");
+      const denied = cause instanceof DOMException && (cause.name === "NotAllowedError" || cause.name === "PermissionDeniedError");
+      setError(denied
+        ? "No se habilitó el micrófono. Permití el acceso al audio desde los ajustes de Safari y volvé a intentarlo."
+        : "No pude iniciar el dictado. Probá nuevamente.");
     }
   }
 
@@ -744,7 +752,6 @@ export default function VeraView() {
               const file = event.target.files?.[0]; event.target.value = "";
               if (!file || attachmentBusy) return;
               if (file.size > 4 * 1024 * 1024) { setError("El archivo debe pesar menos de 4 MB."); return; }
-              if (!window.confirm("El archivo se enviará a Gemini para extraer movimientos y luego VERA analizará el resultado. No se importará ni guardará ningún movimiento. ¿Continuar?")) return;
               setAttachmentBusy(true); setError("");
               try {
                 const token = await getToken(); const form = new FormData(); form.append("file", file);
@@ -774,6 +781,7 @@ export default function VeraView() {
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("decision"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular otra decisión</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
+                      <p className="vera-tools-locked">Los archivos adjuntos se procesan con Gemini para extraer información. VERA analiza el resultado y no guarda movimientos sin tu confirmación.</p>
                     </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con GOLD.
                         {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar GOLD de prueba solo en Preview."); }}>Copiar ID para habilitar prueba GOLD</button>}
                       </div>}
