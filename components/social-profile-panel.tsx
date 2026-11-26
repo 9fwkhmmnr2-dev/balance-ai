@@ -25,7 +25,10 @@ export default function SocialProfilePanel() {
   const [friends, setFriends] = useState<SocialProfile[]>([]);
   const [incoming, setIncoming] = useState<(Friendship & { profile: SocialProfile | null })[]>([]);
   const [outgoing, setOutgoing] = useState<(Friendship & { profile: SocialProfile | null })[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);\n  const [selectedFriend, setSelectedFriend] = useState<SocialProfile | null>(null);\n  const [friendAchievements, setFriendAchievements] = useState<Achievement[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [selectedFriend, setSelectedFriend] = useState<SocialProfile | null>(null);
+  const [friendAchievements, setFriendAchievements] = useState<Achievement[]>([]);
+  const [consentAction, setConsentAction] = useState<{ type: "send" | "accept"; id?: string } | null>(null);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
@@ -103,22 +106,42 @@ export default function SocialProfilePanel() {
 
   async function sendRequest() {
     if (!searchResult) return;
+    setConsentAction({ type: "send" });
+  }
+
+  async function confirmSendRequest() {
+    if (!searchResult) return;
     setBusy(true); setError(""); setNotice("");
     const { error: requestError } = await supabase.from("friendships").insert({ requester_id: userId, addressee_id: searchResult.user_id, status: "pending" });
     setBusy(false);
     if (requestError) { setError(requestError.code === "23505" ? "Ya existe una solicitud o amistad con esa persona." : "No se pudo enviar la solicitud."); return; }
-    setNotice("Solicitud enviada."); setSearchResult(null); await load();
+    setNotice("Solicitud enviada."); setSearchResult(null); setConsentAction(null); await load();
   }
 
   async function acceptRequest(id: string) {
+    setConsentAction({ type: "accept", id });
+  }
+
+  async function confirmAcceptRequest(id: string) {
     setBusy(true);
     const { error: actionError } = await supabase.from("friendships").update({ status: "accepted", updated_at: new Date().toISOString() }).eq("id", id);
     setBusy(false);
     if (actionError) { setError("No pudimos aceptar la solicitud."); return; }
-    setNotice("Ahora son amigos."); await load();
+    setNotice("Ahora son amigos."); setConsentAction(null); await load();
   }
 
-  async function removeRequestFromFriend(friendId: string) {\n    const { data } = await supabase.from("friendships").select("id").or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`).eq("status", "accepted").maybeSingle();\n    if (data?.id) await removeRequest(data.id);\n  }\n\n  async function viewFriend(friend: SocialProfile) {\n    setSelectedFriend(friend); setFriendAchievements([]);\n    const { data } = await supabase.from("user_achievements").select("achievement_id,unlocked_at,catalog:achievement_catalog(id,name,description,tier)").eq("user_id", friend.user_id).order("unlocked_at", { ascending: false });\n    setFriendAchievements((data ?? []) as unknown as Achievement[]);\n  }\n\n  async function removeRequest(id: string) {
+  async function removeRequestFromFriend(friendId: string) {
+    const { data } = await supabase.from("friendships").select("id").or(`and(requester_id.eq.${userId},addressee_id.eq.${friendId}),and(requester_id.eq.${friendId},addressee_id.eq.${userId})`).eq("status", "accepted").maybeSingle();
+    if (data?.id) await removeRequest(data.id);
+  }
+
+  async function viewFriend(friend: SocialProfile) {
+    setSelectedFriend(friend); setFriendAchievements([]);
+    const { data } = await supabase.from("user_achievements").select("achievement_id,unlocked_at,catalog:achievement_catalog(id,name,description,tier)").eq("user_id", friend.user_id).order("unlocked_at", { ascending: false });
+    setFriendAchievements((data ?? []) as unknown as Achievement[]);
+  }
+
+  async function removeRequest(id: string) {
     setBusy(true);
     const { error: actionError } = await supabase.from("friendships").delete().eq("id", id);
     setBusy(false);
@@ -157,6 +180,8 @@ export default function SocialProfilePanel() {
     <div className="social-section-block"><h3 className="social-section-title">Mis amigos <span>{friends.length}</span></h3>
       {friends.length === 0 ? <p className="card-note">Cuando acepten tus solicitudes, van a aparecer acá.</p> : friends.map(friend => <div className="social-person-row" key={friend.user_id}><span className="social-person-avatar">{avatars.find(a => a.id === friend.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{friend.display_name}</strong><small>@{friend.username}</small></div><button className="social-text-button" onClick={() => void viewFriend(friend)}>Ver perfil</button><button className="social-text-button" onClick={() => void removeRequestFromFriend(friend.user_id)} disabled={busy}>Eliminar</button></div>)}
     </div>
+
+    {consentAction && <div className="social-consent-backdrop" role="presentation"><div className="social-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="social-consent-title"><h3 id="social-consent-title">Antes de conectar</h3><p>Al enviar o aceptar esta solicitud, la otra persona podrá ver tu perfil social (nombre visible, usuario, avatar y presentación) y los logros que desbloquees.</p><p><strong>No se comparten</strong> tus cuentas, saldos, movimientos, ingresos ni gastos. La amistad no concede acceso a tu información financiera.</p><div><button type="button" className="social-text-button" onClick={() => setConsentAction(null)}>Cancelar</button><button type="button" className="primary-button" disabled={busy} onClick={() => consentAction.type === "send" ? void confirmSendRequest() : consentAction.id ? void confirmAcceptRequest(consentAction.id) : undefined}>{consentAction.type === "send" ? "Enviar solicitud" : "Aceptar solicitud"}</button></div></div></div>}
 
     <div className="social-divider"/>
     <h3 className="social-section-title">Tus logros <span>{achievements.length}</span></h3>
