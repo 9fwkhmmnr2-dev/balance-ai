@@ -39,7 +39,14 @@ export default function LegalAcceptancePage() {
         body: JSON.stringify({ birthDate, acceptedTerms, acceptedPrivacy, aiDataConsent }),
       });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "No pudimos guardar la aceptación.");
+      if (!response.ok) {
+        if (response.status === 403) {
+          await supabase.auth.signOut();
+          router.replace("/login?blocked=age");
+          return;
+        }
+        throw new Error(payload.error || "No pudimos guardar la aceptación.");
+      }
       router.replace("/perfil/editar");
       router.refresh();
     } catch (cause) {
