@@ -322,7 +322,6 @@ export default function DashboardStats() {
       <section className={`vera-insight-card vera-insight-compact vera-membership-card ${isGold ? "is-gold" : "is-free"}`}>
         <VeraIsotype className="vera-card-isotype" />
         <div className="vera-insight-top">
-          <span className="vera-mark">V</span>
           <div><p className="eyebrow">VERA · LECTURA RÁPIDA</p><h3>{periodMovements.length === 0 ? "Todavía no hay datos para este período." : periodNet > 0 ? "Tu balance está en positivo." : periodNet < 0 ? "Tus gastos superan tus ingresos." : "Tu balance está equilibrado."}</h3></div>
           <span className="insight-status">Básico</span>
         </div>
