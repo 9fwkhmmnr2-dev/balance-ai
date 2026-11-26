@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
     });
     const { data, error } = await supabase.auth.getUser(token);
     if (error || !data.user) return NextResponse.json({ error: "Tu sesión venció." }, { status: 401 });
+    const eligibility = await checkVeraAiEligibility(supabase, data.user.id);
+    if (!eligibility.allowed) return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
 
     const body = await request.json() as { text?: unknown };
     if (typeof body.text !== "string" || !body.text.trim() || body.text.length > 1800) {
