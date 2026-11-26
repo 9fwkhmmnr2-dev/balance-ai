@@ -7,16 +7,16 @@ import VeraView from "../../components/vera-view";
 export default function VeraPage() {
   return (
     <AuthGuard>
-      <VeraLegalGate>
-        <OnboardingGate>
+      <OnboardingGate>
+        <VeraLegalGate>
           <div className="dashboard">
             <MobileMenu />
             <main className="main-content">
               <VeraView />
             </main>
           </div>
-        </OnboardingGate>
-      </VeraLegalGate>
+        </VeraLegalGate>
+      </OnboardingGate>
     </AuthGuard>
   );
 }
