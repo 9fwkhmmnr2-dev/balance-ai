@@ -79,7 +79,7 @@ export default function LegalAcceptancePage() {
           <div style={{ borderTop: "1px solid #34363D", paddingTop: 14 }}>
             <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.5 }}>
               <input type="checkbox" checked={aiDataConsent} onChange={e => setAiDataConsent(e.target.checked)} style={{ marginTop: 3 }} />
-              <span>Autorizo por separado que, cuando VERA esté habilitada y cumpla los requisitos de sus proveedores, mis mensajes, contexto financiero y documentos enviados para análisis puedan ser procesados por proveedores de IA externos, como Google Gemini. Entiendo que puedo no autorizarlo y que VERA no estará disponible para mí mientras no exista este permiso.</span>
+              <span>Autorizo por separado que, cuando VERA esté habilitada y el proveedor y la modalidad de servicio permitan tratar datos financieros, mis mensajes, contexto financiero y documentos puedan ser procesados por proveedores externos de IA, como Google Gemini. Entiendo que puedo no autorizarlo y que VERA no estará disponible para mí mientras no exista este permiso.</span>
             </label>
           </div>
         </div>
