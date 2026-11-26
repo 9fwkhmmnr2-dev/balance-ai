@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "../lib/supabase";
 import VeraGoldWorkspace from "./vera-gold-workspace";
+import VeraIsotype from "./vera-isotype";
 const VeraCore3D = dynamic(() => import("./vera-core-3d"), {
   ssr: false,
   loading: () => <span className="vera-core-3d"><span className="vera-core-fallback" aria-hidden="true" /></span>,
@@ -758,14 +759,14 @@ export default function VeraView() {
               <div className="vera-compose-tools">
                 <button className="vera-tool-trigger" type="button" aria-label="Abrir herramientas" aria-expanded={showTools} onClick={() => setShowTools((current) => !current)} disabled={sending}>＋</button>
                 {showTools && <div className="vera-tools-menu" role="group" aria-label="Herramientas rápidas">
-                  <strong className="vera-tools-title">Funciones disponibles</strong>
+                  <VeraIsotype className="vera-menu-isotype" /><strong className="vera-tools-title">Funciones disponibles</strong>
                   <section className="vera-tools-group">
-                    <span className="vera-tools-group-title">VERA FREE</span>
+                    <VeraIsotype className="vera-menu-isotype" /><span className="vera-tools-group-title">VERA FREE</span>
                     <button className="vera-tools-action" type="button" onClick={() => { setShowTools(false); void sendMessage("Analizá mis principales gastos del período seleccionado y explicame qué patrones encontrás."); }}><span className="vera-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V11M10 19V5M16 19v-7M22 19V8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><path d="M2.5 21h20" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg></span>Analizar mis gastos</button>
                     <button className="vera-tools-action" type="button" onClick={() => { setShowTools(false); void sendMessage("Ayudame a revisar mi progreso financiero en el período seleccionado."); }}><span className="vera-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18.5 9 13l3.5 3.2L20 7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/><path d="M14.8 7H20v5.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg></span>Revisar mi progreso</button>
                   </section>
                   <section className="vera-tools-group gold">
-                    <span className="vera-tools-group-title">VERA GOLD</span>
+                    <VeraIsotype className="vera-menu-isotype" /><span className="vera-tools-group-title">VERA GOLD</span>
                     {isGold ? <>
                       <button className="vera-tools-action gold" type="button" title="Compara ingresos, gastos y categorías con el período anterior equivalente; muestra variaciones y tendencias respaldadas por tus movimientos." onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
                       <p className="vera-tools-locked">Compara ingresos, gastos y categorías contra el período anterior equivalente. Detecta variaciones en dinero y porcentaje, tendencias y datos faltantes.</p>
