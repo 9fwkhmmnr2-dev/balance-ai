@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
@@ -130,6 +131,7 @@ export default function OnboardingGate({
   children: ReactNode;
   mode?: "onboarding" | "edit";
 }) {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [completed, setCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -318,6 +320,7 @@ export default function OnboardingGate({
       }).eq("user_id", userId);
       if (finishError) throw finishError;
       setCompleted(true);
+      if (mode === "edit") router.push("/perfil");
     } catch {
       setError("No pudimos finalizar la configuración. Tus datos guardados siguen disponibles; intentá nuevamente.");
     } finally { setSaving(false); }
@@ -426,7 +429,7 @@ export default function OnboardingGate({
           <>
             <div className="onboarding-field">
               <label style={labelStyle}>País de residencia</label>
-              <SearchablePicker label="Buscar país" value={countryCode} options={countryOptions} placeholder="Seleccionar país" onChange={(nextCode) => {
+              <SearchablePicker label="Buscar país de residencia" value={countryCode} options={countryOptions} placeholder="Seleccionar país" onChange={(nextCode) => {
                 const selected = countries.find((item) => item.code === nextCode);
                 setCountryCode(nextCode);
                 if (selected?.currencies.length) {
@@ -437,6 +440,11 @@ export default function OnboardingGate({
                   setReserveCurrency(preferred.code);
                 }
               }} />
+            </div>
+            <div className="onboarding-field">
+              <label style={labelStyle}>País de origen</label>
+              <SearchablePicker label="Buscar país de origen" value={nationalityCode} options={countryOptions} placeholder="Seleccionar país de origen" onChange={setNationalityCode} />
+              <p style={{ color: "#92909A", fontSize: 11, marginTop: 6 }}>Este dato es independiente de tu país de residencia.</p>
             </div>
             <div className="onboarding-field">
               <label style={labelStyle}>Moneda predeterminada</label>
@@ -485,7 +493,7 @@ export default function OnboardingGate({
 
         {step === 4 && (
           <div style={{ display: "grid", gap: 12 }}>
-            {[["País de residencia", countries.find((item) => item.code === countryCode)?.name ?? countryCode], ["Nacionalidad", countries.find((item) => item.code === nationalityCode)?.name ?? nationalityCode], ["Moneda predeterminada", defaultCurrency], ["Frecuencia de ingresos", frequency ? ({monthly:"Mensual",biweekly:"Quincenal",weekly:"Semanal",daily:"Por día o trabajo",variable:"Variable",none:"Sin ingresos actualmente"} as Record<string,string>)[frequency] : "Pendiente"],["Ingreso habitual", income ? currency + " " + income : "No informado"],["Compromisos registrados", String(commitments.length)],["Categorías de gasto", String(expenseCategories.length)],["Reserva protegida", reserveAmount ? reserveCurrency + " " + reserveAmount : "Sin configurar"]].map(([label,value]) => <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #30323A" }}><span style={{ color: "#AAA7B0", fontSize: 13 }}>{label}</span><strong style={{ color: "#F2F0EB", fontSize: 13, textAlign: "right" }}>{value}</strong></div>)}
+            {[["País de residencia", countries.find((item) => item.code === countryCode)?.name ?? countryCode], ["País de origen", countries.find((item) => item.code === nationalityCode)?.name ?? nationalityCode], ["Moneda predeterminada", defaultCurrency], ["Frecuencia de ingresos", frequency ? ({monthly:"Mensual",biweekly:"Quincenal",weekly:"Semanal",daily:"Por día o trabajo",variable:"Variable",none:"Sin ingresos actualmente"} as Record<string,string>)[frequency] : "Pendiente"],["Ingreso habitual", income ? currency + " " + income : "No informado"],["Compromisos registrados", String(commitments.length)],["Categorías de gasto", String(expenseCategories.length)],["Reserva protegida", reserveAmount ? reserveCurrency + " " + reserveAmount : "Sin configurar"]].map(([label,value]) => <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "12px 0", borderBottom: "1px solid #30323A" }}><span style={{ color: "#AAA7B0", fontSize: 13 }}>{label}</span><strong style={{ color: "#F2F0EB", fontSize: 13, textAlign: "right" }}>{value}</strong></div>)}
             <p style={{ color: "#92909A", fontSize: 11, lineHeight: 1.5 }}>Podés volver a cualquier etapa para corregir los datos. La información también se puede editar más adelante desde Mi perfil.</p>
           </div>
         )}
