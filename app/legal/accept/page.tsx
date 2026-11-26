@@ -4,11 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MINIMUM_AGE_YEARS } from "@/lib/legal-versions";
 
 export default function LegalAcceptancePage() {
   const router = useRouter();
-  const [birthDate, setBirthDate] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [aiDataConsent, setAiDataConsent] = useState(false);
@@ -22,10 +20,6 @@ export default function LegalAcceptancePage() {
       setError("Tenés que aceptar los Términos y la Política de Privacidad.");
       return;
     }
-    if (!birthDate) {
-      setError("Ingresá tu fecha de nacimiento.");
-      return;
-    }
     setLoading(true);
     try {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -36,7 +30,7 @@ export default function LegalAcceptancePage() {
       const response = await fetch("/api/legal/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${sessionData.session.access_token}` },
-        body: JSON.stringify({ birthDate, acceptedTerms, acceptedPrivacy, aiDataConsent }),
+        body: JSON.stringify({ acceptedTerms, acceptedPrivacy, aiDataConsent }),
       });
       const payload = await response.json();
       if (!response.ok) {
@@ -61,11 +55,8 @@ export default function LegalAcceptancePage() {
       <form onSubmit={submit} style={{ width: "100%", maxWidth: 520, background: "#17191F", border: "1px solid #34363D", borderRadius: 18, padding: 26, boxShadow: "0 24px 80px rgba(0,0,0,.35)" }}>
         <p style={{ color: "#C8A96B", fontSize: 11, letterSpacing: 2, fontWeight: 700 }}>FINANCE TRACK</p>
         <h1 style={{ fontSize: 25, margin: "8px 0" }}>Antes de empezar</h1>
-        <p style={{ color: "#A7A7AD", fontSize: 13, lineHeight: 1.6, marginBottom: 22 }}>Confirmá tu edad y revisá las condiciones de uso y privacidad de tu cuenta.</p>
+        <p style={{ color: "#A7A7AD", fontSize: 13, lineHeight: 1.6, marginBottom: 22 }}>Revisá las condiciones de uso y privacidad para continuar. Podés organizar tus finanzas personales sin importar tu edad.</p>
 
-        <label style={{ display: "block", fontSize: 13, marginBottom: 8 }}>Fecha de nacimiento</label>
-        <input type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0,10)} style={{ width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 9, border: "1px solid #3B3D45", background: "#101116", color: "#F2F0EB", marginBottom: 18 }} />
-        <p style={{ color: "#92909A", fontSize: 11, marginTop: -10, marginBottom: 18 }}>FINANCE.TRACK requiere tener al menos {MINIMUM_AGE_YEARS} años. La fecha se verifica y no se conserva en la base de datos.</p>
 
         <div style={{ display: "grid", gap: 14, margin: "18px 0" }}>
           <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.5 }}>
