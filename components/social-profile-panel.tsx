@@ -101,10 +101,24 @@ export default function SocialProfilePanel() {
       setError("Completá un nombre de hasta 32 caracteres y una bio de hasta 120."); return;
     }
     setBusy(true); setError(""); setNotice("");
-    const payload = { user_id: userId, username: username.trim().toLowerCase(), display_name: displayName.trim(), avatar_id: avatarId, bio: bio.trim(), updated_at: new Date().toISOString() };
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) {
+      setBusy(false);
+      setError("Tu sesión no está disponible. Volvé a iniciar sesión e intentá guardar de nuevo.");
+      return;
+    }
+    const payload = { user_id: authData.user.id, username: username.trim().toLowerCase(), display_name: displayName.trim(), avatar_id: avatarId, bio: bio.trim(), updated_at: new Date().toISOString() };
     const { error: saveError } = await supabase.from("social_profiles").upsert(payload, { onConflict: "user_id" });
     setBusy(false);
-    if (saveError) { setError(saveError.code === "23505" ? "Ese nombre de usuario ya está en uso." : "No pudimos guardar tu perfil."); return; }
+    if (saveError) {
+      console.error("No se pudo guardar el perfil social:", saveError);
+      if (saveError.code === "23505") setError("Ese nombre de usuario ya está en uso.");
+      else if (saveError.code === "23514") setError("El avatar o alguno de los datos no está habilitado. Actualizá la página y probá otra vez.");
+      else if (saveError.code === "42501") setError("No tenemos permiso para guardar el perfil con esta sesión. Cerrá sesión, volvé a entrar e intentá de nuevo.");
+      else setError(`No pudimos guardar tu perfil (${saveError.code ?? "sin código"}): ${saveError.message}`);
+      return;
+    }
+    setUserId(authData.user.id);
     setNotice("Perfil social actualizado."); setEditing(false); await load();
   }
 
