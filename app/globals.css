@@ -2507,3 +2507,62 @@ body{background:#090A0D;color:#F2F0EB}
 .social-consent-dialog p { margin:10px 0; color:#61594A; font-size:13px; line-height:1.65; }
 .social-consent-dialog > div { display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:20px; }
 .social-consent-dialog .primary-button { background:#7C3AED; }
+
+
+/* FINANCE FRIENDS · acabado oscuro y navegación */
+.social-profile-panel .social-avatar-preview,
+.social-profile-panel .social-person-avatar,
+.social-profile-panel .social-friend-detail-head .social-person-avatar {
+  display:grid;place-items:center;border-radius:50%;
+  border:2px solid #C8A96B;
+  background:radial-gradient(circle at 35% 25%,#29251D,#101114 72%);
+  color:#F4E7C5;box-shadow:0 0 0 3px rgba(200,169,107,.10),0 5px 18px rgba(0,0,0,.28);
+}
+.social-profile-panel .social-avatar-preview{width:66px;height:66px;font-size:32px}
+.social-profile-panel .social-person-avatar{width:44px;height:44px;font-size:22px;flex:0 0 44px}
+.social-profile-panel .social-tabs{display:flex;gap:8px;margin:0 0 22px;padding:5px;border:1px solid #34343C;border-radius:12px;background:#101116}
+.social-profile-panel .social-tabs button{flex:1;min-height:39px;border:0;border-radius:8px;background:transparent;color:#A8A5AE;font-weight:700;font-size:12px}
+.social-profile-panel .social-tabs button.active{background:#29251D;color:#E8D29A;box-shadow:inset 0 0 0 1px rgba(200,169,107,.35)}
+.social-profile-panel .social-tabs button span{display:inline-grid;place-items:center;min-width:19px;height:19px;margin-left:5px;border-radius:20px;background:#423722;color:#E8D29A}
+.social-profile-panel .social-profile-form{margin-bottom:12px}
+.social-profile-panel .social-field input,
+.social-profile-panel .social-search-row input,
+.social-profile-panel .social-username-input,
+.social-profile-panel .social-avatar-option,
+.social-profile-panel .social-privacy-note,
+.social-profile-panel .social-friend-detail,
+.social-profile-panel .social-achievement,
+.social-profile-panel .social-person-row{background:#15161B;color:#F0EEE8;border-color:#34343C}
+.social-profile-panel .social-field input,
+.social-profile-panel .social-search-row input,
+.social-profile-panel .social-username-input{color:#F0EEE8}
+.social-profile-panel .social-field input::placeholder,
+.social-profile-panel .social-search-row input::placeholder{color:#777681}
+.social-profile-panel .social-avatar-option small,
+.social-profile-panel .social-field small,
+.social-profile-panel .social-friend-detail > p,
+.social-profile-panel .social-achievement small{color:#A6A3AD}
+.social-profile-panel .social-avatar-option.selected{border:2px solid #C8A96B;background:#29251D}
+.social-profile-panel .social-avatar-option.selected small{color:#E8D29A}
+.social-profile-panel .social-privacy-note{border-color:rgba(200,169,107,.25);background:#191812;color:#D8CCB1}
+.social-profile-panel .social-secondary-button{border-color:rgba(200,169,107,.35);background:#29251D;color:#E8D29A}
+.social-profile-panel .social-text-button{color:#B8B3A8}
+.social-profile-panel .social-section-title span{background:#29251D;color:#E8D29A}
+.social-profile-panel .social-consent-dialog{background:#17181D;border:1px solid rgba(200,169,107,.35);color:#F0EEE8}
+.social-profile-panel .social-consent-dialog p{color:#C3BFB5}
+.social-profile-panel .social-consent-dialog .primary-button{background:#B8954F;color:#15130F}
+.social-profile-panel .social-profile-summary{display:grid;gap:13px;padding:16px;border:1px solid #34343C;border-radius:12px;background:#15161B}
+.social-profile-panel .social-profile-summary>div{display:flex;flex-direction:column;gap:4px}
+.social-profile-panel .social-summary-label{color:#96929C;font-size:10px;text-transform:uppercase;letter-spacing:.8px}
+.social-profile-panel .social-profile-summary strong{color:#F0EEE8;font-size:14px}
+.social-profile-panel .social-profile-summary p{margin:0;color:#B8B3A8;font-size:12px}
+.social-profile-panel .social-edit-actions{display:flex;align-items:center;gap:12px}
+.social-profile-panel .social-friends-actions{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.social-profile-panel .social-friends-actions .social-section-title{margin:0}
+.social-profile-panel .social-person-row{border-bottom-color:#34343C}
+.social-profile-panel .social-person-info small{color:#A6A3AD}
+.social-profile-panel .social-divider{background:#34343C}
+@media(max-width:600px){
+ .social-profile-panel .social-avatar-preview{width:58px;height:58px}
+ .social-profile-panel .social-friends-actions{align-items:flex-start;flex-direction:column}
+}
