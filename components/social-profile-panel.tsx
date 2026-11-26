@@ -39,7 +39,8 @@ export default function SocialProfilePanel() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"profile" | "friends">("profile");
-  const [editing, setEditing] = useState(!profile);
+  const [editing, setEditing] = useState(true);
+  const [showAddFriend, setShowAddFriend] = useState(false);
 
   const load = useCallback(async () => {
     setError("");
@@ -53,6 +54,7 @@ export default function SocialProfilePanel() {
     if (ownError) { setError("No pudimos cargar tu perfil social."); return; }
     const current = own as SocialProfile | null;
     setProfile(current);
+    setEditing(!current);
     setUsername(current?.username ?? "");
     setDisplayName(current?.display_name ?? "");
     setBio(current?.bio ?? "");
@@ -190,9 +192,9 @@ export default function SocialProfilePanel() {
         <h4>Logros</h4>
         {friendAchievements.length === 0 ? <small>Este perfil todavía no tiene logros desbloqueados.</small> : <div className="social-achievements-grid">{friendAchievements.map(item => item.catalog && <article className="social-achievement" key={item.achievement_id}><span style={{ color: tierColors[item.catalog.tier] }}>✦</span><div><strong>{item.catalog.name}</strong><small>{item.catalog.description}</small><em>{tierLabels[item.catalog.tier]}</em></div></article>)}</div>}
       </div> : <>
-        <div className="social-friends-actions"><h3 className="social-section-title">Tu comunidad</h3><button type="button" className="social-secondary-button" onClick={() => { setSearchResult(null); setSearch(search); }}>Agregar amigos</button></div>
-        <div className="social-search-row"><input aria-label="Buscar por nombre de usuario" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === "Enter") void findUser(); }} placeholder="Buscar por @usuario"/><button type="button" className="primary-button" onClick={findUser}>Buscar</button></div>
-        {searchResult && <div className="social-person-row"><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === searchResult.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{searchResult.display_name}</strong><small>@{searchResult.username}</small></div><button type="button" className="social-secondary-button" onClick={sendRequest} disabled={busy}>Agregar</button></div>}
+        <div className="social-friends-actions"><h3 className="social-section-title">Tu comunidad</h3><button type="button" className="social-secondary-button" onClick={() => { setShowAddFriend(value => !value); setSearchResult(null); }}>{showAddFriend ? "Cerrar búsqueda" : "Agregar amigos"}</button></div>
+        {showAddFriend && <><div className="social-search-row"><input aria-label="Buscar por nombre de usuario" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === "Enter") void findUser(); }} placeholder="Buscar por @usuario"/><button type="button" className="primary-button" onClick={findUser}>Buscar</button></div>
+        {searchResult && <div className="social-person-row"><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === searchResult.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{searchResult.display_name}</strong><small>@{searchResult.username}</small></div><button type="button" className="social-secondary-button" onClick={sendRequest} disabled={busy}>Agregar</button></div>}</>}
         <div className="social-section-block"><h3 className="social-section-title">Solicitudes recibidas <span>{incoming.length}</span></h3>
           {incoming.length === 0 ? <p className="card-note">No tenés solicitudes pendientes.</p> : incoming.map(item => <div className="social-person-row" key={item.id}><span className="social-person-avatar social-gold-avatar">{avatars.find(a => a.id === item.profile?.avatar_id)?.emoji ?? "👤"}</span><div className="social-person-info"><strong>{item.profile?.display_name ?? "Usuario"}</strong><small>@{item.profile?.username ?? "sin_usuario"}</small></div><button className="social-secondary-button" onClick={() => acceptRequest(item.id)} disabled={busy}>Aceptar</button><button className="social-text-button" onClick={() => removeRequest(item.id)} disabled={busy}>Rechazar</button></div>)}
         </div>
