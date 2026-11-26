@@ -57,7 +57,7 @@ export default function FinanceWrapped(){
   try{
    const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;
    if(!token)throw new Error("Tu sesión no está disponible.");
-   const spokenText=[current[0],current[1],current[2],slide===3?archetypeText:"",slide===8?goalEncouragement:"",slide===10?"Seguir usando FINANCE.TRACK te permite construir un historial confiable, detectar cambios y medir tus objetivos con más claridad.":""].filter(Boolean).join(". ");
+   const spokenText=[current[0],current[1],current[2]].filter(Boolean).join(". ");
    const response=await fetch("/api/vera/tts",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({text:spokenText.slice(0,1800)})});
    if(!response.ok){const payload=await response.json().catch(()=>({}));throw new Error(payload.error||"No pudimos generar la voz de VERA.")}
    const blob=await response.blob();if(audioUrlRef.current)URL.revokeObjectURL(audioUrlRef.current);
