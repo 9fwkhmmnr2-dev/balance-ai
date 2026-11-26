@@ -73,10 +73,19 @@ export default function SocialProfilePanel() {
     if (relationsError) { setError("No pudimos cargar tus amistades."); return; }
     const rows = (relations ?? []) as Friendship[];
     const otherIds = [...new Set(rows.map(row => row.requester_id === id ? row.addressee_id : row.requester_id))];
-    const { data: people } = otherIds.length
-      ? await supabase.from("social_profiles").select("user_id,username,display_name,avatar_id,bio").in("user_id", otherIds)
-      : { data: [] as SocialProfile[] };
-    const peopleMap = new Map(((people ?? []) as SocialProfile[]).map(person => [person.user_id, person]));
+    const { data: directoryPeople, error: directoryError } = otherIds.length
+      ? await supabase.from("social_directory").select("user_id,username,display_name,avatar_id").in("user_id", otherIds)
+      : { data: [], error: null };
+    if (directoryError) { setError("No pudimos cargar los perfiles de tus contactos."); return; }
+
+    const acceptedIds = [...new Set(rows.filter(row => row.status === "accepted").map(row => row.requester_id === id ? row.addressee_id : row.requester_id))];
+    const { data: detailedProfiles, error: detailedProfilesError } = acceptedIds.length
+      ? await supabase.from("social_profiles").select("user_id,username,display_name,avatar_id,bio").in("user_id", acceptedIds)
+      : { data: [] as SocialProfile[], error: null };
+    if (detailedProfilesError) { setError("No pudimos cargar los perfiles de tus amigos."); return; }
+
+    const peopleMap = new Map(((directoryPeople ?? []) as Array<Omit<SocialProfile, "bio">>).map(person => [person.user_id, { ...person, bio: "" } as SocialProfile]));
+    for (const person of (detailedProfiles ?? []) as SocialProfile[]) peopleMap.set(person.user_id, person);
     const acceptedFriends = rows.filter(row => row.status === "accepted").map(row => peopleMap.get(row.requester_id === id ? row.addressee_id : row.requester_id)).filter(Boolean) as SocialProfile[];
     setFriends(acceptedFriends);
     const { data: aliases, error: aliasesError } = await supabase.from("friend_aliases").select("friend_id,alias").eq("user_id", id);
@@ -126,11 +135,11 @@ export default function SocialProfilePanel() {
     setSearchResult(null); setError(""); setNotice("");
     const term = search.trim().replace(/^@/, "").toLowerCase();
     if (!/^[a-z0-9_]{3,20}$/.test(term)) { setError("Ingresá un nombre de usuario válido."); return; }
-    const { data, error: searchError } = await supabase.from("social_profiles")
-      .select("user_id,username,display_name,avatar_id,bio").eq("username", term).maybeSingle();
+    const { data, error: searchError } = await supabase.from("social_directory")
+      .select("user_id,username,display_name,avatar_id").eq("username", term).maybeSingle();
     if (searchError) { setError("No pudimos realizar la búsqueda."); return; }
     if (!data || data.user_id === userId) { setNotice("No encontramos otro perfil con ese usuario."); return; }
-    setSearchResult(data as SocialProfile);
+    setSearchResult({ ...data, bio: "" } as SocialProfile);
   }
 
   async function sendRequest() {
@@ -260,6 +269,6 @@ export default function SocialProfilePanel() {
       {achievements.length === 0 ? <p className="card-note">Tus medallas aparecerán cuando desbloquees logros por tu actividad en FINANCE.TRACK.</p> : <div className="social-achievements-grid">{achievements.map(item => item.catalog && <article className="social-achievement" key={item.achievement_id}><span style={{ color: tierColors[item.catalog.tier] }}>✦</span><div><strong>{item.catalog.name}</strong><small>{item.catalog.description}</small><em>{tierLabels[item.catalog.tier]}</em></div></article>)}</div>}
     </>}
 
-    {consentAction && <div className="social-consent-backdrop" role="presentation"><div className="social-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="social-consent-title"><h3 id="social-consent-title">Antes de conectar</h3><p>Al enviar o aceptar esta solicitud, la otra persona podrá ver tu perfil social (nombre visible, usuario, avatar y presentación) y los logros que desbloquees.</p><p><strong>No se comparten</strong> tus cuentas, saldos, movimientos, ingresos ni gastos. La amistad no concede acceso a tu información financiera.</p><div><button type="button" className="social-text-button" onClick={() => setConsentAction(null)}>Cancelar</button><button type="button" className="primary-button" disabled={busy} onClick={() => consentAction.type === "send" ? void confirmSendRequest() : consentAction.id ? void confirmAcceptRequest(consentAction.id) : undefined}>{consentAction.type === "send" ? "Enviar solicitud" : "Aceptar solicitud"}</button></div></div></div>}
+    {consentAction && <div className="social-consent-backdrop" role="presentation"><div className="social-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="social-consent-title"><h3 id="social-consent-title">Antes de conectar</h3><p>Tu usuario, nombre visible y avatar pueden aparecer en búsquedas para personas con sesión iniciada. Al aceptar la amistad, ambos podrán ver también la presentación de perfil y los logros que desbloquees.</p><p><strong>No se comparten</strong> tus cuentas, saldos, movimientos, ingresos ni gastos. La amistad no concede acceso a tu información financiera.</p><div><button type="button" className="social-text-button" onClick={() => setConsentAction(null)}>Cancelar</button><button type="button" className="primary-button" disabled={busy} onClick={() => consentAction.type === "send" ? void confirmSendRequest() : consentAction.id ? void confirmAcceptRequest(consentAction.id) : undefined}>{consentAction.type === "send" ? "Enviar solicitud" : "Aceptar solicitud"}</button></div></div></div>}
   </section>;
 }
