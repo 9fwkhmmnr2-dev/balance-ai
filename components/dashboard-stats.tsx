@@ -113,6 +113,11 @@ export default function DashboardStats() {
   );
   const activeAccountIds = useMemo(() => new Set(activeAccounts.map((account) => account.id)), [activeAccounts]);
   const accountTotal = activeAccounts.reduce((sum, account) => sum + (accountBalances[account.id] ?? Number(account.initial_balance)), 0);
+  const allActiveAccounts = accounts.filter((account) => !account.is_archived);
+  const accountTotalsByCurrency = allActiveAccounts.reduce((totals, account) => {
+    totals[account.currency] = (totals[account.currency] ?? 0) + (accountBalances[account.id] ?? Number(account.initial_balance));
+    return totals;
+  }, {} as Record<string, number>);
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const todayKey = dateKey(today);
@@ -204,14 +209,14 @@ export default function DashboardStats() {
       <section className="dashboard-accounts-section dashboard-accounts-top">
         <div className="section-heading">
           <div><p className="eyebrow">PATRIMONIO POR CUENTAS</p><h3>Tu dinero disponible</h3></div>
-          <div className="dashboard-account-total"><label className="currency-picker">Moneda<select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label><strong>{money(accountTotal, currency)}</strong></div>
+          <div className="dashboard-account-total">{Object.entries(accountTotalsByCurrency).map(([code,total])=><strong key={code}>{money(total,code)}</strong>)}</div>
         </div>
-        {activeAccounts.length === 0 ? <p className="empty-state">Todavía no tenés cuentas activas en {currency}. Podés agregarlas desde Mis cuentas.</p> : (
+        {allActiveAccounts.length === 0 ? <p className="empty-state">Todavía no tenés cuentas activas. Podés agregarlas desde Mis cuentas.</p> : (
           <div className="dashboard-account-grid">
-            {activeAccounts.map((account) => (
+            {allActiveAccounts.map((account) => (
               <article className="dashboard-account-card" key={account.id}>
                 <span>{account.name}</span>
-                <strong>{money(accountBalances[account.id] ?? Number(account.initial_balance), currency)}</strong>
+                <strong>{money(accountBalances[account.id] ?? Number(account.initial_balance), account.currency)}</strong>
                 <small>{account.currency}</small>
               </article>
             ))}
@@ -225,6 +230,7 @@ export default function DashboardStats() {
             <p className="eyebrow">RESUMEN PERSONAL</p>
             <h2>Tu dinero, en perspectiva.</h2>
           </div>
+          <label className="currency-picker">Moneda de análisis<select value={currency} onChange={(event) => setCurrency(event.target.value)}>{currencies.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
 
         </div>
         <div className="dashboard-balance-controls">
