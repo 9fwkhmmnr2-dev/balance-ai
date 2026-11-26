@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
+import { PRIVACY_VERSION, TERMS_VERSION } from "../lib/legal-versions";
 import { supabase } from "../lib/supabase";
 import FinanceTrackLoader from "./finance-track-loader";
 
@@ -23,11 +24,11 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
       }
       const { data: acceptance, error } = await supabase
         .from("registration_acceptances")
-        .select("user_id")
+        .select("user_id, terms_version, privacy_version")
         .eq("user_id", session.user.id)
         .maybeSingle();
       if (!active) return;
-      if (error || !acceptance) {
+      if (error || !acceptance || acceptance.terms_version !== TERMS_VERSION || acceptance.privacy_version !== PRIVACY_VERSION) {
         router.replace("/legal/accept");
         return;
       }
