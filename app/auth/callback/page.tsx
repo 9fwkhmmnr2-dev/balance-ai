@@ -45,6 +45,11 @@ export default function AuthCallbackPage() {
         });
         const payload = await response.json();
         if (!response.ok) {
+          if (response.status === 403) {
+            await supabase.auth.signOut();
+            router.replace("/login?blocked=age");
+            return;
+          }
           setMessage(payload.error || "No pudimos completar la verificación de edad.");
           return;
         }
