@@ -2566,3 +2566,17 @@ body{background:#090A0D;color:#F2F0EB}
  .social-profile-panel .social-avatar-preview{width:58px;height:58px}
  .social-profile-panel .social-friends-actions{align-items:flex-start;flex-direction:column}
 }
+
+
+.social-profile-panel .social-alias-editor {
+  display:flex; flex:1 0 100%; align-items:center; gap:8px; flex-wrap:wrap;
+  padding:10px 0 4px 55px;
+}
+.social-profile-panel .social-alias-editor input {
+  flex:1; min-width:130px; max-width:220px; background:#111216; color:#F5F2EA;
+  border:1px solid #51452F; border-radius:8px; padding:9px 11px; font-size:12px;
+}
+.social-profile-panel .social-alias-editor .primary-button { padding:8px 12px; font-size:11px; }
+@media(max-width:600px) {
+  .social-profile-panel .social-alias-editor { padding-left:0; }
+}
