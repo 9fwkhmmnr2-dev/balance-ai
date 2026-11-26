@@ -10,9 +10,10 @@ function isAdult(birthDate: unknown) {
   const [year, month, day] = birthDate.split("-").map(Number);
   const parsed = new Date(Date.UTC(year, month - 1, day));
   if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) return false;
-  const now = new Date();
-  let age = now.getUTCFullYear() - year;
-  if (now.getUTCMonth() + 1 < month || (now.getUTCMonth() + 1 === month && now.getUTCDate() < day)) age--;
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const today = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  let age = Number(today.year) - year;
+  if (Number(today.month) < month || (Number(today.month) === month && Number(today.day) < day)) age--;
   return age >= MINIMUM_AGE_YEARS;
 }
 
