@@ -13,3 +13,36 @@
 .wrapped-vera-gold .wrapped-vera-icon{background:#B28B3E!important;color:#17151B!important}
 .wrapped-return-link:focus-visible,.wrapped-footer button:focus-visible{outline:3px solid #A78BFA;outline-offset:3px}
 @media(max-width:600px){.wrapped-header{align-items:stretch;flex-direction:column;gap:12px}.wrapped-return-link{width:100%;min-height:46px}.wrapped-vera{padding:14px}.wrapped-vera>p{font-size:12px}}
+
+/* FINANCE WRAPPED · navegación y transiciones */
+.wrapped-header{justify-content:flex-end}
+.wrapped-stage{perspective:1200px;touch-action:pan-y;overflow:hidden}
+.wrapped-story{will-change:transform,opacity;transform-origin:center center}
+.wrapped-story-0,.wrapped-story-1,.wrapped-story-3,.wrapped-story-4,.wrapped-story-5,.wrapped-story-7,.wrapped-story-8,.wrapped-story-9,.wrapped-story-10{animation:wrapped-spring-in 390ms cubic-bezier(.2,1.18,.35,1) both}
+.wrapped-story-2{animation:wrapped-flip-in 430ms cubic-bezier(.2,.8,.2,1) both;backface-visibility:hidden}
+.wrapped-story-6{animation:wrapped-reveal-in 390ms cubic-bezier(.2,1,.3,1) both}
+.wrapped-story>*{animation:wrapped-stagger-in 420ms ease both}
+.wrapped-story>*:nth-child(2){animation-delay:45ms}
+.wrapped-story>*:nth-child(3){animation-delay:90ms}
+.wrapped-story>*:nth-child(4){animation-delay:135ms}
+.wrapped-story>*:nth-child(5){animation-delay:180ms}
+@keyframes wrapped-spring-in{0%{opacity:0;transform:translateX(34px) scale(.96)}72%{opacity:1;transform:translateX(-3px) scale(1.008)}100%{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes wrapped-flip-in{0%{opacity:0;transform:rotateY(-13deg) scale(.97)}100%{opacity:1;transform:rotateY(0) scale(1)}}
+@keyframes wrapped-reveal-in{0%{opacity:0;clip-path:inset(0 0 0 18%);transform:scale(.985)}100%{opacity:1;clip-path:inset(0 0 0 0);transform:scale(1)}}
+@keyframes wrapped-stagger-in{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:translateY(0)}}
+.wrapped-nav button,.wrapped-period-nav button,.wrapped-footer button{transition:transform .2s ease,background .2s ease,border-color .2s ease}
+.wrapped-nav button:not(:disabled):active,.wrapped-period-nav button:not(:disabled):active,.wrapped-footer button:active{transform:scale(.97)}
+.wrapped-nav button:disabled,.wrapped-period-nav button:disabled{opacity:.32;cursor:not-allowed}
+.wrapped-footer{gap:10px}
+.wrapped-footer button{min-height:42px}
+.wrapped-controls select:focus-visible,.wrapped-nav button:focus-visible,.wrapped-period-nav button:focus-visible,.wrapped-footer button:focus-visible{outline:2px solid #A78BFA;outline-offset:3px}
+.wrapped-page .mobile-menu{display:block;position:relative;width:100%;max-width:920px;margin:0 auto 18px;background:#17151E;border:1px solid #40364F;border-radius:14px;z-index:20}
+.wrapped-page .mobile-menu-bar{min-height:58px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.wrapped-page .mobile-brand{font-family:Manrope,sans-serif;font-size:18px;font-weight:800;color:#F2F0EB}
+.wrapped-page .mobile-brand span{color:#B99AEF}
+.wrapped-page .mobile-menu-button{background:#30253F!important;border:1px solid #59466E!important;color:#D9C7F0!important;border-radius:9px;padding:9px 13px;font-size:13px;font-weight:700}
+.wrapped-page .mobile-menu-panel{display:flex;flex-direction:column;gap:5px;padding:10px 14px 14px!important;background:#17151E;border-top:1px solid #40364F;border-radius:0 0 13px 13px}
+.wrapped-page .mobile-nav-item{display:flex;align-items:center;gap:10px;text-align:left;padding:12px;border:0;border-radius:8px;background:transparent;color:#D8D2E1!important;font-size:13px}
+.wrapped-page .mobile-nav-item.active,.wrapped-page .mobile-nav-item:hover{background:#403052!important;color:#F2EAFB!important}
+@media(prefers-reduced-motion:reduce){.wrapped-story,.wrapped-story>*{animation:none!important;transition:none!important}.wrapped-stage{scroll-behavior:auto}}
+@media(max-width:600px){.wrapped-header{align-items:flex-end;flex-direction:row;justify-content:flex-end}.wrapped-page .mobile-menu{margin-bottom:14px}.wrapped-page .mobile-menu-panel{max-height:70svh;overflow:auto}.wrapped-footer{display:grid;grid-template-columns:1fr 1fr}.wrapped-footer button{width:100%;font-size:11px;padding:9px 8px}}
