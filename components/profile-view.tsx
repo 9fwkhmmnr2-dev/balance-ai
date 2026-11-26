@@ -26,6 +26,16 @@ type Movement = {
   movement_date: string;
 };
 
+type Commitment = {
+  id: string;
+  name: string;
+  category: string;
+  amount: number;
+  currency: string;
+  frequency: "weekly" | "monthly" | "yearly";
+  due_date: string | null;
+};
+
 const frequencies: Record<string, string> = {
   monthly: "Mensualmente",
   biweekly: "Quincenalmente",
@@ -40,6 +50,7 @@ export default function ProfileView() {
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [currency, setCurrency] = useState("ARS");
   const [currencies, setCurrencies] = useState<string[]>(["ARS"]);
   const [countryNames, setCountryNames] = useState<Record<string, string>>({});
@@ -68,6 +79,12 @@ export default function ProfileView() {
         if (profileError) throw profileError;
 
         setProfile(profileData);
+        const { data: commitmentData } = await supabase
+          .from("financial_commitments")
+          .select("id, name, category, amount, currency, frequency, due_date")
+          .eq("is_active", true)
+          .order("due_date", { ascending: true, nullsFirst: false });
+        setCommitments((commitmentData ?? []) as Commitment[]);
         const countryResponse = await fetch("/api/countries");
         if (countryResponse.ok) {
           const countryPayload = await countryResponse.json();
@@ -178,7 +195,7 @@ export default function ProfileView() {
         <h2 className="section-title">Información de la cuenta</h2>
         <p className="card-label">País de residencia</p>
         <p style={{ fontWeight: 600, marginTop: 7 }}>{countryNames[profile?.country_code ?? ""] || profile?.country_code || "No informado"}</p>
-        <p className="card-label" style={{ marginTop: 20 }}>Nacionalidad</p>
+        <p className="card-label" style={{ marginTop: 20 }}>País de origen</p>
         <p style={{ fontWeight: 600, marginTop: 7 }}>{countryNames[profile?.nationality_code ?? ""] || profile?.nationality_code || "No informada"}</p>
         <p className="card-label" style={{ marginTop: 20 }}>Moneda predeterminada</p>
         <p style={{ fontWeight: 600, marginTop: 7 }}>{profile?.default_currency || profile?.currency || "ARS"}</p>
@@ -256,6 +273,26 @@ export default function ProfileView() {
         <p style={{ marginTop: 8, fontSize: 14 }}>
           {profile?.expense_categories?.join(", ") || "Sin información"}
         </p>
+      </section>
+
+      <section className="card" style={{ marginBottom: 20 }}>
+        <h2 className="section-title">Gastos frecuentes y cuotas</h2>
+        {commitments.length === 0 ? (
+          <p className="card-note">Todavía no configuraste gastos frecuentes ni cuotas.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            {commitments.map((item) => (
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", gap: 14, paddingBottom: 10, borderBottom: "1px solid rgba(148,163,184,.16)" }}>
+                <div>
+                  <strong style={{ fontSize: 14 }}>{item.name}</strong>
+                  <p className="card-note" style={{ marginTop: 4 }}>{item.category} · {item.frequency === "weekly" ? "Semanal" : item.frequency === "monthly" ? "Mensual" : "Anual"}{item.due_date ? " · Próximo vencimiento: " + item.due_date : ""}</p>
+                </div>
+                <strong style={{ whiteSpace: "nowrap", fontSize: 14 }}>{new Intl.NumberFormat("es-AR", { style: "currency", currency: item.currency, maximumFractionDigits: 2 }).format(Number(item.amount))}</strong>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="card-note" style={{ marginTop: 12 }}>Estos compromisos quedan guardados en tu perfil como referencia para organizar tus próximos gastos.</p>
       </section>
 
       <section className="card" style={{ marginBottom: 20 }}>
