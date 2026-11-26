@@ -5,7 +5,7 @@ import DashboardStats from "../components/dashboard-stats";
 import QuickMovement from "../components/quick-movement";
 import NavigationIcon, { type NavigationIconName } from "../components/navigation-icon";
 
-const navigation = [{ label: "Inicio", href: "/", icon: "home" }, { label: "Movimientos", href: "/movimientos", icon: "activity" }, { label: "Mis cuentas", href: "/cuentas", icon: "wallet" }, { label: "Objetivos", href: "/objetivos", icon: "target" }, { label: "Transferencias", href: "/transferencias", icon: "transfer" }, { label: "Conversor", href: "/conversor", icon: "exchange" }, { label: "Documentos · GOLD", href: "/documentos", icon: "file" }, { label: "VERA", href: "/vera", icon: "vera" }];
+const navigation = [{ label: "Inicio", href: "/", icon: "home" }, { label: "Movimientos", href: "/movimientos", icon: "activity" }, { label: "Mis cuentas", href: "/cuentas", icon: "wallet" }, { label: "Objetivos", href: "/objetivos", icon: "target" }, { label: "Transferencias", href: "/transferencias", icon: "transfer" }, { label: "Conversor", href: "/conversor", icon: "exchange" }, { label: "VERA", href: "/vera", icon: "vera" }];
 
 export default function Home() {
   return (
