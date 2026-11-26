@@ -34,11 +34,6 @@ export default function LegalAcceptancePage() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        if (response.status === 403) {
-          await supabase.auth.signOut();
-          router.replace("/login?blocked=age");
-          return;
-        }
         throw new Error(payload.error || "No pudimos guardar la aceptación.");
       }
       router.replace("/");
