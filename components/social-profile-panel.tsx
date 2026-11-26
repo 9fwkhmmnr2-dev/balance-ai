@@ -213,5 +213,5 @@ export default function SocialProfilePanel() {
     </>}
 
     {consentAction && <div className="social-consent-backdrop" role="presentation"><div className="social-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="social-consent-title"><h3 id="social-consent-title">Antes de conectar</h3><p>Al enviar o aceptar esta solicitud, la otra persona podrá ver tu perfil social (nombre visible, usuario, avatar y presentación) y los logros que desbloquees.</p><p><strong>No se comparten</strong> tus cuentas, saldos, movimientos, ingresos ni gastos. La amistad no concede acceso a tu información financiera.</p><div><button type="button" className="social-text-button" onClick={() => setConsentAction(null)}>Cancelar</button><button type="button" className="primary-button" disabled={busy} onClick={() => consentAction.type === "send" ? void confirmSendRequest() : consentAction.id ? void confirmAcceptRequest(consentAction.id) : undefined}>{consentAction.type === "send" ? "Enviar solicitud" : "Aceptar solicitud"}</button></div></div></div>}
-  </section>;>;
+  </section>;
 }
