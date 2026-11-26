@@ -47,7 +47,7 @@ export default function LegalAcceptancePage() {
         }
         throw new Error(payload.error || "No pudimos guardar la aceptación.");
       }
-      router.replace("/perfil/editar");
+      router.replace("/");
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Ocurrió un error.");
