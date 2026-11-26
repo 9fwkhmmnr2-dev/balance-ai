@@ -2410,3 +2410,18 @@ body{background:#090A0D;color:#F2F0EB}
 .wrapped-nav{display:flex;justify-content:space-between;margin-top:18px}.wrapped-nav button:last-child,.wrapped-footer button:last-of-type{background:#D4B36C;color:#17140F;border-color:#D4B36C;font-weight:700}
 .wrapped-footer{justify-content:center;flex-wrap:wrap}.wrapped-note{max-width:780px;margin:14px auto;color:#9B978F;font-size:11px;line-height:1.6;text-align:center}
 @media(max-width:600px){.wrapped-page{padding:18px 12px 28px}.wrapped-header{align-items:flex-start;flex-direction:column}.wrapped-stage{min-height:calc(100svh - 210px);padding:14px 17px 18px;border-radius:20px}.wrapped-story{padding:34px 0 24px}.wrapped-metrics{grid-template-columns:1fr}.wrapped-metrics article{padding:13px}.wrapped-metrics strong{font-size:20px}.wrapped-footer{gap:8px}.wrapped-footer button,.wrapped-footer a{font-size:11px;padding:8px 11px}}
+
+
+/* FINANCE WRAPPED · explicaciones y objetivos */
+.wrapped-archetype-explain>p{font-size:14px;line-height:1.8;color:#E0D8C8;margin:18px 0 10px;max-width:620px}
+.wrapped-archetype-explain>small{font-size:11px;line-height:1.6;color:#A9A398}
+.wrapped-goals-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:28px}
+.wrapped-goals-grid article{padding:17px;border-radius:16px;background:linear-gradient(145deg,#252630,#1D1E25);border:1px solid #48413A;min-width:0}
+.wrapped-goals-grid article>div{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.wrapped-goals-grid article>div strong{font-size:13px;color:#F1EBDD;overflow-wrap:anywhere}
+.wrapped-goals-grid article>div b{color:#E5C77D;font-size:14px;white-space:nowrap}
+.wrapped-goals-grid article>i{display:block;height:9px;border-radius:10px;background:#3A3940;overflow:hidden;margin:15px 0 10px}
+.wrapped-goals-grid article>i em{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,#A27D3E,#E9CF84)}
+.wrapped-goals-grid article>small{font-size:10px;color:#BEB7A9;line-height:1.5}
+.wrapped-goals-grid article>p{font-size:11px;color:#D6C9A8;line-height:1.5;margin-top:10px}
+@media(max-width:600px){.wrapped-goals-grid{grid-template-columns:1fr}}
