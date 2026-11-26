@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { MINIMUM_AGE_YEARS } from "../../lib/legal-versions";
+import { MINIMUM_AGE_YEARS, PRIVACY_VERSION, TERMS_VERSION } from "../../lib/legal-versions";
 
 function isAdultDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -80,9 +80,24 @@ export default function LoginPage() {
           router.refresh();
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: signInData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.replace("/");
+        if (!signInData.user) throw new Error("No pudimos verificar la cuenta. Volvé a iniciar sesión.");
+
+        // Existing accounts must explicitly complete any missing or outdated legal acceptance.
+        const { data: acceptance, error: acceptanceError } = await supabase
+          .from("registration_acceptances")
+          .select("terms_version, privacy_version")
+          .eq("user_id", signInData.user.id)
+          .maybeSingle();
+
+        if (acceptanceError || !acceptance ||
+            acceptance.terms_version !== TERMS_VERSION ||
+            acceptance.privacy_version !== PRIVACY_VERSION) {
+          router.replace("/legal/accept");
+        } else {
+          router.replace("/");
+        }
         router.refresh();
       }
     } catch (error) {
