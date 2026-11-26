@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import FinanceTrackLoader from "./finance-track-loader";
 
@@ -13,7 +14,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
     let active = true;
     let checkingUser = false;
 
-    async function verify(session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) {
+    async function verify(session: Session | null) {
       if (checkingUser || !active) return;
       checkingUser = true;
       if (!session) {
