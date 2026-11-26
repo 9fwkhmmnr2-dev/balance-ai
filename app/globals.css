@@ -2243,3 +2243,90 @@ body{background:#090A0D;color:#F2F0EB}
     font-size: 16px !important;
   }
 }
+
+
+/* Dashboard: patrimonio multi-moneda y descripción financiera */
+.dashboard-account-total{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:5px;
+  min-width:0;
+}
+.dashboard-account-total>strong{
+  color:#E7D5AF;
+  font-size:12px;
+  white-space:nowrap;
+}
+.dashboard-accounts-top .section-heading{
+  align-items:flex-start;
+}
+.dashboard-financial-status{
+  margin:0 0 22px;
+  padding:17px 19px!important;
+  border-radius:13px!important;
+  background:linear-gradient(135deg,rgba(155,120,208,.09),rgba(200,169,107,.045))!important;
+  border:1px solid rgba(155,120,208,.22)!important;
+}
+.dashboard-financial-status .section-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:9px;
+}
+.dashboard-financial-status .section-heading h3{
+  margin-top:3px;
+  color:#F2F0EB;
+  font-family:'Manrope',sans-serif;
+  font-size:15px;
+}
+.dashboard-status-tag{
+  color:#C8B8DE;
+  font-size:9px;
+  text-align:right;
+}
+.dashboard-financial-status>p{
+  margin:0 0 13px;
+  color:#D8D2DF;
+  font-size:12px;
+  line-height:1.5;
+}
+.dashboard-financial-status-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:11px;
+}
+.dashboard-financial-status-grid>div{
+  min-width:0;
+  padding:10px;
+  border-radius:9px;
+  background:rgba(255,255,255,.035);
+}
+.dashboard-financial-status-grid span{
+  display:block;
+  color:#92909A;
+  font-size:9px;
+  line-height:1.4;
+}
+.dashboard-financial-status-grid strong{
+  display:block;
+  margin-top:5px;
+  color:#F2F0EB;
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+.dashboard-financial-status>small{
+  display:block;
+  color:#85838D;
+  font-size:9px;
+  line-height:1.5;
+}
+@media(max-width:700px){
+  .dashboard-account-total>strong{font-size:11px}
+  .dashboard-financial-status{padding:14px!important}
+  .dashboard-financial-status .section-heading{align-items:flex-start}
+  .dashboard-financial-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-financial-status-grid>div{padding:9px}
+}
