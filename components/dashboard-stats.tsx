@@ -301,7 +301,7 @@ export default function DashboardStats() {
           <div><span>Gastos sobre ingresos</span><strong>{income>0?(expenses/income*100).toLocaleString("es-AR",{maximumFractionDigits:1})+"%":"Sin base para calcular"}</strong></div>
           <div><span>Dinero disponible en cuentas ({currency})</span><strong>{money(accountTotal,currency)}</strong></div>
         </div>
-        <small>Es una descripción de los datos registrados, no una calificación integral de salud financiera. Las categorías Excelente, Saludable, Estable, Ajustada y Crítica todavía requieren umbrales definidos.</small>
+        <small>Es una descripción de los datos registrados, no una calificación integral de salud financiera. No se asigna una categoría automática hasta validar los criterios de evaluación.</small>
       </section>
 
       <section className="dashboard-charts-section">
