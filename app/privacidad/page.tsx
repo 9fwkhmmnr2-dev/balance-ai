@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AiConsentControls from "@/components/ai-consent-controls";
 
 const section: React.CSSProperties = { marginTop: 22, lineHeight: 1.7, color: "#C7C5CC", fontSize: 14 };
 export default function PrivacyPage() {
@@ -15,6 +16,7 @@ export default function PrivacyPage() {
       <section style={section}><h2>5. Conservación y seguridad</h2><p>Los datos de cuenta y financieros se conservan mientras sean necesarios para prestar el servicio o cumplir obligaciones aplicables. Aplicamos controles de acceso y políticas de seguridad, pero no existe una garantía absoluta frente a todos los riesgos.</p></section>
       <section style={section}><h2>6. Tus opciones</h2><p>Podés dejar de autorizar el procesamiento por proveedores de IA; al hacerlo, las funciones que necesiten ese procesamiento dejarán de estar disponibles. También podrás solicitar acceso, corrección o eliminación de datos mediante los canales de contacto que se informarán antes del lanzamiento.</p></section>
       <section style={section}><h2>7. Responsable y actualizaciones</h2><p>Antes del lanzamiento público se debe identificar al responsable del tratamiento, domicilio, correo de contacto, plazos concretos de conservación y mecanismo para ejercer derechos conforme a la normativa aplicable en Argentina y otros países donde opere el servicio.</p></section>
+      <AiConsentControls />
       <p style={{ marginTop: 32, padding: 14, border: "1px solid #66522D", borderRadius: 10, color: "#D8B66A", fontSize: 12 }}>Este documento es un borrador funcional. Requiere revisión legal y completar los datos del responsable antes del lanzamiento público.</p>
     </article>
   </main>;
