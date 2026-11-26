@@ -52,7 +52,8 @@ export default function FinanceWrapped(){
  useEffect(()=>{audioRef.current?.pause();setVoicePlaying(false);setVoiceError("")},[slide]);
  async function playVeraVoice(){
   if(voicePlaying&&audioRef.current){audioRef.current.pause();setVoicePlaying(false);return}
-  if(audioRef.current&&audioRef.current.paused&&audioUrlRef.current){try{await audioRef.current.play();setVoicePlaying(true);return}catch{audioRef.current=null}}\n  if(voiceLoading)return;
+  if(audioRef.current&&audioRef.current.paused&&audioUrlRef.current){try{await audioRef.current.play();setVoicePlaying(true);return}catch{audioRef.current=null}}
+  if(voiceLoading)return;
   setVoiceLoading(true);setVoiceError("");
   try{
    const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;
