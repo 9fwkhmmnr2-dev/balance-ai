@@ -11,7 +11,6 @@ const navigation = [
   { label: "Objetivos", href: "/objetivos", icon: "target" },
   { label: "Transferencias", href: "/transferencias", icon: "transfer" },
   { label: "Conversor", href: "/conversor", icon: "exchange" },
-  { label: "Documentos · GOLD", href: "/documentos", icon: "file" },
   { label: "VERA", href: "/vera", icon: "vera" },
   { label: "Perfil", href: "/perfil", icon: "user" }
 ];
