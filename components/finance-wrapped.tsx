@@ -27,7 +27,7 @@ export default function FinanceWrapped(){
  const shops=Object.entries(expenses.reduce<Record<string,{name:string,total:number,count:number}>>((a,x)=>{const n=(x.description||x.category||"Gasto").trim(),k=clean(n);if(!a[k])a[k]={name:n,total:0,count:0};a[k].total+=Number(x.amount);a[k].count++;return a},{})).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
  const days=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"],weekday=expenses.reduce<Record<string,number>>((a,x)=>{const d=days[new Date(x.movement_date.slice(0,10)+"T12:00:00").getDay()];a[d]=(a[d]||0)+Number(x.amount);return a},{}),peak=Object.entries(weekday).sort((a,b)=>b[1]-a[1])[0];
  const biggest=[...expenses].sort((a,b)=>Number(b.amount)-Number(a.amount))[0],small=expenses.filter(x=>Number(x.amount)>0&&Number(x.amount)<=Math.max(1500,totalOut*.015)),smallSum=small.reduce((a,x)=>a+Number(x.amount),0);
- const timedExpenses=expenses.filter(x=>/T\\d{2}:\\d{2}/.test(x.movement_date));
+ const timedExpenses=expenses.filter(x=>/T\d{2}:\d{2}/.test(x.movement_date));
  const nightExpenses=timedExpenses.filter(x=>{const hour=Number(x.movement_date.slice(11,13));return hour>=20||hour<3});
  const nightShare=timedExpenses.length?nightExpenses.reduce((sum,x)=>sum+Number(x.amount),0)/timedExpenses.reduce((sum,x)=>sum+Number(x.amount),0):0;
  const hasEnoughData=data.length>=4&&income.length>=1&&expenses.length>=2;
@@ -52,7 +52,7 @@ export default function FinanceWrapped(){
  useEffect(()=>{audioRef.current?.pause();setVoicePlaying(false);setVoiceError("")},[slide]);
  async function playVeraVoice(){
   if(voicePlaying&&audioRef.current){audioRef.current.pause();setVoicePlaying(false);return}
-  if(voiceLoading)return;
+  if(audioRef.current&&audioRef.current.paused&&audioUrlRef.current){try{await audioRef.current.play();setVoicePlaying(true);return}catch{audioRef.current=null}}\n  if(voiceLoading)return;
   setVoiceLoading(true);setVoiceError("");
   try{
    const {data:session}=await supabase.auth.getSession();const token=session.session?.access_token;
