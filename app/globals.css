@@ -2580,3 +2580,36 @@ body{background:#090A0D;color:#F2F0EB}
 @media(max-width:600px) {
   .social-profile-panel .social-alias-editor { padding-left:0; }
 }
+
+
+/* FINANCE.TRACK loader wordmark · mismo tratamiento que FINANCE WRAPPED */
+.financetrack-loading-lockup{
+  width:min(420px,84vw);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  filter:none;
+  color:#D8B66A;
+  font-family:Georgia,serif;
+  text-align:center;
+}
+.financetrack-loading-lockup .financetrack-loading-finance{
+  display:block;
+  color:inherit;
+  font-family:Georgia,serif;
+  font-size:clamp(25px,5vw,44px);
+  font-weight:400;
+  letter-spacing:4px;
+  line-height:1.1;
+}
+.financetrack-loading-lockup .financetrack-loading-track{
+  display:block;
+  color:inherit;
+  font-family:Georgia,serif;
+  font-size:clamp(42px,9vw,76px);
+  font-weight:700;
+  letter-spacing:3px;
+  line-height:1.05;
+}
