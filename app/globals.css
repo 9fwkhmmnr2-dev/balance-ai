@@ -2491,3 +2491,11 @@ body{background:#090A0D;color:#F2F0EB}
  .social-person-row { flex-wrap:wrap; }
  .social-person-info { min-width:100px; }
 }
+
+
+.social-friend-detail { margin-top:18px; padding:16px; border:1px solid #DDD6FE; border-radius:12px; background:#FAF9FF; }
+.social-friend-detail-head { display:flex; align-items:center; gap:11px; margin-bottom:12px; }
+.social-friend-detail-head > div { display:flex; flex:1; flex-direction:column; gap:3px; }
+.social-friend-detail-head small,.social-friend-detail > small { color:var(--muted); font-size:11px; }
+.social-friend-detail > p { margin:8px 0 16px; color:var(--gray); font-size:13px; }
+.social-friend-detail h4 { margin-bottom:10px; font-size:13px; }
