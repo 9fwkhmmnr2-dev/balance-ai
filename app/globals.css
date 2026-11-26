@@ -2433,3 +2433,7 @@ body{background:#090A0D;color:#F2F0EB}
 .wrapped-voice-controls button:disabled{opacity:.65;cursor:wait}
 .wrapped-voice-controls small{font-size:10px;color:#D9A5A5;text-align:center}
 .wrapped-voice-disclosure{max-width:780px;margin:0 auto 10px;text-align:center;color:#918B80;font-size:10px;line-height:1.5}
+
+/* FINANCE.TRACK loading lockup: preserve the original logo aspect ratio */
+.financetrack-loading-lockup{width:min(420px,84vw);display:flex;align-items:center;justify-content:center}
+.financetrack-loading-lockup img{display:block;width:100%;height:auto;max-height:220px;object-fit:contain;object-position:center}
