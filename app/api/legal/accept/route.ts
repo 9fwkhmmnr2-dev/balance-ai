@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id" });
     if (error) {
-      console.error("[LEGAL_ACCEPTANCE_DIAGNOSTIC]", { code: error.code });
+      console.error("[LEGAL_ACCEPTANCE_DIAGNOSTIC]", { code: error.code ?? null, message: typeof error.message === "string" ? error.message.slice(0, 240) : null, details: typeof error.details === "string" ? error.details.slice(0, 240) : null, hint: typeof error.hint === "string" ? error.hint.slice(0, 160) : null });
       return NextResponse.json({ error: "No pudimos guardar tu aceptación. Intentá nuevamente." }, { status: 503 });
     }
     return NextResponse.json({ ok: true });
