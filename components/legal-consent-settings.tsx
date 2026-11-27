@@ -85,14 +85,6 @@ export default function LegalConsentSettings() {
       const generalPayload = await generalResponse.json();
       if (!generalResponse.ok) throw new Error(generalPayload.error || "No pudimos actualizar las aceptaciones generales.");
 
-      const veraResponse = await fetch("/api/vera/legal/accept", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ acceptedTerms: true, acceptedPrivacy: true })
-      });
-      const veraPayload = await veraResponse.json();
-      if (!veraResponse.ok) throw new Error(veraPayload.error || "Se guardaron las condiciones generales, pero no pudimos actualizar las de VERA.");
-
       setAcceptance({
         age_eligible: true, terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION,
         vera_terms_version: VERA_TERMS_VERSION, vera_privacy_version: VERA_PRIVACY_VERSION,
@@ -115,7 +107,7 @@ export default function LegalConsentSettings() {
 
   return (
     <section style={cardStyle}>
-      <h2 style={{ fontSize: 17, margin: "0 0 7px" }}>Permisos y condiciones de uso</h2>
+      <h2 style={{ fontSize: 17, margin: "0 0 7px" }}>Configuración de permisos</h2>
       <p style={{ color: "#A7A7AD", fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
         Revisá y actualizá desde acá la edad mínima, los términos, la privacidad y el permiso independiente para el procesamiento mediante IA.
       </p>
@@ -128,15 +120,16 @@ export default function LegalConsentSettings() {
         <p style={{ fontSize: 11, color: "#85838D" }}>Estado completo: {current ? "Todo actualizado" : "Hay aceptaciones pendientes"}</p>
       </div>
       <form onSubmit={save} style={{ display: "grid", gap: 14 }}>
+        <details open style={{ border: "1px solid #34363D", borderRadius: 10, padding: 12, background: "#191B22" }}>
+          <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Permisos y condiciones de uso · Ver todo y aceptar</summary>
+          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
         <div>
           <label htmlFor="vera-birth-date" style={{ display: "block", color: "#D4D1D9", fontSize: 12, marginBottom: 7 }}>Fecha de nacimiento (solo se utiliza para verificar la edad)</label>
           <input id="vera-birth-date" type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} style={{ width: "100%", boxSizing: "border-box", padding: 11, borderRadius: 8, border: "1px solid #454751", background: "#101116", color: "#F2F0EB" }} />
           <p style={{ color: "#85838D", fontSize: 11, marginTop: 5 }}>La fecha no se guarda en la base de datos. VERA requiere tener al menos 18 años.</p>
         </div>
         <label style={labelStyle}><input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} required style={{ marginTop: 4 }} />Confirmo que tengo 18 años o más y que la fecha indicada es correcta.</label>
-        <details style={{ border: "1px solid #34363D", borderRadius: 10, padding: 12, background: "#191B22" }}>
-          <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Permisos y condiciones de uso</summary>
-          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+          <div style={{ display: "grid", gap: 10 }}>
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>FINANCE.TRACK · Condiciones generales</p>
             <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Regulan el acceso, las responsabilidades de la persona titular, las funciones disponibles y las limitaciones del servicio.</p>
             <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Leer Términos y Condiciones</Link>
@@ -150,11 +143,12 @@ export default function LegalConsentSettings() {
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Edad mínima</p>
             <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>VERA está destinada exclusivamente a personas titulares mayores de 18 años. La verificación debe completarla la propia persona titular.</p>
           </div>
-        </details>
         <label style={labelStyle}><input type="checkbox" checked={allLegalAccepted} onChange={e => setAllLegalAccepted(e.target.checked)} required style={{ marginTop: 4 }} />Leí y acepto en una sola confirmación los Términos y Condiciones y las Políticas de Privacidad de FINANCE.TRACK y VERA.</label>
         <div style={{ borderTop: "1px solid #34363D", paddingTop: 14 }}>
           <label style={labelStyle}><input type="checkbox" checked={aiConsent} onChange={e => setAiConsent(e.target.checked)} style={{ marginTop: 4 }} /><span>Autorizo por separado el procesamiento de mis mensajes y datos financieros mediante proveedores externos de IA, cuando la función y el proveedor estén habilitados. Este permiso es opcional y puedo revocarlo.</span></label>
         </div>
+          </div>
+        </details>
         {error && <p role="alert" style={{ color: "#E6A39B", fontSize: 12, lineHeight: 1.5 }}>{error}</p>}
         {message && <p role="status" style={{ color: "#9BC7A5", fontSize: 12, lineHeight: 1.5 }}>{message}</p>}
         <button type="submit" disabled={saving} style={{ border: 0, borderRadius: 9, padding: 13, background: "#C8A96B", color: "#17130B", fontWeight: 700, opacity: saving ? .65 : 1 }}>{saving ? "Guardando aceptaciones…" : "Guardar y continuar"}</button>
