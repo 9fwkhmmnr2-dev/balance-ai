@@ -235,7 +235,7 @@ export async function POST(request: Request) {
 
     const { data: profile, error: profileError } = await supabase
       .from("financial_profiles")
-      .select("currency")
+      .select("currency, pay_frequency, typical_income, income_sources, expense_categories, protected_reserve_amount, protected_reserve_currency")
       .eq("user_id", authData.user.id)
       .maybeSingle();
     if (profileError) throw profileError;
@@ -395,10 +395,71 @@ export async function POST(request: Request) {
       });
     }
 
+    const [{ data: accountContextRows, error: accountContextError }, { data: commitmentRows, error: commitmentError }, { data: transferContextRows, error: transferContextError }, { data: accountMovementRows, error: accountMovementError }] = await Promise.all([
+      supabase.from("financial_accounts").select("id, name, type, currency, initial_balance, is_archived").eq("user_id", authData.user.id).order("created_at", { ascending: true }).limit(200),
+      supabase.from("financial_commitments").select("name, category, amount, currency, frequency, due_date").eq("user_id", authData.user.id).eq("is_active", true).order("due_date", { ascending: true }).limit(100),
+      supabase.from("account_transfers").select("from_account_id, to_account_id, amount, currency, created_at").eq("user_id", authData.user.id).order("created_at", { ascending: false }).limit(100),
+      supabase.from("movements").select("account_id, type, amount, currency").eq("user_id", authData.user.id).not("account_id", "is", null).limit(10000),
+    ]);
+    if (accountContextError) throw accountContextError;
+    if (commitmentError) throw commitmentError;
+    if (transferContextError) throw transferContextError;
+    if (accountMovementError) throw accountMovementError;
+
+    const accountNames = new Map((accountContextRows ?? []).map((account) => [account.id, account.name]));
+    const accountBalances = new Map((accountContextRows ?? []).map((account) => [account.id, Number(account.initial_balance)]));
+    (accountMovementRows ?? []).forEach((movement) => {
+      if (!movement.account_id || !accountBalances.has(movement.account_id)) return;
+      accountBalances.set(movement.account_id, (accountBalances.get(movement.account_id) ?? 0) + (movement.type === "income" ? 1 : -1) * Number(movement.amount));
+    });
+    (transferContextRows ?? []).forEach((transfer) => {
+      if (accountBalances.has(transfer.from_account_id)) accountBalances.set(transfer.from_account_id, (accountBalances.get(transfer.from_account_id) ?? 0) - Number(transfer.amount));
+      if (accountBalances.has(transfer.to_account_id)) accountBalances.set(transfer.to_account_id, (accountBalances.get(transfer.to_account_id) ?? 0) + Number(transfer.amount));
+    });
+    const accountContext = (accountContextRows ?? []).map((account) => ({
+      name: account.name,
+      type: account.type,
+      currency: account.currency,
+      balance: accountBalances.get(account.id) ?? Number(account.initial_balance),
+      archived: account.is_archived,
+    }));
+    const commitmentContext = (commitmentRows ?? []).map((item) => ({
+      name: item.name, category: item.category, amount: Number(item.amount),
+      currency: item.currency, frequency: item.frequency, dueDate: item.due_date,
+    }));
+    const transferContext = (transferContextRows ?? []).map((item) => ({
+      date: item.created_at.slice(0, 10),
+      amount: Number(item.amount),
+      currency: item.currency,
+      fromAccount: accountNames.get(item.from_account_id) ?? "Cuenta de origen",
+      toAccount: accountNames.get(item.to_account_id) ?? "Cuenta de destino",
+    }));
+    const currentTransfersCount = transferContextRows?.filter((item) =>
+      item.currency === currency && item.created_at.slice(0, 10) >= from && item.created_at.slice(0, 10) <= today
+    ).length ?? 0;
+    currentSummary.movementsCount += currentTransfersCount;
+    if (previousSummary) {
+      previousSummary.movementsCount += transferContextRows?.filter((item) =>
+        item.currency === currency && item.created_at.slice(0, 10) >= previousFrom && item.created_at.slice(0, 10) <= previousTo
+      ).length ?? 0;
+    }
+    const profileContext = {
+      payFrequency: profile?.pay_frequency ?? "not_set",
+      typicalIncome: profile?.typical_income == null ? null : Number(profile.typical_income),
+      incomeSources: Array.isArray(profile?.income_sources) ? profile.income_sources : [],
+      expenseCategories: Array.isArray(profile?.expense_categories) ? profile.expense_categories : [],
+      protectedReserveAmount: profile?.protected_reserve_amount == null ? null : Number(profile.protected_reserve_amount),
+      protectedReserveCurrency: profile?.protected_reserve_currency ?? null,
+    };
+
     const financialContext: VeraFinancialContext = {
       currency,
       period: input.period,
       ...currentSummary,
+      profile: profileContext,
+      accounts: accountContext,
+      commitments: commitmentContext,
+      transfers: transferContext,
       ...(goalContext ? { goals: goalContext } : {}),
       experience: isGold ? "gold" : "standard",
       ...(financialPosition ? { financialPosition } : {}),
