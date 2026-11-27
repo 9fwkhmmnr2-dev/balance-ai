@@ -56,7 +56,7 @@ export type VeraFinancialContext = {
     status: "active" | "paused" | "completed";
     contributionCount: number;
   }>;
-  experience?: "standard" | "gold";
+  experience?: "standard" | "plus";
   financialPosition?: {
     currency: string;
     liquidBalance: number | null;
