@@ -123,7 +123,7 @@ export default function SocialProfilePanel() {
       console.error("No se pudo guardar el perfil social:", saveError);
       if (saveError.code === "23505") setError("Ese nombre de usuario ya está en uso.");
       else if (saveError.code === "23514") setError("El avatar o alguno de los datos no está habilitado. Actualizá la página y probá otra vez.");
-      else if (saveError.code === "42501") setError("No tenemos permiso para guardar el perfil con esta sesión. Cerrá sesión, volvé a entrar e intentá de nuevo.");
+      else if (saveError.code === "42501") setError("Esta cuenta no tiene habilitado el acceso a Finance Friends. La experiencia actual está reservada para cuentas adultas que cumplan las condiciones de acceso.");
       else setError(`No pudimos guardar tu perfil (${saveError.code ?? "sin código"}): ${saveError.message}`);
       return;
     }
