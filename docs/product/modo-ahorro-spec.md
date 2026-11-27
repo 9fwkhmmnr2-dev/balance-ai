@@ -1,0 +1,109 @@
+# VERA: Modo Ahorro — Especificación completa de producto
+
+**Plan:** FINANCE PLUS.
+**Estado:** diseño funcional; interfaz inicial parcialmente implementada. Comparación real, ofertas y optimización avanzada dependen de fuentes autorizadas y backend.
+**Rama:** `feature/finance-plus-unification`.
+
+## 1. Promesa
+
+Ayudar a gastar menos en compras planificadas comparando productos equivalentes y el coste total real. No mostrar descuentos genéricos sin verificar ni inventar precios, comercios, stock u ofertas.
+
+## 2. Funciones
+
+1. **Listas de compras:** crear listas por texto o imagen, cantidades, presentaciones y marcas preferidas.
+2. **Presupuesto de compra:** definir límite y detectar qué productos elevan el total; sugerir alternativas sin presionar a comprar.
+3. **Comparación de comercios:** comparar mismo producto/presentación en supermercados, farmacias y comercios admitidos.
+4. **Descuentos y promociones:** cupones, bancos, tarjetas y promociones con fuente, vigencia, requisitos, restricciones y condiciones.
+5. **Alternativas económicas:** marcas, variantes y tamaños comparables; normalizar precio por kg, litro o unidad y explicar diferencias.
+6. **Optimización de canasta:** comparar compra en un solo comercio frente a varios; considerar entrega, mínimo de compra, distancia, transporte y otros costes.
+7. **Análisis de ahorro:** estimar oportunidades y registrar ahorro realizado solo cuando el usuario confirme el precio real de compra.
+
+## 3. Canasta mensual familiar
+
+Herramienta Plus donde la persona selecciona:
+- cantidad de integrantes del hogar;
+- duración: 15, 30, 60 días o período configurable;
+- categorías y cantidades de productos.
+
+Debe mantener dos referencias distintas:
+1. **Canasta Básica Alimentaria (CBA) del INDEC:** referencia estadística oficial, no una lista personalizada de compras ni consejo nutricional.
+2. **Canasta práctica FINANCE.TRACK:** conjunto configurable de categorías y cantidades para comparar costes reales.
+
+Resultados posibles:
+- coste estimado de la canasta para tamaño y duración elegidos;
+- comparación de canastas equivalentes entre comercios;
+- diferencia y ahorro potencial;
+- proyección mensual/anual claramente identificada como estimación;
+- estrategia de compra en uno o varios comercios con costes de traslado/entrega y mínimos.
+
+No convertirla en dieta, recomendación clínica ni consejo nutricional. No afirmar que la canasta práctica representa exactamente la CBA.
+
+## 4. Datos, equivalencia y calidad
+
+Cada oferta debe registrar:
+- comercio y fuente autorizada;
+- producto exacto, marca, modelo/variante y presentación;
+- cantidad, unidad y precio unitario normalizado;
+- moneda y precio total;
+- fecha/hora de consulta y estado de frescura;
+- disponibilidad solo cuando esté verificada;
+- condiciones de promoción, vigencia y elegibilidad;
+- entrega, mínimos, viaje u otros cargos cuando se conozcan.
+
+No comparar como idénticos productos de distinto tamaño, calidad, variante o contenido. Marcar sustituciones explícitamente.
+
+Si no existe fuente confiable, informar que no se encontró una oferta verificada. No hacer scraping ni mostrar comercialmente datos si la licencia no lo permite.
+
+## 5. Ubicación y privacidad
+
+La comparación cercana requiere ubicación aproximada compartida explícitamente o zona ingresada manualmente. Permitir usar la función sin ubicación precisa cuando sea posible. No conservar ubicación precisa por defecto. No compartir listas ni preferencias con comercios.
+
+## 6. Ahorro: tres conceptos obligatorios
+
+- **Ahorro potencial/estimado:** diferencia calculada entre alternativas comparables, aún no realizada.
+- **Ahorro confirmado/realizado:** diferencia respaldada por precio real de compra que el usuario confirmó.
+- **Dinero reservado:** importe que la persona separó efectivamente para una meta.
+
+No confundirlos ni sumarlos como si fueran el mismo saldo. Evitar contar dos veces una misma oportunidad.
+
+## 7. Evolución e historial de ahorro
+
+Panel Plus con vistas mensual, trimestral, semestral, anual y total:
+- ahorro potencial;
+- ahorro confirmado;
+- promedio mensual;
+- mejor período;
+- comercios y categorías donde más se ahorró;
+- evolución y proyecciones;
+- historial de oportunidades y confirmaciones.
+
+Informe anual de VERA puede resumir evolución, mejor mes, categorías/comercios y proyección del próximo año usando datos verificados.
+
+## 8. Integración con Objetivos y demás módulos
+
+Modo Ahorro puede ayudar a reducir el coste de compras para acercarse a metas. Objetivos calcula aportes y plazo; Analytics evalúa capacidad; Predict presenta escenarios; VERA explica recomendaciones.
+
+Una compra más barata no significa que el importe ahorrado haya sido depositado o reservado. Para sumar dinero a una meta, el usuario debe registrar o confirmar la reserva.
+
+## 9. Límites de plan
+
+Modo Ahorro completo es Plus. Free puede ver una presentación o vista previa y conocer cómo funciona, pero no debe aparecer como si tuviera comparaciones en vivo habilitadas. Funciones esenciales de finanzas y seguridad siguen disponibles en Free.
+
+## 10. Estado técnico conocido
+
+- Existe una primera interfaz en `components/vera-savings-mode.tsx`, CSS asociado y ruta `/finance-plus/ahorro`.
+- La interfaz incluye lista, cantidades, presupuesto y cálculos con precios de referencia ingresados por el usuario.
+- La UI inicial no equivale a cotizaciones en vivo.
+- Comparador, descuentos y optimización avanzada fueron marcados como próximos.
+- Persistencia, endpoints, integración de comercios y precios autorizados no están completos.
+- No activar ofertas hasta validar licencia, calidad, frescura, seguridad y coste total.
+
+## 11. Criterios de aceptación
+
+- Comparaciones de productos equivalentes y cantidades normalizadas.
+- Coste total considera gastos conocidos y condiciones.
+- Toda oferta externa tiene fuente y fecha.
+- Estimado, confirmado y reservado se muestran separados.
+- El usuario puede editar/eliminar listas y controlar ubicación.
+- Sin compras, redenciones ni transferencias automáticas.
+- Datos insuficientes producen aviso, no invención.
