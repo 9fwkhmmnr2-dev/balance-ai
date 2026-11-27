@@ -4,7 +4,7 @@ import { PRIVACY_VERSION, TERMS_VERSION, VERA_PRIVACY_VERSION, VERA_TERMS_VERSIO
 export async function checkVeraAiEligibility(supabase: SupabaseClient<any, "public">, userId: string) {
   // Gemini stays fail-closed until an adult account owner has confirmed a paid processing setup that permits financial data.
   if (process.env.VERA_GEMINI_PAID_DATA_PROCESSING_APPROVED !== "true") {
-    return { allowed: false as const, status: 503, error: "VERA está temporalmente deshabilitada mientras se verifica la habilitación del proveedor de IA." };
+    return { allowed: false as const, status: 503, error: "VERA todavía no está habilitada por el administrador adulto del servicio de IA. No es un error de tu sesión ni de tus cuentas." };
   }
   const { data, error } = await supabase
     .from("registration_acceptances")
