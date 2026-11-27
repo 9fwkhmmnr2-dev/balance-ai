@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import SocialProfilePanel from "./social-profile-panel";
+import LegalConsentSettings from "./legal-consent-settings";
 
 type Profile = {
   pay_frequency: string;
@@ -343,6 +344,8 @@ export default function ProfileView() {
           Versión inicial basada en reglas y movimientos registrados.
         </p>
       </section>
+
+      <LegalConsentSettings />
     </div>
   );
 }
