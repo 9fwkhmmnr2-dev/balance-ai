@@ -19,8 +19,8 @@ Base branch: `feature/mis-cuentas`
 - Accounts, movements, transfers, budgets and goals: core functionality.
 - VERA: basic assistant access, shorter context and conservative fair-use limits.
 - Markets: public market overview, company directory, favorites and daily data when display licensing permits.
-- Basic price comparison: available in every plan. FINANCE PLUS adds the advanced VERA: Modo Ahorro workflow described below.
 - Notifications: essential in-app alerts and a low-frequency summary.
+- Price comparison, local merchant offers, promotion search and smart basket optimization are not included in Free.
 - Monthly finance summary: basic, factual totals and categories.
 
 ### FINANCE PLUS
@@ -31,7 +31,7 @@ Base branch: `feature/mis-cuentas`
 - Document intelligence: PDF, XLSX, CSV and DOCX statement/receipt ingestion, transaction extraction, automatic categorization with user review before saving, and question-answering over the uploaded document.
 - Monthly close: AI-generated report based on actual movements and account data.
 - Goal planning: contribution scenarios and projections.
-- VERA: Modo Ahorro: advanced nearby merchant comparison, verified discounts, smart shopping lists, lower-cost alternatives and purchase-budget guidance.
+- VERA: Modo Ahorro: Plus-only shopping lists, purchase budgets, nearby merchant comparison, verified discounts, lower-cost alternatives and basket optimization. The list/budget workspace is the first implementation phase; live offers remain unavailable until authorized data sources are integrated.
 - Notifications: customizable thresholds, unusual spending signals, due-date reminders, favorite-market alerts (only when licensed data supports them), and a richer weekly/monthly VERA digest.
 - No plan should execute transfers, payments, trades or edits to financial records without a separate explicit user confirmation.
 
@@ -76,15 +76,16 @@ Help users spend less on planned purchases by comparing trustworthy local offers
 - Respect provider licensing and merchant terms. No scraping or public commercial display unless the data source explicitly permits it.
 
 ### Plan boundaries
-- **FINANCE FREE:** retain the existing basic/general price-comparison access; do not remove or paywall it.
-- **FINANCE PLUS:** unlock Modo Ahorro's advanced local basket comparison, promotion eligibility checks, multiple-store optimization, image-assisted shopping lists, saved lists and VERA's personalized savings analysis.
+- **FINANCE FREE:** no access to the Modo Ahorro workspace, local merchant comparison, discount finder or shopping-list optimization. Free keeps core account management, basic budgets/goals, basic VERA and essential notifications.
+- **FINANCE PLUS:** unlock the Modo Ahorro workspace, shopping lists, purchase budgets, advanced local basket comparison, promotion eligibility checks, multiple-store optimization, image-assisted lists, saved lists and VERA's personalized savings analysis.
 
 ### Delivery phases (no invented live data)
-1. Build the module shell, list editor, product identity model, manual area entry and comparison-result schema.
-2. Integrate one or more sources only after confirming geographic coverage, update frequency, commercial display rights and terms. Start with source-backed merchant/product data; keep manual price entry as a clearly labeled fallback.
-3. Add discounts with validity/eligibility validation and a stale-offer policy.
-4. Add basket optimization with travel/delivery/minimum-purchase costs and explainable calculations.
-5. Add image-assisted item recognition and VERA summaries after accuracy and privacy testing.
+1. Build the module shell, list editor and purchase-budget workspace (initial UI supports user-entered reference prices, clearly distinguished from live quotes).
+2. Add the product identity model, manual area entry and comparison-result schema.
+3. Integrate one or more sources only after confirming geographic coverage, update frequency, commercial display rights and terms. Start with source-backed merchant/product data; keep manual price entry as a clearly labeled fallback.
+4. Add discounts with validity/eligibility validation and a stale-offer policy.
+5. Add basket optimization with travel/delivery/minimum-purchase costs and explainable calculations.
+6. Add image-assisted item recognition and VERA summaries after accuracy and privacy testing.
 
 **Release gate:** do not label the feature live or show sample/demo prices as real offers until an authorized data provider is integrated and freshness checks pass.
 
