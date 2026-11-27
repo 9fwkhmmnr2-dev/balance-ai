@@ -4,13 +4,14 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import NavigationIcon, { type NavigationIconName } from "./navigation-icon";
 
-const navigation = [
+const navigation: Array<{ label: string; href: string; icon: NavigationIconName }> = [
   { label: "Inicio", href: "/", icon: "home" },
   { label: "Movimientos", href: "/movimientos", icon: "activity" },
   { label: "Mis cuentas", href: "/cuentas", icon: "wallet" },
   { label: "Objetivos", href: "/objetivos", icon: "target" },
   { label: "Transferencias", href: "/transferencias", icon: "transfer" },
   { label: "Conversor", href: "/conversor", icon: "exchange" },
+  { label: "Mercados", href: "/mercados", icon: "markets" },
   { label: "FINANCE WRAPPED", href: "/wrapped", icon: "activity" },
   { label: "VERA", href: "/vera", icon: "vera" },
   { label: "Perfil", href: "/perfil", icon: "user" },
@@ -49,7 +50,7 @@ export default function MobileMenu() {
                 aria-current={pathname === item.href ? "page" : undefined}
                 onClick={() => setOpen(false)}
               >
-                <NavigationIcon name={item.icon as NavigationIconName} className="nav-item-icon" />
+                <NavigationIcon name={item.icon} className="nav-item-icon" />
                 <span>{item.label}</span>
               </a>
             );
