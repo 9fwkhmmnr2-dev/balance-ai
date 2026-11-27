@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isAdult(birthDate: unknown) {
-  if (typeof birthDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return false;
+  if (typeof birthDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate)) return false;
   const [year, month, day] = birthDate.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return false;
@@ -19,15 +19,18 @@ function isAdult(birthDate: unknown) {
 }
 
 function clients(token: string) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const serviceRoleKey = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !anonKey || !serviceRoleKey) return null;
+  // Prefer the current Supabase integration variables; retain legacy fallbacks for existing environments.
+  const url = process.env.NEXT_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const serverKey = process.env.NEXT_SUPABASE_SECRET_KEY ||
+    process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !anonKey || !serverKey) return null;
   const authClient = createClient(url, anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const adminClient = createClient(url, serviceRoleKey, {
+  const adminClient = createClient(url, serverKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   return { authClient, adminClient };
@@ -35,7 +38,7 @@ function clients(token: string) {
 
 export async function POST(request: Request) {
   try {
-    const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+    const token = (request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
     const supabase = clients(token);
     if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
@@ -92,7 +95,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+    const token = (request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
     const supabase = clients(token);
     if (!supabase) return NextResponse.json({ error: "Servicio no disponible." }, { status: 503 });
