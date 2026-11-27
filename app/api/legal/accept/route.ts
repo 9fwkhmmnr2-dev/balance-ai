@@ -53,14 +53,14 @@ export async function POST(request: Request) {
     if (typeof body.aiDataConsent !== "boolean") {
       return NextResponse.json({ error: "Indicá tu preferencia para el procesamiento mediante IA." }, { status: 400 });
     }
-    if (body.confirmAdult !== true || !isAdult(body.birthDate)) {
+    const verifiesAge = body.birthDate !== undefined;
+    if (verifiesAge && (body.confirmAdult !== true || !isAdult(body.birthDate))) {
       return NextResponse.json({ error: "VERA está disponible únicamente para personas de 18 años o más. No guardamos tu fecha de nacimiento." }, { status: 403 });
     }
 
     const acceptedAt = new Date().toISOString();
     const acceptanceValues = {
-      age_eligible: true,
-      minimum_age_years: 18,
+      ...(verifiesAge ? { age_eligible: true, minimum_age_years: 18 } : {}),
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
       ai_data_consent: body.aiDataConsent,
@@ -76,6 +76,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No pudimos guardar tu aceptación. Intentá nuevamente." }, { status: 503 });
     }
     if (!updated) {
+      if (!verifiesAge) return NextResponse.json({ error: "No encontramos un registro de edad verificada para esta cuenta. No podemos habilitar VERA sin completar la verificación." }, { status: 409 });
       const { error: insertError } = await supabase.adminClient.from("registration_acceptances")
         .insert({ user_id: auth.user.id, ...acceptanceValues });
       if (insertError) {
