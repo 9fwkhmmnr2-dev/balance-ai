@@ -407,9 +407,12 @@ export async function POST(request: Request) {
     if (accountMovementError) throw accountMovementError;
 
     const accountNames = new Map((accountContextRows ?? []).map((account) => [account.id, account.name]));
+    const accountCurrencies = new Map((accountContextRows ?? []).map((account) => [account.id, account.currency]));
     const accountBalances = new Map((accountContextRows ?? []).map((account) => [account.id, Number(account.initial_balance)]));
     (accountMovementRows ?? []).forEach((movement) => {
       if (!movement.account_id || !accountBalances.has(movement.account_id)) return;
+      // Cada saldo se calcula únicamente con movimientos de la moneda de esa cuenta.
+      if (movement.currency !== accountCurrencies.get(movement.account_id)) return;
       accountBalances.set(movement.account_id, (accountBalances.get(movement.account_id) ?? 0) + (movement.type === "income" ? 1 : -1) * Number(movement.amount));
     });
     (transferContextRows ?? []).forEach((transfer) => {
