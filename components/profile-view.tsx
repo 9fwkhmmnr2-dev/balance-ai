@@ -3,14 +3,21 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import SocialProfilePanel from "./social-profile-panel";
 
 type Profile = {
   pay_frequency: string;
   typical_income: number | null;
   currency: string;
+  country_code?: string | null;
+  nationality_code?: string | null;
+  default_currency?: string | null;
+  favorite_currencies?: string[] | null;
   next_pay_date: string | null;
   income_sources: string[];
   expense_categories: string[];
+  protected_reserve_amount: number | null;
+  protected_reserve_currency: string | null;
 };
 
 type Movement = {
@@ -18,6 +25,16 @@ type Movement = {
   amount: number;
   currency: string;
   movement_date: string;
+};
+
+type Commitment = {
+  id: string;
+  name: string;
+  category: string;
+  amount: number;
+  currency: string;
+  frequency: "weekly" | "monthly" | "yearly";
+  due_date: string | null;
 };
 
 const frequencies: Record<string, string> = {
@@ -30,12 +47,43 @@ const frequencies: Record<string, string> = {
   not_set: "No configurada"
 };
 
+
+function categoryLabel(value: string) {
+  const labels: Record<string, string> = {
+    housing: "Vivienda", food: "Alimentación", education: "Educación",
+    transport: "Transporte", services: "Servicios", health: "Salud",
+    installment: "Cuotas", subscription: "Suscripciones",
+    other_essential: "Otros gastos esenciales", other_commitment: "Otro compromiso",
+    entertainment: "Entretenimiento", groceries: "Alimentación",
+    rent: "Alquiler", utilities: "Servicios",
+  };
+  return labels[value.trim().toLocaleLowerCase("en")] ?? value.trim();
+}
+
+function incomeSourceLabel(value: string) {
+  const labels: Record<string, string> = {
+    salary: "Sueldo", employment: "Sueldo", freelance: "Trabajo independiente",
+    self_employed: "Trabajo independiente", business: "Negocio propio",
+    business_income: "Negocio propio", pension: "Jubilación o pensión",
+    rental: "Alquileres", investments: "Inversiones",
+    family_support: "Ayuda familiar", scholarship: "Beca",
+    other: "Otros ingresos", variable: "Ingresos variables",
+  };
+  return labels[value.trim().toLocaleLowerCase("en")] ?? value.trim();
+}
+
+function uniqueLabels(values: string[] | null | undefined, labeler: (value: string) => string) {
+  return Array.from(new Set((values ?? []).map(labeler).filter(Boolean)));
+}
+
 export default function ProfileView() {
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [movements, setMovements] = useState<Movement[]>([]);
+  const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [currency, setCurrency] = useState("ARS");
   const [currencies, setCurrencies] = useState<string[]>(["ARS"]);
+  const [countryNames, setCountryNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -61,6 +109,20 @@ export default function ProfileView() {
         if (profileError) throw profileError;
 
         setProfile(profileData);
+        const { data: commitmentData } = await supabase
+          .from("financial_commitments")
+          .select("id, name, category, amount, currency, frequency, due_date")
+          .eq("user_id", userData.user.id)
+          .eq("is_active", true)
+          .order("due_date", { ascending: true, nullsFirst: false });
+        setCommitments((commitmentData ?? []) as Commitment[]);
+        const countryResponse = await fetch("/api/countries");
+        if (countryResponse.ok) {
+          const countryPayload = await countryResponse.json();
+          if (Array.isArray(countryPayload.countries)) {
+            setCountryNames(Object.fromEntries(countryPayload.countries.map((item: { code: string; name: string }) => [item.code, item.name])));
+          }
+        }
 
         const preferredCurrency = profileData?.currency || "ARS";
         setCurrency(preferredCurrency);
@@ -68,6 +130,7 @@ export default function ProfileView() {
         const { data, error: movementsError } = await supabase
           .from("movements")
           .select("type, amount, currency, movement_date")
+          .eq("user_id", userData.user.id)
           .order("movement_date", { ascending: false });
 
         if (movementsError) throw movementsError;
@@ -160,8 +223,16 @@ export default function ProfileView() {
         </div>
       </header>
 
+      <SocialProfilePanel />
+
       <section className="card" style={{ marginBottom: 20 }}>
         <h2 className="section-title">Información de la cuenta</h2>
+        <p className="card-label">País de residencia</p>
+        <p style={{ fontWeight: 600, marginTop: 7 }}>{countryNames[profile?.country_code ?? ""] || profile?.country_code || "No informado"}</p>
+        <p className="card-label" style={{ marginTop: 20 }}>País de origen</p>
+        <p style={{ fontWeight: 600, marginTop: 7 }}>{countryNames[profile?.nationality_code ?? ""] || profile?.nationality_code || "No informada"}</p>
+        <p className="card-label" style={{ marginTop: 20 }}>Moneda predeterminada</p>
+        <p style={{ fontWeight: 600, marginTop: 7 }}>{profile?.default_currency || profile?.currency || "ARS"}</p>
         <p className="card-label">Correo electrónico</p>
         <p style={{ fontWeight: 600, marginTop: 7 }}>{email}</p>
         <p className="card-label" style={{ marginTop: 20 }}>
@@ -227,14 +298,54 @@ export default function ProfileView() {
 
         <p className="card-label">Fuentes de ingresos</p>
         <p style={{ marginTop: 8, fontSize: 14 }}>
-          {profile?.income_sources?.join(", ") || "Sin información"}
+          {uniqueLabels(profile?.income_sources, incomeSourceLabel).join(", ") || "Sin información"}
         </p>
 
         <p className="card-label" style={{ marginTop: 20 }}>
           Categorías de gastos habituales
         </p>
         <p style={{ marginTop: 8, fontSize: 14 }}>
-          {profile?.expense_categories?.join(", ") || "Sin información"}
+          {uniqueLabels(profile?.expense_categories, categoryLabel).join(", ") || "Sin información"}
+        </p>
+      </section>
+
+      <section className="card" style={{ marginBottom: 20 }}>
+        <h2 className="section-title">Gastos frecuentes y cuotas</h2>
+        {commitments.length === 0 ? (
+          <p className="card-note">Todavía no configuraste gastos frecuentes ni cuotas.</p>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            {commitments.map((item) => (
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", gap: 14, paddingBottom: 10, borderBottom: "1px solid rgba(148,163,184,.16)" }}>
+                <div>
+                  <strong style={{ fontSize: 14 }}>{item.name}</strong>
+                  <p className="card-note" style={{ marginTop: 4 }}>{categoryLabel(item.category)} · {item.frequency === "weekly" ? "Semanal" : item.frequency === "monthly" ? "Mensual" : "Anual"}{item.due_date ? " · Próximo vencimiento: " + item.due_date : ""}</p>
+                </div>
+                <strong style={{ whiteSpace: "nowrap", fontSize: 14 }}>{new Intl.NumberFormat("es-AR", { style: "currency", currency: item.currency, maximumFractionDigits: 2 }).format(Number(item.amount))}</strong>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="card-note" style={{ marginTop: 12 }}>Estos compromisos quedan guardados en tu perfil como referencia para organizar tus próximos gastos.</p>
+      </section>
+
+      <section className="card" style={{ marginBottom: 20 }}>
+        <h2 className="section-title">Reserva protegida</h2>
+        <p className="card-label">
+          Importe que querés mantener reservado
+        </p>
+        <h2 className="card-value" style={{ marginTop: 8 }}>
+          {profile?.protected_reserve_amount !== null &&
+          profile?.protected_reserve_amount !== undefined
+            ? new Intl.NumberFormat("es-AR", {
+                style: "currency",
+                currency: profile.protected_reserve_currency || profile.currency || "ARS",
+                maximumFractionDigits: 2
+              }).format(Number(profile.protected_reserve_amount))
+            : "Sin configurar"}
+        </h2>
+        <p className="card-note" style={{ marginTop: 10 }}>
+          VERA tendrá en cuenta esta reserva al ayudarte a organizar objetivos y planes de ahorro.
         </p>
       </section>
 
@@ -245,9 +356,11 @@ export default function ProfileView() {
           Análisis de tu actividad financiera de este mes.
         </p>
 
-        <div
+        <div className="profile-vera-summary"
           style={{
-            background: "#EFF8FE",
+            background: "linear-gradient(120deg, #191A22, #211E2B)",
+            border: "1px solid #40364F",
+            color: "#E7E2EC",
             borderRadius: 12,
             padding: 18,
             lineHeight: 1.8,
@@ -261,6 +374,7 @@ export default function ProfileView() {
           Versión inicial basada en reglas y movimientos registrados.
         </p>
       </section>
+
     </div>
   );
 }

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 240">
+<defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8C875"/><stop offset="1" stop-color="#B88D36"/></linearGradient></defs>
+<rect width="520" height="240" fill="#17191F"/>
+<g fill="none" stroke="url(#gold)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+<path d="M177 104 C177 53 210 31 263 31 H324 C341 31 354 24 366 11"/>
+<path d="M178 104 C146 111 122 135 111 166 C102 192 119 207 137 190 C151 177 150 153 177 130"/>
+<path d="M263 59 C264 111 295 139 337 126 C373 115 403 76 442 34"/>
+<path d="M405 34 L451 18 L441 66"/>
+<path d="M264 105 L264 190"/>
+</g>
+<text x="260" y="226" text-anchor="middle" fill="url(#gold)" font-family="Georgia,serif" font-size="54" font-weight="bold" letter-spacing="2.3">FINANCE.TRACK</text>
+</svg>

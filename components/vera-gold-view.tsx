@@ -1,0 +1,110 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import styles from "./vera-gold.module.css";
+
+const features = [
+  ["Consultas financieras habituales", true, true],
+  ["Resumen y análisis de gastos", true, true],
+  ["Comparación básica de períodos", true, true],
+  ["Objetivos con aportes manuales", true, true],
+  ["Progreso automático desde una cuenta vinculada", false, "Exclusivo FINANCE PLUS · En preparación"],
+  ["Mayor capacidad para conversar", false, true],
+  ["Análisis financieros más profundos", false, true],
+  ["Análisis avanzado de documentos", false, "En preparación"],
+  ["Simulador de acciones: compras, pagos y decisiones", false, true],
+] as const;
+
+export default function VeraGoldView() {
+  const [isPreview, setIsPreview] = useState(false);
+  const [isGold, setIsGold] = useState(false);
+  const [accountId, setAccountId] = useState("");
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      const response = await fetch("/api/vera/entitlement", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const result = await response.json() as { isGold?: boolean; accountId?: string; previewOnly?: boolean };
+      if (!active) return;
+      setIsPreview(Boolean(result.previewOnly));
+      setIsGold(Boolean(result.isGold));
+      setAccountId(result.accountId ?? "");
+    })();
+    return () => { active = false; };
+  }, []);
+
+  function requestPreviewAccess() {
+    if (!accountId) return;
+    void navigator.clipboard?.writeText(accountId);
+    setNotice("ID de cuenta copiado. Enviálo para habilitar FINANCE PLUS temporalmente en esta Preview. No se realiza ningún cobro.");
+  }
+
+  return (
+    <div className={styles.page}>
+      <header className={styles.topbar}>
+        <a className={styles.back} href="/vera">← Volver a VERA</a>
+        <span className={styles.topTag}>FINANCETRACK / VERA</span>
+      </header>
+      <main className={styles.main}>
+        <section className={styles.intro}>
+          <p className={styles.eyebrow}>UNA VERA CON MÁS CAPACIDAD</p>
+          <div className={styles.wordmark}>VERA <span>FINANCE PLUS</span></div>
+          <h1>Más profundidad para entender tu dinero.</h1>
+          <p>La misma VERA que ya conocés, con más capacidad para sostener conversaciones y profundizar tus análisis.</p>
+        </section>
+
+        <section className={styles.checkout} aria-label="Comparar planes y elegir FINANCE PLUS">
+          <div className={styles.sectionHeading}>
+            <div><span className={styles.eyebrow}>COMPARÁ LOS PLANES</span><h2>Elegí tu experiencia</h2></div>
+            <span className={styles.goldPill}>FINANCE PLUS</span>
+          </div>
+          <div className={styles.tableWrap}>
+            <table className={styles.comparison}>
+              <thead><tr><th>Incluye</th><th>VERA</th><th>FINANCE PLUS</th></tr></thead>
+              <tbody>{features.map(([name, free, gold]) => (
+                <tr key={name}><td>{name}</td><td>{free ? <span className={styles.check}>✓</span> : "—"}</td><td>{gold === true ? <span className={styles.check}>✓</span> : gold}</td></tr>
+              ))}</tbody>
+            </table>
+          </div>
+
+          <div className={styles.prices}>
+            <article className={styles.priceCard}>
+              <span>Mensual · precio propuesto</span>
+              <strong>USD 3,99<small>/mes</small></strong>
+              <p>Cancelación mensual cuando la suscripción esté habilitada.</p>
+            </article>
+            <article className={styles.priceCard}>
+              <span>Anual · precio propuesto</span>
+              <strong>USD 39,99<small>/año</small></strong>
+              <p>Equivale a USD 3,33 por mes.</p>
+            </article>
+          </div>
+
+          <div className={styles.payment}>
+            <strong>Medios de pago previstos</strong>
+            <p>Tarjeta y PayPal. La disponibilidad final, moneda de cobro e impuestos se confirmarán antes de habilitar la compra.</p>
+          </div>
+          {isPreview ? (
+            <button className={styles.buyButton} type="button" onClick={requestPreviewAccess} disabled={isGold || !accountId}>
+              {isGold ? "FINANCE PLUS de prueba activo" : "Solicitar acceso FINANCE PLUS de prueba"}
+            </button>
+          ) : (
+            <button className={styles.buyButton} type="button" disabled aria-disabled="true">Comprar FINANCE PLUS · Próximamente</button>
+          )}
+          {notice && <p role="status" className={styles.note}>{notice}</p>}
+          <p className={styles.note}>Todavía no se realizan cobros ni se solicitan tarjetas. En Preview, el acceso de prueba se habilita individualmente. Los precios son orientativos y las funciones marcadas “En preparación” aún no están disponibles.</p>
+          <a className={styles.backToVera} href="/vera">Volver a VERA</a>
+        </section>
+      </main>
+    </div>
+  );
+}

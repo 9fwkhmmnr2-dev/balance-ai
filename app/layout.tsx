@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FINANCE AI — Finanzas personales inteligentes",
+  title: "FINANCETRACK — Finanzas personales",
   description: "Entendé tu dinero."
 };
 

@@ -4,6 +4,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
+import CurrencyPicker from "./currency-picker";
+import { useProfileCurrency } from "../lib/use-profile-currency";
+
+type GoalOption = { id: string; title: string; currency: string; status: "active" | "paused" | "completed" };
 
 type Movement = {
   id: string;
@@ -22,6 +26,10 @@ export default function MovementsManager() {
   const [category, setCategory] = useState("Otros");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [currency, setCurrency] = useState("ARS");
+  const [goals, setGoals] = useState<GoalOption[]>([]);
+  const [goalId, setGoalId] = useState("");
+  const profileCurrency = useProfileCurrency();
+  useEffect(() => { setCurrency(profileCurrency); }, [profileCurrency]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -40,8 +48,25 @@ export default function MovementsManager() {
     setMovements((data ?? []) as Movement[]);
   }
 
+  async function loadGoals() {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+    const response = await fetch("/api/financial-goals", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store"
+    });
+    if (!response.ok) return;
+    const data = await response.json();
+    setGoals((data.goals ?? []).filter((goal: GoalOption) => goal.status === "active"));
+  }
+
   useEffect(() => {
-    loadMovements();
+    void loadMovements();
+    void loadGoals();
+    const refresh = () => { void loadMovements(); void loadGoals(); };
+    window.addEventListener("finance:movement-saved", refresh);
+    return () => window.removeEventListener("finance:movement-saved", refresh);
   }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -64,21 +89,46 @@ export default function MovementsManager() {
         throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
       }
 
-      const { error } = await supabase.from("movements").insert({
-        user_id: user.id,
-        description: description.trim(),
-        type,
-        amount: numericAmount,
-        currency,
-        category
-      });
-
-      if (error) throw error;
+      if (goalId) {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+        const response = await fetch("/api/financial-goals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            action: "movement",
+            goalId,
+            type,
+            amount: numericAmount,
+            currency,
+            category,
+            description: description.trim(),
+            movementDate: new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }),
+            requireLedgerLink: true
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "No pudimos vincular el movimiento con el objetivo.");
+        window.dispatchEvent(new Event("finance:movement-saved"));
+      } else {
+        const { error } = await supabase.from("movements").insert({
+          user_id: user.id,
+          description: description.trim(),
+          type,
+          amount: numericAmount,
+          currency,
+          category,
+          movement_date: new Date().toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" })
+        });
+        if (error) throw error;
+      }
 
       setDescription("");
       setAmount("");
       setCategory("Otros");
       setType("expense");
+      setGoalId("");
 
       await loadMovements();
       setMessage("Movimiento guardado correctamente.");
@@ -128,14 +178,7 @@ export default function MovementsManager() {
           required
         />
 
-        <select
-          value={currency}
-          onChange={(event) => setCurrency(event.target.value)}
-        >
-          <option value="ARS">Peso argentino (ARS)</option>
-          <option value="USD">Dólar estadounidense (USD)</option>
-          <option value="EUR">Euro (EUR)</option>
-        </select>
+        <CurrencyPicker value={currency} onChange={setCurrency} label="Moneda del movimiento" variant="dark" />
 
         <select
           value={category}
@@ -152,6 +195,19 @@ export default function MovementsManager() {
           <option>Trabajo</option>
           <option>Ventas</option>
         </select>
+
+        <label style={{ display: "grid", gap: 7, fontSize: 12, fontWeight: 600 }}>
+          Vincular a un objetivo (opcional)
+          <select value={goalId} onChange={(event) => setGoalId(event.target.value)}>
+            <option value="">Sin objetivo</option>
+            {goals.map((goal) => (
+              <option key={goal.id} value={goal.id}>{goal.title} · {goal.currency}</option>
+            ))}
+          </select>
+          <small style={{ color: "#78716C", fontWeight: 400, lineHeight: 1.45 }}>
+            Los ingresos suman al progreso y los gastos vinculados lo descuentan. El movimiento seguirá apareciendo en Movimientos.
+          </small>
+        </label>
 
         <button className="primary-button" type="submit" disabled={loading}>
           {loading ? "Guardando..." : "Guardar movimiento"}

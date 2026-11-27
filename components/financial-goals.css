@@ -1,0 +1,86 @@
+.goals-page{min-height:100vh;background:#F8F7F5;color:#171717}.goals-nav{max-width:1180px;margin:auto;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #E8E2D7}.goals-nav .mobile-brand{font-family:Manrope,sans-serif;font-size:20px;font-weight:800}.goals-nav .mobile-brand span{color:#C8A96B}.goals-nav nav{display:flex;gap:22px;flex-wrap:wrap;font-size:13px;color:#61594A}.goals-nav nav a[aria-current=page]{color:#9B783A;font-weight:700}.goals-main{max-width:1050px;margin:0 auto;padding:42px 24px 70px}.goals-heading{margin-bottom:28px}.goals-heading h1{font-family:Manrope,sans-serif;font-size:34px;letter-spacing:-1.1px;margin-bottom:8px}.goals-heading p:not(.goals-eyebrow){color:#716B62;font-size:14px}.goals-eyebrow{font-size:10px;font-weight:800;letter-spacing:1.2px;color:#A18450;margin-bottom:9px}.goals-create-card{display:grid;grid-template-columns:.8fr 1.2fr;gap:34px;background:#fff;border:1px solid #E8E2D7;border-radius:16px;padding:26px;margin-bottom:32px}.goals-create-card h2,.goals-modal h2{font-family:Manrope,sans-serif;font-size:21px;letter-spacing:-.5px;margin-bottom:8px}.goals-create-card>div>p:not(.goals-eyebrow){font-size:13px;color:#716B62;line-height:1.6}.goals-form{display:grid;gap:14px}.goals-form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#514B43}.goals-form label span{font-weight:400;color:#8B847A}.goals-form input,.goals-form select{width:100%;min-height:44px;border:1px solid #E3DFD5;border-radius:8px;background:#fff;padding:10px 12px;color:#171717;font-size:14px;outline:none}.goals-form input:focus,.goals-form select:focus{border-color:#C8A96B;box-shadow:0 0 0 3px rgba(200,169,107,.14)}.goals-form-row{display:grid;grid-template-columns:1fr 150px;gap:12px}.goals-primary{border:0;border-radius:8px;background:#171717;color:#F2E5C8;min-height:44px;padding:11px 16px;font-size:13px;font-weight:700}.goals-primary:disabled{opacity:.6;cursor:not-allowed}.goals-list{display:grid;gap:14px}.goals-list-heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:4px}.goals-list-heading h2{font-family:Manrope,sans-serif;font-size:20px}.goals-list-heading>span{font-size:12px;color:#716B62}.goal-card{background:#fff;border:1px solid #E8E2D7;border-radius:14px;padding:22px}.goal-card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.goal-card h3{font-family:Manrope,sans-serif;font-size:17px;margin-bottom:5px}.goal-card-top p{font-size:12px;color:#81796E}.goal-status{font-size:10px;font-weight:700;padding:6px 9px;border-radius:30px;background:#F3F0E9;color:#71634A;white-space:nowrap}.goal-status-paused{background:#F2F0ED;color:#746D64}.goal-status-completed{background:#EAF2EA;color:#3F7049}.goal-amounts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 16px}.goal-amounts div{display:grid;gap:5px}.goal-amounts small{font-size:11px;color:#81796E}.goal-amounts strong{font-size:14px;font-weight:700}.goal-progress-track{height:8px;background:#F0EDE7;border-radius:20px;overflow:hidden}.goal-progress-track span{display:block;height:100%;background:linear-gradient(90deg,#B79A62,#D8C08F);border-radius:20px;transition:width .25s ease}.goal-progress-caption{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:#81796E}.goal-progress-caption strong{color:#80663B}.goals-contribute{margin-top:17px;min-height:40px}.goal-history{margin-top:17px;border-top:1px solid #EEEAE3;padding-top:13px}.goal-history summary{font-size:12px;font-weight:700;color:#655D52;cursor:pointer}.goal-history-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #F1EEE8;font-size:11px;color:#716B62}.goal-history-row strong{color:#24211D;white-space:nowrap}.goal-actions{display:flex;gap:15px;flex-wrap:wrap;margin-top:16px}.goal-actions button{border:0;background:none;color:#74664E;font-size:11px;font-weight:700;padding:4px 0}.goal-actions .goal-delete{color:#A34E45;margin-left:auto}.goals-empty{background:#fff;border:1px solid #E8E2D7;border-radius:14px;padding:28px;text-align:center;color:#716B62;font-size:13px}.goals-empty h2{font-family:Manrope,sans-serif;font-size:18px;color:#171717;margin-bottom:7px}.goals-notice{margin:-12px 0 22px;color:#66552F;font-size:12px}.goals-secondary{margin-top:12px;border:1px solid #DDD4C3;background:#fff;border-radius:8px;padding:9px 14px}.goals-modal-backdrop{position:fixed;inset:0;background:rgba(12,12,12,.48);z-index:80;display:grid;place-items:center;padding:18px}.goals-modal{position:relative;width:min(100%,460px);background:#fff;border-radius:16px;padding:27px;box-shadow:0 24px 70px rgba(0,0,0,.2)}.goals-modal-close{position:absolute;right:17px;top:14px;border:0;background:transparent;font-size:25px;color:#746D64}.goals-modal-description{font-size:13px;color:#716B62;margin-bottom:19px}.goals-disclaimer{font-size:11px;color:#81796E;line-height:1.6;margin-top:15px}@media(max-width:700px){.goals-nav{display:none}.goals-main{padding:26px 16px 54px}.goals-heading h1{font-size:28px}.goals-create-card{grid-template-columns:1fr;gap:20px;padding:20px}.goals-form-row{grid-template-columns:1fr 115px}.goal-card{padding:17px}.goal-amounts{gap:7px}.goal-amounts strong{font-size:12px}.goals-list-heading{align-items:flex-start;gap:8px}.goals-list-heading h2{font-size:18px}}@media(max-width:390px){.goals-form-row{grid-template-columns:1fr}.goal-amounts{grid-template-columns:1fr 1fr}.goal-amounts div:last-child{grid-column:1/-1}}
+.goal-history-row button{border:0;background:transparent;color:#A34E45;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}.goal-history-row button:hover{text-decoration:underline}
+
+/* FINANCETRACK brand palette · Savings goals */
+.goals-page{background:var(--canvas,#F8F7F5);color:var(--graphite,#0D0D0D)}
+.goals-nav{border-color:var(--border,#E3DFD5)}
+.goals-nav .mobile-brand span{color:var(--cyan,#F9A600)}
+.goals-nav nav{color:var(--gray,#61594A)}
+.goals-nav nav a[aria-current=page]{color:var(--cyan-dark,#E89B01)}
+.goals-heading p:not(.goals-eyebrow),.goals-create-card>div>p:not(.goals-eyebrow){color:var(--gray,#61594A)}
+.goals-eyebrow{color:var(--cyan-dark,#E89B01)}
+.goals-create-card,.goal-card,.goals-empty,.goals-modal{background:var(--white,#FFFFFF);border-color:var(--border,#E3DFD5);color:var(--graphite,#0D0D0D)}
+.goals-form label{color:var(--gray,#61594A)}
+.goals-form label span,.goal-card-top p,.goal-amounts small,.goal-progress-caption,.goals-list-heading>span,.goals-disclaimer{color:var(--muted,#8F897E)}
+.goals-form input,.goals-form select{border-color:var(--border,#E3DFD5);background:var(--white,#FFFFFF);color:var(--graphite,#0D0D0D)}
+.goals-form input:focus,.goals-form select:focus{border-color:var(--cyan,#F9A600);box-shadow:0 0 0 3px rgba(249,166,0,.16)}
+.goals-primary{background:var(--cyan,#F9A600);color:#261B07;transition:background .18s ease,transform .18s ease}
+.goals-primary:hover:not(:disabled){background:var(--cyan-dark,#E89B01);transform:translateY(-1px)}
+.goal-status{background:var(--cyan-light,#F5D78E);color:#5B3B00}
+.goal-status-paused{background:#F1F0ED;color:var(--gray,#61594A)}
+.goal-status-completed{background:#E8F1E9;color:#376B43}
+.goal-progress-track{background:#F1E8D3}
+.goal-progress-track span{background:linear-gradient(90deg,var(--cyan-dark,#E89B01),var(--cyan-light,#F5D78E))}
+.goal-progress-caption strong,.goal-history summary,.goal-actions button{color:var(--cyan-dark,#E89B01)}
+.goal-history{border-color:var(--border,#E3DFD5)}
+.goal-history-row{border-color:var(--border,#E3DFD5);color:var(--gray,#61594A)}
+.goal-history-row strong,.goals-empty h2{color:var(--graphite,#0D0D0D)}
+.goals-notice{color:#8A5A00}
+.goals-secondary{border-color:var(--border,#E3DFD5);background:var(--white,#FFFFFF);color:var(--gray,#61594A)}
+.goals-modal-close{color:var(--gray,#61594A)}
+.goals-modal-backdrop{background:rgba(13,13,13,.52)}
+.goal-actions .goal-delete,.goal-history-row button{color:#A44F3F}
+@media(prefers-reduced-motion:reduce){.goals-primary,.goal-progress-track span{transition:none}}
+
+
+/* FINANCETRACK · Gestión de reglas recurrentes */
+.goal-recurring-add{display:inline-flex;align-items:center;margin-top:12px;min-height:38px;padding:8px 12px;text-decoration:none}
+.goal-recurring-list{margin-top:14px;padding-top:13px;border-top:1px solid var(--border,#E3DFD5)}
+.goal-recurring-list>summary{font-size:12px;font-weight:700;color:var(--cyan-dark,#E89B01);cursor:pointer}
+.goal-recurring-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:13px 0;border-bottom:1px solid var(--border,#E3DFD5)}
+.goal-recurring-info{display:grid;gap:4px;min-width:0}
+.goal-recurring-info strong{font-size:12px;color:var(--graphite,#0D0D0D)}
+.goal-recurring-info span,.goal-recurring-info small{font-size:10px;line-height:1.45;color:var(--muted,#8F897E)}
+.goal-recurring-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;flex:none}
+.goal-recurring-actions button{border:0;background:transparent;color:var(--cyan-dark,#E89B01);font-size:10px;font-weight:700;padding:3px 0}
+.goal-recurring-actions button:last-child{color:#A44F3F}
+@media(max-width:520px){.goal-recurring-row{flex-direction:column;gap:8px}.goal-recurring-actions{justify-content:flex-start}.goal-recurring-actions button{margin-right:10px}}
+
+.goal-pending-actions{display:inline-flex;gap:9px;flex-wrap:wrap}
+.goal-pending-actions button{border:0;background:transparent;color:var(--cyan-dark,#E89B01);font-size:10px;font-weight:700;padding:3px 0}
+.goal-pending-actions button:last-child{color:#A44F3F}
+
+
+/* FINANCETRACK · Avisos de comprobación de movimientos automáticos */
+.goal-verification-alert{margin-top:16px;padding:14px;border:1px solid #E8C878;border-radius:10px;background:#FFF9E9;color:var(--graphite,#0D0D0D)}
+.goal-verification-alert>strong{display:block;font-size:12px;color:#805600}
+.goal-verification-alert>p{margin:6px 0 9px;font-size:11px;line-height:1.5;color:var(--gray,#61594A)}
+.goal-verification-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 0;border-top:1px solid rgba(184,137,42,.2);font-size:11px}
+.goal-verification-row span{flex:1;min-width:150px;color:var(--gray,#61594A)}
+.goal-verification-row strong{white-space:nowrap}
+.goal-verification-row button{border:0;border-radius:7px;background:var(--cyan,#F9A600);color:#261B07;padding:8px 10px;font-size:10px;font-weight:800}
+@media(prefers-reduced-motion:reduce){.goal-verification-row button{transition:none}}
+
+
+/* Modales de objetivos: scroll interno en móvil y bloqueo del fondo */
+.goals-modal-backdrop{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+.goals-modal{
+  max-height:calc(100dvh - 36px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  flex:0 0 auto;
+  margin:auto;
+}
+@supports not (height: 100dvh){
+  .goals-modal{max-height:calc(100vh - 36px)}
+}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import AuthGuard from "../../components/auth-guard";
 import OnboardingGate from "../../components/onboarding-gate";
 import MobileMenu from "../../components/mobile-menu";
+import QuickMovement from "../../components/quick-movement";
 import { supabase } from "../../lib/supabase";
 import { parseLocalizedAmount } from "../../lib/parse-localized-amount";
 
@@ -11,7 +12,9 @@ type Movement = {
   id: string;
   user_id: string;
   description: string;
-  type: "income" | "expense";
+  type: "income" | "expense" | "transfer";
+  fromAccountName?: string;
+  toAccountName?: string;
   amount: number;
   currency: string;
   category: string;
@@ -76,21 +79,48 @@ function MovementsContent() {
       setLoading(false);
       return;
     }
-    const { data, error: queryError } = await supabase
-      .from("movements")
-      .select("id, user_id, description, type, amount, currency, category, movement_date, created_at")
-      .eq("user_id", auth.user.id)
-      .order("movement_date", { ascending: false })
-      .order("created_at", { ascending: false });
-    if (queryError) {
-      setError("No pudimos cargar tus movimientos. Intentá nuevamente.");
+    const [{ data, error: queryError }, { data: transfers, error: transferError }] = await Promise.all([
+      supabase.from("movements")
+        .select("id, user_id, description, type, amount, currency, category, movement_date, created_at")
+        .eq("user_id", auth.user.id)
+        .order("movement_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase.from("account_transfers")
+        .select("id, user_id, from_account_id, to_account_id, amount, currency, created_at")
+        .eq("user_id", auth.user.id)
+        .order("created_at", { ascending: false }),
+    ]);
+    if (queryError || transferError) {
+      setError("No pudimos cargar toda tu actividad financiera. Intentá nuevamente.");
     } else {
-      setItems((data ?? []) as Movement[]);
+      const accountIds = Array.from(new Set((transfers ?? []).flatMap((item) => [item.from_account_id, item.to_account_id])));
+      const { data: accountRows, error: accountError } = accountIds.length
+        ? await supabase.from("financial_accounts").select("id, name").eq("user_id", auth.user.id).in("id", accountIds)
+        : { data: [], error: null };
+      if (accountError) {
+        setError("No pudimos identificar las cuentas de algunas transferencias.");
+      } else {
+        const accountNames = new Map((accountRows ?? []).map((account) => [account.id, account.name]));
+        const transferItems: Movement[] = (transfers ?? []).map((item) => ({
+          id: item.id,
+          user_id: item.user_id,
+          description: `Transferencia: ${accountNames.get(item.from_account_id) ?? "Cuenta de origen"} → ${accountNames.get(item.to_account_id) ?? "Cuenta de destino"}`,
+          type: "transfer",
+          fromAccountName: accountNames.get(item.from_account_id) ?? "Cuenta de origen",
+          toAccountName: accountNames.get(item.to_account_id) ?? "Cuenta de destino",
+          amount: Number(item.amount),
+          currency: item.currency,
+          category: "Transferencia",
+          movement_date: item.created_at.slice(0, 10),
+          created_at: item.created_at,
+        }));
+        setItems([...(data ?? []) as Movement[], ...transferItems]);
+      }
     }
     setLoading(false);
   }, []);
 
-  useEffect(() => { void loadMovements(); }, [loadMovements]);
+  useEffect(() => { void loadMovements(); const refresh = () => { void loadMovements(); }; window.addEventListener("finance:transfer-saved", refresh); return () => window.removeEventListener("finance:transfer-saved", refresh); }, [loadMovements]);
 
   const categoriesInData = useMemo(() => Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort((a, b) => a.localeCompare(b, "es")), [items]);
 
@@ -121,13 +151,14 @@ function MovementsContent() {
     const result = new Map<string, { income: number; expense: number }>();
     filtered.forEach((item) => {
       const current = result.get(item.currency) ?? { income: 0, expense: 0 };
-      current[item.type] += Number(item.amount);
+      if (item.type !== "transfer") current[item.type] += Number(item.amount);
       result.set(item.currency, current);
     });
     return Array.from(result.entries()).sort(([a], [b]) => a.localeCompare(b));
   }, [filtered]);
 
   function startEditing(item: Movement) {
+    if (item.type === "transfer") return;
     setNotice("");
     setEditing(item);
     setDraft({
@@ -199,12 +230,12 @@ function MovementsContent() {
       <MobileMenu />
       <header className="movements-desktop-nav">
         <a href="/" className="mobile-brand">FINANCE<span>.</span>AI</a>
-        <nav><a href="/">Inicio</a><a href="/movimientos" aria-current="page">Movimientos</a><a href="/perfil">Perfil</a></nav>
+        <nav><a href="/">Inicio</a><a href="/movimientos" aria-current="page">Movimientos</a><a href="/cuentas">Mis cuentas</a><a href="/transferencias">Transferencias</a><a href="/conversor">Conversor</a><a href="/perfil">Perfil</a></nav>
       </header>
       <main className="movements-main">
         <div className="movements-heading">
           <div><p className="eyebrow">TU ACTIVIDAD FINANCIERA</p><h1>Movimientos</h1><p>Todo lo que registraste, en un solo lugar.</p></div>
-          <a className="movements-add-link" href="/">Registrar movimiento</a>
+          <button type="button" className="movements-add-link" onClick={() => window.dispatchEvent(new Event("finance:open-quick-movement"))}>Registrar movimiento</button>
         </div>
 
         <section className="movements-summary" aria-label="Resumen de movimientos filtrados">
@@ -214,7 +245,7 @@ function MovementsContent() {
 
         <section className="movements-filters" aria-label="Filtros">
           <label className="movements-search">Buscar<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Descripción del movimiento" /></label>
-          <label>Tipo<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option></select></label>
+          <label>Tipo<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option><option value="transfer">Transferencias</option></select></label>
           <label>Período<select value={periodFilter} onChange={(event) => setPeriodFilter(event.target.value)}><option value="all">Todo el historial</option><option value="today">Hoy</option><option value="7days">Últimos 7 días</option><option value="30days">Últimos 30 días</option><option value="thisMonth">Este mes</option><option value="lastMonth">Mes anterior</option><option value="custom">Fechas personalizadas</option></select></label>
           {periodFilter === "custom" && <><label>Desde<input type="date" max={todayKey} value={dateFrom} onChange={(event) => { setDateFrom(event.target.value); if (dateTo && event.target.value > dateTo) setDateTo(""); }} /></label><label>Hasta<input type="date" min={dateFrom || undefined} max={todayKey} value={dateTo} onChange={(event) => setDateTo(event.target.value)} /></label></>}
           <label>Categoría<select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}><option value="all">Todas</option>{categoriesInData.map((category) => <option key={category}>{category}</option>)}</select></label>
@@ -224,9 +255,10 @@ function MovementsContent() {
         </section>
 
         {notice && <p className="movements-notice" role="status">{notice}</p>}
-        {error ? <section className="movements-list-card"><p className="movements-error">{error}</p><button className="movements-clear-filters" onClick={() => { setLoading(true); void loadMovements(); }}>Reintentar</button></section> : loading ? <section className="movements-list-card"><p className="movements-empty">Cargando tus movimientos...</p></section> : filtered.length === 0 ? <section className="movements-list-card"><h2>No encontramos movimientos</h2><p className="movements-empty">{items.length === 0 ? "Cuando registres un ingreso o gasto, aparecerá acá." : "Probá cambiar los filtros para ver otros registros."}</p></section> : <section className="movements-list-card"><div className="movements-list-heading"><h2>Historial</h2><span>{filtered.length} registros</span></div>{filtered.map((item) => <article className="movements-row" key={item.id}><span className={`movements-type-mark ${item.type === "income" ? "income" : "expense"}`} aria-hidden="true" /><div className="movements-row-info"><strong>{item.description}</strong><span>{item.category} · {new Date(item.movement_date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</span></div><strong className={item.type === "income" ? "amount-income" : "amount-expense"}>{item.type === "income" ? "+" : "−"}{formatMoney(Number(item.amount), item.currency)}</strong><div className="movements-row-actions"><button type="button" onClick={() => startEditing(item)}>Editar</button><button type="button" onClick={() => void deleteMovement(item)}>Eliminar</button></div></article>)}</section>}
+        {error ? <section className="movements-list-card"><p className="movements-error">{error}</p><button className="movements-clear-filters" onClick={() => { setLoading(true); void loadMovements(); }}>Reintentar</button></section> : loading ? <section className="movements-list-card"><p className="movements-empty">Cargando tus movimientos...</p></section> : filtered.length === 0 ? <section className="movements-list-card"><h2>No encontramos movimientos</h2><p className="movements-empty">{items.length === 0 ? "Cuando registres un ingreso o gasto, aparecerá acá." : "Probá cambiar los filtros para ver otros registros."}</p></section> : <section className="movements-list-card"><div className="movements-list-heading"><h2>Historial</h2><span>{filtered.length} registros</span></div>{filtered.map((item) => <article className="movements-row" key={item.id}><span className={`movements-type-mark ${item.type === "income" ? "income" : item.type === "transfer" ? "transfer" : "expense"}`} aria-hidden="true" /><div className="movements-row-info"><strong>{item.description}</strong><span>{item.category} · {new Date(item.movement_date + "T12:00:00").toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</span></div><strong className={item.type === "income" ? "amount-income" : item.type === "transfer" ? "amount-transfer" : "amount-expense"}>{item.type === "transfer" ? "↔ " : item.type === "income" ? "+" : "−"}{formatMoney(Number(item.amount), item.currency)}</strong><div className="movements-row-actions">{item.type !== "transfer" && <><button type="button" onClick={() => startEditing(item)}>Editar</button><button type="button" onClick={() => void deleteMovement(item)}>Eliminar</button></>}</div></article>)}</section>}
       </main>
 
+      <QuickMovement showButton={false} />
       {editing && <div className="movement-edit-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) setEditing(null); }}><section className="movement-edit-modal" role="dialog" aria-modal="true" aria-labelledby="movement-edit-title"><div className="movement-edit-heading"><div><p className="eyebrow">ACTUALIZAR REGISTRO</p><h2 id="movement-edit-title">Editar movimiento</h2></div><button type="button" onClick={() => setEditing(null)} disabled={saving} aria-label="Cerrar">×</button></div><form onSubmit={saveEdit}><label>Descripción<input value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} maxLength={100} required /></label><div className="movement-edit-grid"><label>Tipo<select value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as Draft["type"] })}><option value="expense">Gasto</option><option value="income">Ingreso</option></select></label><label>Importe<input inputMode="decimal" value={draft.amount} onChange={(event) => setDraft({ ...draft, amount: event.target.value })} required /></label><label>Moneda<select value={draft.currency} onChange={(event) => setDraft({ ...draft, currency: event.target.value })}>{supportedCurrencies.map((currency) => <option key={currency.code} value={currency.code}>{currency.label}</option>)}{!supportedCurrencies.some((currency) => currency.code === draft.currency) && <option value={draft.currency}>{draft.currency}</option>}</select></label><label>Categoría<select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>{Array.from(new Set([...categories, draft.category])).map((category) => <option key={category}>{category}</option>)}</select></label><label className="movement-edit-date">Fecha<input type="date" max={todayKey} value={draft.movement_date} onChange={(event) => setDraft({ ...draft, movement_date: event.target.value })} required /></label></div>{notice && <p className="movements-error" role="alert">{notice}</p>}<button className="movements-save-button" type="submit" disabled={saving}>{saving ? "Guardando..." : "Guardar cambios"}</button></form></section></div>}
     </div>
   );
