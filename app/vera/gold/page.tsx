@@ -1,19 +1,5 @@
-import AuthGuard from "../../../components/auth-guard";
-import OnboardingGate from "../../../components/onboarding-gate";
-import MobileMenu from "../../../components/mobile-menu";
-import VeraGoldView from "../../../components/vera-gold-view";
+import { redirect } from "next/navigation";
 
-export default function VeraGoldPage() {
-  return (
-    <AuthGuard>
-      <OnboardingGate>
-        <div className="dashboard">
-          <MobileMenu />
-          <main className="main-content">
-            <VeraGoldView />
-          </main>
-        </div>
-      </OnboardingGate>
-    </AuthGuard>
-  );
+export default function LegacyVeraGoldPage() {
+  redirect("/finance-plus");
 }
