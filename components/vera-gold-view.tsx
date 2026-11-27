@@ -16,8 +16,9 @@ const features = [
   ["Planificación personalizada de objetivos", false, true],
   ["Lector de imágenes y PDF con contexto escrito", false, true],
   ["Cierre mensual inteligente con VERA", false, true],
-  ["VERA: Modo Ahorro (listas, presupuesto y comparación avanzada)", false, true],
+  ["VERA: Modo Ahorro — lista y presupuesto inteligente", false, true],
   ["Comparador de comercios y descuentos verificados", false, "En desarrollo"],
+  ["Optimización de compras entre varios comercios", false, "En desarrollo"],
   ["Notificaciones personalizadas y alertas avanzadas", false, "En desarrollo"],
   ["Análisis de archivos XLSX, CSV y DOCX", false, "En desarrollo"],
 ] as const;
