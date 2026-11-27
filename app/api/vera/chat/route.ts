@@ -472,7 +472,7 @@ export async function POST(request: Request) {
       commitments: commitmentContext,
       transfers: transferContext,
       ...(goalContext ? { goals: goalContext } : {}),
-      experience: isPlus ? "gold" : "standard",
+      experience: isPlus ? "plus" : "standard",
       ...(financialPosition ? { financialPosition } : {}),
       ...(decisionSimulation ? { decisionSimulation } : {}),
       ...(previousSummary ? {
