@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function isAdult(birthDate: unknown) {
-  if (typeof birthDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate)) return false;
+  if (typeof birthDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return false;
   const [year, month, day] = birthDate.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return false;
@@ -38,7 +38,7 @@ function clients(token: string) {
 
 export async function POST(request: Request) {
   try {
-    const token = (request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
+    const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
     const supabase = clients(token);
     if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const token = (request.headers.get("authorization") || "").replace(/^Bearer\\s+/i, "");
+    const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
     const supabase = clients(token);
     if (!supabase) return NextResponse.json({ error: "Servicio no disponible." }, { status: 503 });
