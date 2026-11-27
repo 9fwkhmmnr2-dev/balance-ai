@@ -196,8 +196,8 @@ export default function MarketAnalysisView() {
           cache: "no-store",
         });
         if (!response.ok) throw new Error("No pudimos verificar el acceso.");
-        const result = await response.json() as { isGold?: boolean; previewOnly?: boolean };
-        if (active) setAccess(result.isGold || result.previewOnly ? "allowed" : "locked");
+        const result = await response.json() as { isPlus?: boolean; previewOnly?: boolean };
+        if (active) setAccess(result.isPlus || result.previewOnly ? "allowed" : "locked");
       } catch {
         if (active) setAccess("locked");
       }
@@ -285,7 +285,7 @@ export default function MarketAnalysisView() {
   if (access === "locked") return (
     <section className={styles.page}>
       <header className={styles.header}><span className={styles.eyebrow}>FINANCE PLUS</span><h1>Análisis de mercados</h1><p>Indicadores económicos y contexto de mercado, con fuente y período.</p></header>
-      <div className={styles.locked}><strong>Esta herramienta forma parte de FINANCE PLUS.</strong><p>Con FINANCE PLUS vas a poder consultar indicadores económicos internacionales y su evolución histórica.</p><a href="/vera/gold">Conocer FINANCE PLUS</a></div>
+      <div className={styles.locked}><strong>Esta herramienta forma parte de FINANCE PLUS.</strong><p>Con FINANCE PLUS vas a poder consultar indicadores económicos internacionales y su evolución histórica.</p><a href="/finance-plus">Conocer FINANCE PLUS</a></div>
     </section>
   );
 
@@ -310,7 +310,7 @@ export default function MarketAnalysisView() {
           {wallStreetIndices.map((index) => <article className={styles.marketTile} key={index.key}>
             <div><span className={styles.tileSymbol}>{index.symbol}</span><h3>{index.name}</h3><p>{index.description}</p></div>
             <FavoriteButton active={isFavorite(index.key)} busy={favoriteBusy === index.key} label={index.name} onClick={() => void toggleFavorite({ market_key: index.key, item_type: "index", display_name: index.name, symbol: index.symbol, country_code: "USA" })} />
-            <small className={styles.pendingQuote}>Cotización pendiente de fuente autorizada</small>
+            <small className={styles.pendingQuote}>Cierre diario pendiente de proveedor autorizado</small>
           </article>)}
         </div>
         <p className={styles.marketFootnote}>Los índices se muestran como referencias de mercado. Todavía no publicamos valores ni variaciones sin una fuente de cotización validada.</p>
@@ -325,7 +325,7 @@ export default function MarketAnalysisView() {
               return <article className={styles.companyTile} key={key}>
                 <div><span className={styles.tileSymbol}>{company.symbol}</span><h3>{company.name}</h3><p>{company.description}</p></div>
                 <FavoriteButton active={isFavorite(key)} busy={favoriteBusy === key} label={company.name} onClick={() => void toggleFavorite({ market_key: key, item_type: "company", display_name: company.name, symbol: company.symbol, country_code: country })} />
-                <small className={styles.pendingQuote}>Cotización pendiente de fuente autorizada</small>
+                <small className={styles.pendingQuote}>Cierre diario pendiente de proveedor autorizado</small>
               </article>;
             })}
           </div> : <div className={styles.stockNotice}><strong>Directorio local en preparación</strong><p>Estamos validando símbolos y cobertura de empresas que cotizan en {countryName}. No vamos a mostrar compañías o precios sin una referencia comprobable.</p></div>}

@@ -1,7 +1,7 @@
-# VERA: Modo Ahorro — Especificación completa de producto
+# FINANCE.TRACK: Modo Ahorro — Especificación completa de producto
 
 **Plan:** FINANCE PLUS.
-**Estado:** diseño funcional; interfaz inicial parcialmente implementada. Comparación real, ofertas y optimización avanzada dependen de fuentes autorizadas y backend.
+**Estado:** interfaz inicial parcialmente implementada. La calculadora Free usa una función determinista compartida; Operación de Ahorro Plus aún es una proyección de referencia, no una evaluación de capacidad ni un plan persistido. Comparación real, ofertas y optimización avanzada dependen de fuentes autorizadas y backend.
 **Rama:** `feature/finance-plus-unification`.
 
 ## 1. Promesa

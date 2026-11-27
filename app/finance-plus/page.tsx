@@ -1,7 +1,7 @@
 import AuthGuard from "../../components/auth-guard";
 import OnboardingGate from "../../components/onboarding-gate";
 import MobileMenu from "../../components/mobile-menu";
-import FinancePlusView from "../../components/vera-gold-view";
+import FinancePlusView from "../../components/finance-plus-view";
 
 export default function FinancePlusPage() {
   return (

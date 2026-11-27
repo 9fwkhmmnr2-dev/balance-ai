@@ -27,8 +27,6 @@ export async function GET(request: Request) {
     return NextResponse.json({
       plan: planAccess.plan,
       isPlus: planAccess.isPlus,
-      // Temporary compatibility for clients not yet renamed from VERA GOLD.
-      isGold: planAccess.isPlus,
       accountId: data.user.id,
       previewOnly: isPreview,
     }, { headers: { "Cache-Control": "no-store" } });

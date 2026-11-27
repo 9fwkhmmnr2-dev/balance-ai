@@ -7,6 +7,7 @@ Este índice reúne la documentación funcional y comercial de FINANCE.TRACK / V
 - [Matriz FINANCE FREE vs. FINANCE PLUS](./free-vs-plus-matrix.md)
 - [VERA: Modo Ahorro](./modo-ahorro-spec.md)
 - [FINANCE: ALGORITMO](./finance-algorithm-spec.md)
+- [Wall Street y proveedor de datos de mercado](./wall-street-integration.md)
 
 ## Experiencia y crecimiento
 - [Registro y PERFIL FINANCE obligatorio y guiado](../onboarding-and-legal-flow.md)

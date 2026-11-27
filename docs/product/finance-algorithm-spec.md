@@ -1,6 +1,6 @@
 # FINANCE: ALGORITMO — Especificación funcional y arquitectura
 
-**Estado:** diseño de producto aprobado conceptualmente; implementación parcial o pendiente según módulo.
+**Estado:** diseño de producto aprobado conceptualmente. En código existe un registro tipado de motores/modos y una función determinista de proyección de ahorro; los motores analíticos completos siguen pendientes por etapas.
 **Rama:** `feature/finance-plus-unification`
 **No autoriza deploy, merge a main ni cambios de producción.**
 

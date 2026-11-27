@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import styles from "./vera-savings-mode.module.css";
+import { buildSavingsProjections, calculateSavingsProjection } from "@/lib/finance-algorithm/savings";
 
 type ShoppingItem = { id: number; name: string; quantity: number; unitPrice: string };
 
@@ -91,10 +92,10 @@ export default function VeraSavingsMode() {
           </label>
           {validMonthlySaving ? (
             <div className={styles.projectionGrid}>
-              {periods.map((month) => (
+              {buildSavingsProjections(monthlyValue, periods).map(({ months: month, total: projectedTotal }) => (
                 <article key={month} className={month === 12 ? styles.projectionHighlight : styles.projection}>
                   <span>{month} {month === 1 ? "mes" : "meses"}</span>
-                  <strong>{money(monthlyValue * month)}</strong>
+                  <strong>{money(projectedTotal)}</strong>
                   <small>{money(monthlyValue)} por mes</small>
                 </article>
               ))}
@@ -123,8 +124,8 @@ export default function VeraSavingsMode() {
               <p>Usamos el importe que elegiste para mostrar un punto de partida. Antes de recomendar un ritmo, FINANCE: ALGORITMO deberá contrastarlo con tus ingresos, gastos esenciales, compromisos y reservas disponibles.</p>
               {validMonthlySaving ? (
                 <div className={styles.operationResult}>
-                  <div><span>En 6 meses</span><strong>{money(monthlyValue * 6)}</strong></div>
-                  <div><span>En 12 meses</span><strong>{money(monthlyValue * 12)}</strong></div>
+                  <div><span>En 6 meses</span><strong>{money(calculateSavingsProjection(monthlyValue, 6) ?? 0)}</strong></div>
+                  <div><span>En 12 meses</span><strong>{money(calculateSavingsProjection(monthlyValue, 12) ?? 0)}</strong></div>
                 </div>
               ) : <p className={styles.disclaimer}>Ingresá un importe válido para ver el escenario.</p>}
               <p className={styles.disclaimer}>Esta primera vista es una simulación aritmética. Todavía no verifica capacidad de ahorro ni crea una reserva de dinero.</p>
