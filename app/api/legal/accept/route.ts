@@ -57,21 +57,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "VERA está disponible únicamente para personas de 18 años o más. No guardamos tu fecha de nacimiento." }, { status: 403 });
     }
 
-    const { data, error } = await supabase.adminClient.from("registration_acceptances").update({
+    const acceptedAt = new Date().toISOString();
+    const acceptanceValues = {
       age_eligible: true,
+      minimum_age_years: 18,
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
       ai_data_consent: body.aiDataConsent,
       ai_consent_version: body.aiDataConsent ? AI_CONSENT_VERSION : null,
-      accepted_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }).eq("user_id", auth.user.id).select("user_id").maybeSingle();
-
-    if (error) {
-      console.error("[LEGAL_ACCEPTANCE_DIAGNOSTIC]", { code: error.code ?? null, message: error.message?.slice(0, 180) ?? null });
+      accepted_at: acceptedAt,
+      updated_at: acceptedAt,
+    };
+    const { data: updated, error: updateError } = await supabase.adminClient
+      .from("registration_acceptances").update(acceptanceValues)
+      .eq("user_id", auth.user.id).select("user_id").maybeSingle();
+    if (updateError) {
+      console.error("[LEGAL_ACCEPTANCE_DIAGNOSTIC]", { code: updateError.code ?? null, message: updateError.message?.slice(0, 180) ?? null });
       return NextResponse.json({ error: "No pudimos guardar tu aceptación. Intentá nuevamente." }, { status: 503 });
     }
-    if (!data) return NextResponse.json({ error: "No encontramos el registro de tu cuenta para actualizar los permisos." }, { status: 409 });
+    if (!updated) {
+      const { error: insertError } = await supabase.adminClient.from("registration_acceptances")
+        .insert({ user_id: auth.user.id, ...acceptanceValues });
+      if (insertError) {
+        console.error("[LEGAL_ACCEPTANCE_INSERT_DIAGNOSTIC]", { code: insertError.code ?? null, message: insertError.message?.slice(0, 180) ?? null });
+        return NextResponse.json({ error: "No pudimos crear el registro de aceptaciones. Intentá nuevamente." }, { status: 503 });
+      }
+    }
     return NextResponse.json({ ok: true, ageEligible: true });
   } catch {
     return NextResponse.json({ error: "No pudimos completar la actualización." }, { status: 400 });
