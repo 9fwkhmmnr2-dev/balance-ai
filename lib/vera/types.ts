@@ -74,7 +74,7 @@ export type VeraFinancialContext = {
 
 export type VeraProviderResponse = {
   text: string;
-  provider: "gemini";
+  provider: "gemini" | "local";
   model: string;
 };
 
