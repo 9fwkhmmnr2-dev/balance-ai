@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { getFinancePlanAccess } from "@/lib/server/gold-access";
+import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,7 +23,11 @@ export async function GET(request: Request) {
     const { data: auth, error: authError } = await supabase.auth.getUser(token);
     if (authError || !auth.user) return NextResponse.json({ error: "Tu sesión venció." }, { status: 401 });
 
-    if (!isGoldEnabledForUser(auth.user)) return NextResponse.json({ error: "Esta herramienta requiere VERA GOLD." }, { status: 403 });
+    const eligibility = await checkVeraAiEligibility(supabase, auth.user.id);
+    if (!eligibility.allowed) return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
+
+    const planAccess = await getFinancePlanAccess(supabase, auth.user.id);
+    if (!planAccess.isPlus) return NextResponse.json({ error: "Esta herramienta requiere FINANCE PLUS." }, { status: 403 });
 
     const { data: profile, error: profileError } = await supabase
       .from("financial_profiles").select("currency").eq("user_id", auth.user.id).maybeSingle();
