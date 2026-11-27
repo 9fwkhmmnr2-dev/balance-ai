@@ -384,20 +384,6 @@ export default function MarketAnalysisView() {
         <p className={styles.notice}>{assetPayload.notice}</p>
       </> : null}
 
-      <details className={styles.marketGroup}>
-        <summary className={styles.marketGroupSummary}>
-          <span>Bolsas de valores y empresas</span>
-          <small className={styles.groupMeta}>Wall Street y mercados nacionales</small>
-        </summary>
-        <div className={styles.groupContent}>
-          <div className={styles.stockNotice}>
-            <strong>Integración bursátil en preparación</strong>
-            <p>Vamos a incorporar índices de Wall Street y acciones de empresas de los países disponibles. Antes de publicar cotizaciones necesitamos confirmar una fuente que permita mostrar sus datos dentro de FINANCE.TRACK, con cobertura, retraso y permisos claros.</p>
-            <p>Por ahora no mostramos precios estimados ni valores inventados. La sección se habilitará cuando la fuente esté validada.</p>
-          </div>
-        </div>
-      </details>
-
       <a className={styles.veraEntryCard} href="/vera">
         <div className={styles.veraMark} aria-hidden="true">V</div>
         <div><span className={styles.eyebrow}>ASISTENTE FINANCIERA</span><h2>Continuá con VERA</h2><p>Interpretá el contexto de mercado y conectá esta sección con futuras alertas y notificaciones personalizadas.</p><small>Las notificaciones de mercados todavía no están activas.</small></div>
