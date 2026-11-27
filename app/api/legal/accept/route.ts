@@ -92,9 +92,9 @@ export async function DELETE(request: Request) {
   try {
     const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
-    const supabase = clients(token);
-    if (!supabase) return NextResponse.json({ error: "Servicio no disponible." }, { status: 503 });
-    const { data: auth, error: authError } = await supabase.authClient.auth.getUser(token);
+    const supabase = clients();
+    if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
+    const { data: auth, error: authError } = await supabase.adminClient.auth.getUser(token);
     if (authError || !auth.user) return NextResponse.json({ error: "La sesión venció." }, { status: 401 });
     const { error } = await supabase.adminClient.from("registration_acceptances")
       .update({ ai_data_consent: false, ai_consent_version: null, updated_at: new Date().toISOString() })
