@@ -155,6 +155,8 @@ export default function VeraView() {
   const [showTools, setShowTools] = useState(false);
   const [plusWorkspaceMode, setPlusWorkspaceMode] = useState<"actions" | "planning" | null>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<File | null>(null);
+  const [attachmentContext, setAttachmentContext] = useState("");
   const attachmentRef = useRef<HTMLInputElement | null>(null);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -439,6 +441,39 @@ export default function VeraView() {
       setError(cause instanceof Error ? cause.message : "No pude conectar con VERA.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function analyzeSelectedAttachment() {
+    const file = selectedAttachment;
+    if (!file || attachmentBusy) return;
+    setAttachmentBusy(true);
+    setError("");
+    try {
+      const token = await getToken();
+      const form = new FormData();
+      form.append("file", file);
+      form.append("additional_context", attachmentContext.trim());
+      const response = await fetch("/api/vera/documents/analyze", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+        body: form,
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "No pude analizar el archivo.");
+      const rows = (payload.transactions ?? []).slice(0, 20).map((item: { date: string; description: string; amount: number; currency: string; type: string; category: string }, index: number) =>
+        (index + 1) + ". " + item.date + " · " + item.description.slice(0, 70) + " · " + (item.type === "income" ? "Ingreso" : "Gasto") + " · " + item.amount + " " + item.currency + " · " + item.category
+      ).join("\n");
+      const extra = attachmentContext.trim()
+        ? "\nInformación adicional aportada por el usuario (usala como contexto, no como dato extraído del documento):\n" + attachmentContext.trim()
+        : "";
+      setSelectedAttachment(null);
+      setAttachmentContext("");
+      await sendMessage("Analizá el documento " + file.name + ". Se detectaron " + (payload.summary?.count ?? 0) + " movimientos. No importes ni guardes nada. Revisá patrones e inconsistencias usando estos datos extraídos:" + extra + "\n" + rows);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No pude analizar el archivo.");
+    } finally {
+      setAttachmentBusy(false);
     }
   }
 
@@ -747,20 +782,25 @@ export default function VeraView() {
           </div>
           {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
           {error && <div className="vera-error" role="alert">{error}</div>}
+          {selectedAttachment && <section aria-label="Información adicional del archivo" style={{ margin: "0 16px 12px", padding: "14px", border: "1px solid rgba(196,181,253,.28)", borderRadius: "16px", background: "rgba(24,18,36,.92)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
+              <strong style={{ fontSize: "13px", overflowWrap: "anywhere" }}>Archivo: {selectedAttachment.name}</strong>
+              <button type="button" onClick={() => { setSelectedAttachment(null); setAttachmentContext(""); }} disabled={attachmentBusy} aria-label="Quitar archivo" style={{ color: "#d8ccf7", background: "transparent", border: 0, fontSize: "20px" }}>×</button>
+            </div>
+            <label htmlFor="vera-attachment-context" style={{ display: "block", color: "#c4b5fd", fontSize: "12px", fontWeight: 700, marginBottom: "6px" }}>＋ Información adicional para VERA (opcional)</label>
+            <textarea id="vera-attachment-context" value={attachmentContext} onChange={(event) => setAttachmentContext(event.target.value)} maxLength={2000} rows={3} placeholder="Ej.: Es el resumen de mi tarjeta de noviembre. Quiero identificar cuotas y pagos duplicados." disabled={attachmentBusy} style={{ width: "100%", resize: "vertical", boxSizing: "border-box", borderRadius: "10px", border: "1px solid rgba(196,181,253,.2)", background: "#100d17", color: "#f5f3fa", padding: "10px", font: "inherit", fontSize: "13px" }} />
+            <p style={{ color: "#a9a1b8", fontSize: "11px", margin: "6px 0 10px" }}>Podés indicar período, tipo de documento, moneda o qué querés que revise. VERA distinguirá tu explicación de los datos leídos.</p>
+            <button type="button" onClick={() => void analyzeSelectedAttachment()} disabled={attachmentBusy} style={{ width: "100%", border: 0, borderRadius: "10px", padding: "11px", background: "#8b5cf6", color: "white", fontWeight: 700, opacity: attachmentBusy ? .65 : 1 }}>{attachmentBusy ? "Analizando archivo…" : "Analizar archivo con VERA"}</button>
+          </section>}
           <div className="vera-compose">
-            <input ref={attachmentRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" style={{ display: "none" }} onChange={async (event) => {
+            <input ref={attachmentRef} type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" style={{ display: "none" }} onChange={(event) => {
               const file = event.target.files?.[0]; event.target.value = "";
               if (!file || attachmentBusy) return;
               if (file.size > 4 * 1024 * 1024) { setError("El archivo debe pesar menos de 4 MB."); return; }
-              setAttachmentBusy(true); setError("");
-              try {
-                const token = await getToken(); const form = new FormData(); form.append("file", file);
-                const response = await fetch("/api/vera/documents/analyze", { method: "POST", headers: { Authorization: "Bearer " + token }, body: form });
-                const payload = await response.json(); if (!response.ok) throw new Error(payload.error || "No pude analizar el archivo.");
-                const rows = (payload.transactions ?? []).slice(0, 20).map((item: { date: string; description: string; amount: number; currency: string; type: string; category: string }, index: number) => (index + 1) + ". " + item.date + " · " + item.description.slice(0, 70) + " · " + (item.type === "income" ? "Ingreso" : "Gasto") + " · " + item.amount + " " + item.currency + " · " + item.category).join("\n");
-                await sendMessage("Analizá el documento " + file.name + ". Se detectaron " + (payload.summary?.count ?? 0) + " movimientos. No importes ni guardes nada. Revisá patrones e inconsistencias usando estos datos extraídos:\n" + rows);
-              } catch (cause) { setError(cause instanceof Error ? cause.message : "No pude analizar el archivo."); }
-              finally { setAttachmentBusy(false); }
+              setSelectedAttachment(file);
+              setAttachmentContext("");
+              setShowTools(false);
+              setError("");
             }} />
             <form onSubmit={handleSubmit}>
               <div className="vera-compose-tools">
