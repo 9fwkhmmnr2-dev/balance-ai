@@ -20,14 +20,14 @@
 - Resúmenes financieros básicos basados en datos reales.
 - Notificaciones de servicio, seguridad y avisos financieros importantes.
 - Centro de notificaciones y preferencias esenciales.
-- Vista previa y explicación de FINANCE PLUS y Modo Ahorro.
+- Calculadora básica de Modo Ahorro: importe mensual elegido por el usuario y proyecciones simples a 2, 3, 6 y 12 meses, sin intereses ni inflación.\n- Vista previa y explicación de FINANCE PLUS.
 - Acceso a funciones generales de administración financiera que no estén expresamente designadas como Plus.
 
 ## 3. FINANCE PLUS
 
 - VERA ampliado: **40 mensajes diarios**, saldo acumulable máximo **80**.
 - Respuestas más detalladas, análisis profundo y contexto ampliado dentro de límites sostenibles.
-- Modo Ahorro: listas, presupuesto, comparación, ofertas verificadas, alternativas, canasta familiar y optimización de cesta cuando haya fuentes autorizadas.
+- Modo Ahorro: Operación de Ahorro personalizada, listas, presupuesto, comparación, ofertas verificadas, alternativas, canasta familiar y optimización de cesta cuando haya fuentes autorizadas.
 - Evolución e historial de ahorro con estimaciones, confirmaciones y dinero reservado separados.
 - Simulador de decisiones y cuotas usando datos existentes de FINANCE.TRACK.
 - Importación inteligente y análisis avanzado de documentos: PDF, XLSX, CSV, DOCX e imágenes, con extracción y categorización propuesta; el usuario revisa antes de guardar.
@@ -77,6 +77,6 @@ Free recibe alertas esenciales y resumen básico. Plus puede recibir análisis, 
 - No presionar, usar urgencia falsa ni bloquear funciones básicas.
 - Marketing personalizado solo con permisos aplicables. Los ejemplos de ahorro deben ser ilustrativos salvo que se basen en precios y datos comprobados.
 
-## 8. Estado y cautelas
+## 8. Primera entrega de Modo Ahorro\n\n- Free conserva la calculadora básica y puede conocer el importe acumulado para el plazo elegido.\n- Plus incorpora Operación de Ahorro personalizada y herramientas avanzadas; el algoritmo debe revisar capacidad real antes de recomendar un aporte.\n- Comparador, promociones y optimización en vivo solo se habilitan con fuentes autorizadas y datos frescos.\n- No confundir ahorro estimado, ahorro confirmado y dinero reservado.\n\n## 9. Estado y cautelas
 
 Esta matriz consolida decisiones aprobadas y propuestas de precio que aún deben validarse. No implica que todas las funciones estén implementadas. Revisar el código, backend, RLS, entitlements, proveedores, legal y costes antes de publicar.
