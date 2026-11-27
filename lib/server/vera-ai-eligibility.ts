@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { PRIVACY_VERSION, TERMS_VERSION, VERA_PRIVACY_VERSION, VERA_TERMS_VERSION } from "@/lib/legal-versions";
 
 export async function checkVeraAiEligibility(supabase: SupabaseClient<any, "public">, userId: string) {
-  // Free-tier Gemini is restricted to allowlisted general-knowledge prompts.
-  // Personal financial analysis is handled locally and is never sent to Gemini.
+  // Personal financial context may be processed by the configured AI provider only
+  // after the account passes the adult-eligibility, legal-version, and explicit AI-consent checks.
   const { data, error } = await supabase
     .from("registration_acceptances")
     .select("age_eligible, ai_data_consent, terms_version, privacy_version, vera_terms_version, vera_privacy_version")
