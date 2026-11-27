@@ -57,7 +57,23 @@ function categoryLabel(value: string) {
     entertainment: "Entretenimiento", groceries: "Alimentación",
     rent: "Alquiler", utilities: "Servicios",
   };
-  return labels[value.trim().toLocaleLowerCase("en")] ?? value;
+  return labels[value.trim().toLocaleLowerCase("en")] ?? value.trim();
+}
+
+function incomeSourceLabel(value: string) {
+  const labels: Record<string, string> = {
+    salary: "Sueldo", employment: "Sueldo", freelance: "Trabajo independiente",
+    self_employed: "Trabajo independiente", business: "Negocio propio",
+    business_income: "Negocio propio", pension: "Jubilación o pensión",
+    rental: "Alquileres", investments: "Inversiones",
+    family_support: "Ayuda familiar", scholarship: "Beca",
+    other: "Otros ingresos", variable: "Ingresos variables",
+  };
+  return labels[value.trim().toLocaleLowerCase("en")] ?? value.trim();
+}
+
+function uniqueLabels(values: string[] | null | undefined, labeler: (value: string) => string) {
+  return Array.from(new Set((values ?? []).map(labeler).filter(Boolean)));
 }
 
 export default function ProfileView() {
@@ -282,14 +298,14 @@ export default function ProfileView() {
 
         <p className="card-label">Fuentes de ingresos</p>
         <p style={{ marginTop: 8, fontSize: 14 }}>
-          {profile?.income_sources?.join(", ") || "Sin información"}
+          {uniqueLabels(profile?.income_sources, incomeSourceLabel).join(", ") || "Sin información"}
         </p>
 
         <p className="card-label" style={{ marginTop: 20 }}>
           Categorías de gastos habituales
         </p>
         <p style={{ marginTop: 8, fontSize: 14 }}>
-          {profile?.expense_categories?.map(categoryLabel).join(", ") || "Sin información"}
+          {uniqueLabels(profile?.expense_categories, categoryLabel).join(", ") || "Sin información"}
         </p>
       </section>
 
