@@ -95,7 +95,7 @@ function formatAssetValue(value: number | null, code: string) {
 }
 
 function FavoriteButton({ active, busy, label, onClick }: { active: boolean; busy: boolean; label: string; onClick: () => void }) {
-  return <button type="button" className={`favoriteButton${active ? " isActive" : ""}`} aria-pressed={active} aria-label={active ? `Quitar ${label} de favoritos` : `Seguir ${label}`} title={active ? "Quitar de favoritos" : "Seguir"} onClick={onClick} disabled={busy}>{busy ? "…" : active ? "★ Siguiendo" : "☆ Seguir"}</button>;
+  return <button type="button" className={`${styles.favoriteButton}${active ? ` ${styles.isActive}` : ""}`} aria-pressed={active} aria-label={active ? `Quitar ${label} de favoritos` : `Seguir ${label}`} title={active ? "Quitar de favoritos" : "Seguir"} onClick={onClick} disabled={busy}>{busy ? "…" : active ? "★ Siguiendo" : "☆ Seguir"}</button>;
 }
 
 function formatDate(value: string) {
