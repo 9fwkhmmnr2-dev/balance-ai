@@ -2613,3 +2613,13 @@ body{background:#090A0D;color:#F2F0EB}
   letter-spacing:3px;
   line-height:1.05;
 }
+
+
+/* VERA tools menu: compact, scrollable and dismissible on mobile */
+.vera-tools-menu{position:relative;max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;padding-top:22px}
+.vera-tools-close{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:center;width:34px;height:34px;margin:-12px -8px 4px auto;border:1px solid rgba(200,169,107,.35);border-radius:50%;background:#211a12;color:#e6d1a2;font-size:25px;line-height:1;cursor:pointer}
+.vera-tools-menu .vera-menu-isotype{margin-bottom:4px}
+.vera-tools-menu .vera-tools-group{padding-top:8px;padding-bottom:8px}
+.vera-tools-menu .vera-tools-action{margin-top:7px;margin-bottom:7px}
+.vera-tools-menu .vera-tools-group-title{margin-bottom:7px}
+@media(max-width:700px){.vera-tools-menu{max-height:calc(100dvh - 24px);padding:18px 16px 16px}.vera-tools-close{margin:-10px -6px 4px auto}}
