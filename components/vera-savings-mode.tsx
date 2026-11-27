@@ -6,13 +6,16 @@ import styles from "./vera-savings-mode.module.css";
 
 type ShoppingItem = { id: number; name: string; quantity: number; unitPrice: string };
 
+const periods = [2, 3, 6, 12];
+
 function money(value: number) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
 }
 
 export default function VeraSavingsMode() {
   const [isPlus, setIsPlus] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [monthlySaving, setMonthlySaving] = useState("50000");
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unitPrice, setUnitPrice] = useState("");
@@ -33,6 +36,8 @@ export default function VeraSavingsMode() {
         if (!response.ok) return;
         const result = await response.json() as { isPlus?: boolean };
         if (active) setIsPlus(Boolean(result.isPlus));
+      } catch {
+        // The basic calculator remains available if entitlement lookup fails.
       } finally {
         if (active) setLoading(false);
       }
@@ -40,6 +45,8 @@ export default function VeraSavingsMode() {
     return () => { active = false; };
   }, []);
 
+  const monthlyValue = Number(monthlySaving);
+  const validMonthlySaving = monthlySaving.trim() !== "" && Number.isFinite(monthlyValue) && monthlyValue > 0;
   const total = useMemo(() => items.reduce((sum, item) => {
     const price = Number(item.unitPrice);
     return sum + (Number.isFinite(price) && price >= 0 ? price * item.quantity : 0);
@@ -61,33 +68,71 @@ export default function VeraSavingsMode() {
     setUnitPrice("");
   }
 
-  if (loading) return <div className={styles.page}><p className={styles.loading}>Cargando FINANCE PLUS…</p></div>;
-
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
-        <a href="/finance-plus" className={styles.back}>← FINANCE PLUS</a>
-        <span className={styles.topTag}>VERA / MODO AHORRO</span>
+        <a href="/finance-plus" className={styles.back}>← FINANCE.TRACK</a>
+        <span className={styles.topTag}>MODO AHORRO</span>
       </header>
       <main className={styles.main}>
         <section className={styles.hero}>
-          <p className={styles.eyebrow}>FINANCE PLUS · NUEVO MÓDULO</p>
-          <h1>Comprá con más información. <span>Gastá con intención.</span></h1>
-          <p>Organizá lo que necesitás, definí un presupuesto y prepará tus compras. VERA te ayudará a comparar opciones verificadas cuando las fuentes estén disponibles.</p>
+          <p className={styles.eyebrow}>FINANCE.TRACK · MODO AHORRO</p>
+          <h1>Convertí una intención en <span>un plan posible.</span></h1>
+          <p>Calculá cuánto podrías acumular y elegí un ritmo de ahorro que tenga sentido para tu situación. Las proyecciones no incluyen intereses ni garantizan resultados.</p>
         </section>
 
-        {!isPlus ? (
+        <section className={styles.calculator}>
+          <div className={styles.sectionTitle}>
+            <div><span className={styles.eyebrow}>01 / CALCULADORA</span><h2>¿Cuánto podrías ahorrar?</h2></div>
+            <span className={styles.freeTag}>Disponible en FREE</span>
+          </div>
+          <label className={styles.monthlyInput}>¿Cuánto estarías dispuesto/a a separar por mes?
+            <div><span>$</span><input type="number" min="1" max="100000000" step="100" inputMode="decimal" value={monthlySaving} onChange={(event) => setMonthlySaving(event.target.value)} placeholder="Ej. 50000" /></div>
+          </label>
+          {validMonthlySaving ? (
+            <div className={styles.projectionGrid}>
+              {periods.map((month) => (
+                <article key={month} className={month === 12 ? styles.projectionHighlight : styles.projection}>
+                  <span>{month} {month === 1 ? "mes" : "meses"}</span>
+                  <strong>{money(monthlyValue * month)}</strong>
+                  <small>{money(monthlyValue)} por mes</small>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.disclaimer}>Ingresá un importe mensual mayor a cero para calcular tus proyecciones.</p>
+          )}
+          <p className={styles.disclaimer}>Cálculo simple: aporte mensual × cantidad de meses. No contempla inflación, intereses, variaciones de ingresos ni retiros. No es una recomendación de cuánto deberías ahorrar.</p>
+        </section>
+
+        {loading ? (
+          <p className={styles.loading}>Comprobando las herramientas disponibles…</p>
+        ) : !isPlus ? (
           <section className={styles.locked}>
             <span className={styles.lockIcon}>✦</span>
-            <h2>Una herramienta de FINANCE PLUS</h2>
-            <p>La lista y el presupuesto inteligente forman parte de la experiencia Plus. El comparador de comercios, promociones y optimización de compras se habilitarán cuando estén integradas fuentes de datos confiables.</p>
+            <p className={styles.eyebrow}>FINANCE PLUS</p>
+            <h2>Ya sabés cuánto podrías acumular. Ahora descubrí cómo acercarte.</h2>
+            <p>FINANCE PLUS amplía la calculadora con Operación de Ahorro personalizada, seguimiento inteligente y herramientas para encontrar oportunidades en tus compras.</p>
             <a href="/finance-plus" className={styles.primaryLink}>Conocer FINANCE PLUS</a>
           </section>
         ) : (
           <>
+            <section className={styles.operationCard}>
+              <span className={styles.eyebrow}>02 / FINANCE PLUS · OPERACIÓN DE AHORRO</span>
+              <h2>Tu operación personalizada</h2>
+              <p>Usamos el importe que elegiste para mostrar un punto de partida. Antes de recomendar un ritmo, FINANCE: ALGORITMO deberá contrastarlo con tus ingresos, gastos esenciales, compromisos y reservas disponibles.</p>
+              {validMonthlySaving ? (
+                <div className={styles.operationResult}>
+                  <div><span>En 6 meses</span><strong>{money(monthlyValue * 6)}</strong></div>
+                  <div><span>En 12 meses</span><strong>{money(monthlyValue * 12)}</strong></div>
+                </div>
+              ) : <p className={styles.disclaimer}>Ingresá un importe válido para ver el escenario.</p>}
+              <p className={styles.disclaimer}>Esta primera vista es una simulación aritmética. Todavía no verifica capacidad de ahorro ni crea una reserva de dinero.</p>
+            </section>
+
             <section className={styles.workspace}>
               <div className={styles.sectionTitle}>
-                <div><span className={styles.eyebrow}>01 / PLANIFICACIÓN</span><h2>Tu lista de compras</h2></div>
+                <div><span className={styles.eyebrow}>03 / PLANIFICACIÓN</span><h2>Tu lista de compras</h2></div>
                 <span className={styles.count}>{items.length} {items.length === 1 ? "producto" : "productos"}</span>
               </div>
               <form className={styles.addForm} onSubmit={addItem}>
@@ -121,7 +166,7 @@ export default function VeraSavingsMode() {
 
             <section className={styles.summaryGrid}>
               <article className={styles.budgetCard}>
-                <span className={styles.eyebrow}>02 / CONTROL</span>
+                <span className={styles.eyebrow}>04 / CONTROL</span>
                 <h2>Tu presupuesto</h2>
                 <label className={styles.budgetInput}>¿Cuánto querés destinar a esta compra?
                   <div><span>$</span><input type="number" min="0" step="0.01" inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="Ej. 50000" /></div>
@@ -131,18 +176,19 @@ export default function VeraSavingsMode() {
                   {hasBudget && <div><span>{difference !== null && difference >= 0 ? "Presupuesto disponible" : "Exceso sobre el presupuesto"}</span><strong className={difference !== null && difference < 0 ? styles.over : styles.remaining}>{money(Math.abs(difference ?? 0))}</strong></div>}
                 </div>
                 {items.length > pricedItems && <p className={styles.disclaimer}>{items.length - pricedItems} producto(s) no tienen precio de referencia; el total no representa el costo completo de la compra.</p>}
-                <p className={styles.disclaimer}>Los precios que ingresás son referencias tuyas, no cotizaciones actuales ni ofertas verificadas. Moneda de esta primera versión: ARS.</p>
+                <p className={styles.disclaimer}>Los precios ingresados son referencias tuyas, no cotizaciones actuales ni ofertas verificadas. Moneda: ARS.</p>
               </article>
               <article className={styles.nextCard}>
-                <span className={styles.eyebrow}>03 / PRÓXIMAMENTE</span>
-                <h2>Compará antes de comprar</h2>
+                <span className={styles.eyebrow}>05 / HERRAMIENTAS EN DESARROLLO</span>
+                <h2>Encontrá oportunidades</h2>
                 <ul>
-                  <li>Comercios cercanos y precios comparables</li>
+                  <li>Comparación de comercios y productos equivalentes</li>
                   <li>Descuentos con vigencia y condiciones verificadas</li>
-                  <li>Mejor combinación de comercios para tu lista</li>
-                  <li>Alternativas y precio por unidad</li>
+                  <li>Alternativas económicas y precio por unidad</li>
+                  <li>Optimización de canastas y compras familiares</li>
+                  <li>Historial de ahorro potencial y ahorro confirmado</li>
                 </ul>
-                <div className={styles.sourceNote}>Esta sección todavía no muestra ofertas. Se activará al integrar fuentes autorizadas y comprobar la actualización de sus datos.</div>
+                <div className={styles.sourceNote}>Estas herramientas se habilitarán cuando existan fuentes autorizadas, datos actualizados y persistencia segura. Esta vista no muestra ofertas en vivo.</div>
               </article>
             </section>
           </>
