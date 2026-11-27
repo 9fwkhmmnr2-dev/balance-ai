@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getVeraProvider } from "@/lib/vera/provider";
-import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { getFinancePlanAccess } from "@/lib/server/gold-access";
 import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
@@ -243,7 +243,8 @@ export async function POST(request: Request) {
     const currency = typeof profile?.currency === "string" ? profile.currency : "ARS";
     const today = buenosAiresToday();
     const from = startDate(input.period, today);
-    const isGold = isGoldEnabledForUser(authData.user);
+    const planAccess = await getFinancePlanAccess(supabase, authData.user.id);
+    const isPlus = planAccess.isPlus;
     const previousFrom = previousStartDate(input.period, from);
     const previousToDate = new Date(`${from}T00:00:00.000Z`);
     previousToDate.setUTCDate(previousToDate.getUTCDate() - 1);
@@ -254,7 +255,7 @@ export async function POST(request: Request) {
       .select("type, amount, category, movement_date")
       .eq("user_id", authData.user.id)
       .eq("currency", currency)
-      .gte("movement_date", isGold ? previousFrom : from)
+      .gte("movement_date", isPlus ? previousFrom : from)
       .lte("movement_date", today)
       .order("movement_date", { ascending: false })
       .limit(5000);
@@ -263,14 +264,14 @@ export async function POST(request: Request) {
     const allMovements = (rows ?? []) as MovementRow[];
     const movements = allMovements.filter((item) => item.movement_date >= from);
     const currentSummary = summarizeMovements(movements);
-    const previousMovements = isGold
+    const previousMovements = isPlus
       ? allMovements.filter((item) => item.movement_date >= previousFrom && item.movement_date <= previousTo)
       : [];
-    const previousSummary = isGold ? summarizeMovements(previousMovements) : null;
+    const previousSummary = isPlus ? summarizeMovements(previousMovements) : null;
 
     let financialPosition: VeraFinancialContext["financialPosition"];
     let decisionSimulation: VeraFinancialContext["decisionSimulation"];
-    if (isGold) {
+    if (isPlus) {
       const sixMonthsAgo = new Date(`${today}T00:00:00.000Z`);
       sixMonthsAgo.setUTCDate(sixMonthsAgo.getUTCDate() - 179);
       const positionFrom = sixMonthsAgo.toISOString().slice(0, 10);
@@ -447,7 +448,7 @@ export async function POST(request: Request) {
       .gte("created_at", `${previousFrom}T00:00:00-03:00`).lt("created_at", `${from}T00:00:00-03:00`);
     const [{ count: currentTransfersCount, error: currentTransferCountError }, { count: previousTransfersCount, error: previousTransferCountError }] = await Promise.all([
       currentTransferQuery,
-      isGold ? previousTransferQuery : Promise.resolve({ count: 0, error: null }),
+      isPlus ? previousTransferQuery : Promise.resolve({ count: 0, error: null }),
     ]);
     if (currentTransferCountError) throw currentTransferCountError;
     if (previousTransferCountError) throw previousTransferCountError;
@@ -471,7 +472,7 @@ export async function POST(request: Request) {
       commitments: commitmentContext,
       transfers: transferContext,
       ...(goalContext ? { goals: goalContext } : {}),
-      experience: isGold ? "gold" : "standard",
+      experience: isPlus ? "gold" : "standard",
       ...(financialPosition ? { financialPosition } : {}),
       ...(decisionSimulation ? { decisionSimulation } : {}),
       ...(previousSummary ? {
