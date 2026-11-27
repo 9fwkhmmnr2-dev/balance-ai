@@ -280,7 +280,7 @@ export async function POST(request: Request) {
       const positionFrom = sixMonthsAgo.toISOString().slice(0, 10);
       const [{ data: accountRows, error: accountError }, { data: balanceRows, error: balanceError }] = await Promise.all([
         supabase.from("financial_accounts").select("id, currency, initial_balance, is_archived").eq("user_id", authData.user.id).eq("currency", currency).eq("is_archived", false),
-        supabase.from("movements").select("account_id, type, amount, movement_date, description, currency").eq("user_id", authData.user.id).eq("currency", currency).gte("movement_date", "2000-01-01").lte("movement_date", today).order("movement_date", { ascending: true }).limit(10000),
+        supabase.from("movements").select("account_id, type, amount, movement_date").eq("user_id", authData.user.id).eq("currency", currency).gte("movement_date", "2000-01-01").lte("movement_date", today).order("movement_date", { ascending: true }).limit(10000),
       ]);
       if (accountError) throw accountError;
       if (balanceError) throw balanceError;
