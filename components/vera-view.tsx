@@ -427,7 +427,7 @@ export default function VeraView() {
       const response = await fetch("/api/vera/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ messages: nextMessages.slice(-11).filter((message, index) => index > 0 || message.role === "user").map(({ role, content }) => ({ role, content })), period: selectedPeriod }),
+        body: JSON.stringify({ messages: nextMessages.slice(isPlus ? -32 : -12).filter((message, index) => index > 0 || message.role === "user").map(({ role, content }) => ({ role, content })), period: selectedPeriod }),
       });
       const payload = await response.json() as { reply?: string; error?: string; financialSummary?: FinancialSummary };
       if (!response.ok || !payload.reply) throw new Error(payload.error || "No pude recibir una respuesta de VERA.");
