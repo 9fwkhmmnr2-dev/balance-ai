@@ -125,10 +125,10 @@ export default function LegalConsentSettings() {
           <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
         <div>
           <label htmlFor="vera-birth-date" style={{ display: "block", color: "#D4D1D9", fontSize: 12, marginBottom: 7 }}>Fecha de nacimiento (solo se utiliza para verificar la edad)</label>
-          <input id="vera-birth-date" type="date" required value={birthDate} onChange={e => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} style={{ width: "100%", boxSizing: "border-box", padding: 11, borderRadius: 8, border: "1px solid #454751", background: "#101116", color: "#F2F0EB" }} />
+          <input id="vera-birth-date" type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} max={new Date().toISOString().slice(0, 10)} style={{ width: "100%", boxSizing: "border-box", padding: 11, borderRadius: 8, border: "1px solid #454751", background: "#101116", color: "#F2F0EB" }} />
           <p style={{ color: "#85838D", fontSize: 11, marginTop: 5 }}>La fecha no se guarda en la base de datos. VERA requiere tener al menos 18 años.</p>
         </div>
-        <label style={labelStyle}><input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} required style={{ marginTop: 4 }} />Confirmo que tengo 18 años o más y que la fecha indicada es correcta.</label>
+        <label style={labelStyle}><input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} style={{ marginTop: 4 }} />Confirmo que tengo 18 años o más y que la fecha indicada es correcta.</label>
           <div style={{ display: "grid", gap: 10 }}>
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>FINANCE.TRACK · Condiciones generales</p>
             <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Regulan el acceso, las responsabilidades de la persona titular, las funciones disponibles y las limitaciones del servicio.</p>
@@ -143,7 +143,7 @@ export default function LegalConsentSettings() {
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Edad mínima</p>
             <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>VERA está destinada exclusivamente a personas titulares mayores de 18 años. La verificación debe completarla la propia persona titular.</p>
           </div>
-        <label style={labelStyle}><input type="checkbox" checked={allLegalAccepted} onChange={e => setAllLegalAccepted(e.target.checked)} required style={{ marginTop: 4 }} />Leí y acepto en una sola confirmación los Términos y Condiciones y las Políticas de Privacidad de FINANCE.TRACK y VERA.</label>
+        <label style={labelStyle}><input type="checkbox" checked={allLegalAccepted} onChange={e => setAllLegalAccepted(e.target.checked)} style={{ marginTop: 4 }} />Leí y acepto en una sola confirmación los Términos y Condiciones y las Políticas de Privacidad de FINANCE.TRACK y VERA.</label>
         <div style={{ borderTop: "1px solid #34363D", paddingTop: 14 }}>
           <label style={labelStyle}><input type="checkbox" checked={aiConsent} onChange={e => setAiConsent(e.target.checked)} style={{ marginTop: 4 }} /><span>Autorizo por separado el procesamiento de mis mensajes y datos financieros mediante proveedores externos de IA, cuando la función y el proveedor estén habilitados. Este permiso es opcional y puedo revocarlo.</span></label>
         </div>
