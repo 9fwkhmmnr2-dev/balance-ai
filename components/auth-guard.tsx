@@ -32,7 +32,7 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
       if (error || !acceptance || acceptance.terms_version !== TERMS_VERSION || acceptance.privacy_version !== PRIVACY_VERSION) {
         // Keep Profile reachable so the user can renew an outdated acceptance.
         if (pathname !== "/perfil") {
-          router.replace("/legal/accept");
+          router.replace("/perfil");
           return;
         }
       }
