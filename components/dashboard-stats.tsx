@@ -64,17 +64,20 @@ export default function DashboardStats() {
       const preferred = profile?.currency || "ARS";
       const [
         { data: movementRows, error: movementError },
-        { data: accountRows, error: accountError }
+        { data: accountRows, error: accountError },
+        { data: transferRows, error: transferError }
       ] = await Promise.all([
         supabase.from("movements").select("id, account_id, type, amount, currency, movement_date, description, category").eq("user_id", userData.user.id).order("movement_date", { ascending: false }).order("created_at", { ascending: false }),
-        supabase.from("financial_accounts").select("id, name, currency, initial_balance, is_archived").eq("user_id", userData.user.id).order("created_at", { ascending: true })
+        supabase.from("financial_accounts").select("id, name, currency, initial_balance, is_archived").eq("user_id", userData.user.id).order("created_at", { ascending: true }),
+        supabase.from("account_transfers").select("from_account_id, to_account_id, amount").eq("user_id", userData.user.id)
       ]);
       if (movementError) throw movementError;
       if (accountError) throw accountError;
+      if (transferError) throw transferError;
       const rows = (movementRows ?? []) as Movement[];
       setMovements(rows);
       setAccounts((accountRows ?? []) as Account[]);
-      setTransfers([]);
+      setTransfers((transferRows ?? []) as Transfer[]);
       setCurrencies(Array.from(new Set([preferred, ...(accountRows ?? []).map((row) => row.currency), ...rows.map((row) => row.currency)])));
       setCurrency((current) => current || preferred);
     } catch {
