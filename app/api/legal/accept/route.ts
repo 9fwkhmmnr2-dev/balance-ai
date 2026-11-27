@@ -18,32 +18,27 @@ function isAdult(birthDate: unknown) {
   return age >= 18;
 }
 
-function clients(token: string) {
-  // Prefer the current Supabase integration variables; retain legacy fallbacks for existing environments.
+function clients() {
+  // The server validates the user's JWT with the project secret key; no browser anon key is needed here.
   const url = process.env.NEXT_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serverKey = process.env.NEXT_SUPABASE_SECRET_KEY ||
     process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !anonKey || !serverKey) return null;
-  const authClient = createClient(url, anonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  if (!url || !serverKey) return null;
   const adminClient = createClient(url, serverKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  return { authClient, adminClient };
+  return { adminClient };
 }
 
 export async function POST(request: Request) {
   try {
     const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
-    const supabase = clients(token);
+    const supabase = clients();
     if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
 
-    const { data: auth, error: authError } = await supabase.authClient.auth.getUser(token);
+    const { data: auth, error: authError } = await supabase.adminClient.auth.getUser(token);
     if (authError || !auth.user) return NextResponse.json({ error: "La sesión venció. Volvé a ingresar." }, { status: 401 });
 
     const body = await request.json() as {
