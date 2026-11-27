@@ -413,7 +413,7 @@ export default function VeraView() {
     }
   }
 
-  async function sendMessage(value: string) {
+  async function sendMessage(value: string, selectedPeriod: Period = period) {
     const text = value.trim();
     if (!text || sending) return;
     setError("");
@@ -427,7 +427,7 @@ export default function VeraView() {
       const response = await fetch("/api/vera/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ messages: nextMessages.slice(-11).filter((message, index) => index > 0 || message.role === "user").map(({ role, content }) => ({ role, content })), period }),
+        body: JSON.stringify({ messages: nextMessages.slice(-11).filter((message, index) => index > 0 || message.role === "user").map(({ role, content }) => ({ role, content })), period: selectedPeriod }),
       });
       const payload = await response.json() as { reply?: string; error?: string; financialSummary?: FinancialSummary };
       if (!response.ok || !payload.reply) throw new Error(payload.error || "No pude recibir una respuesta de VERA.");
@@ -779,6 +779,7 @@ export default function VeraView() {
                       <button className="vera-tools-action gold" type="button" title="Compara ingresos, gastos y categorías con el período anterior equivalente; muestra variaciones y tendencias respaldadas por tus movimientos." onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setPlusWorkspaceMode("actions"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simulador de acciones</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setPlusWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
+                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setPeriod("monthly"); void sendMessage("Prepará mi cierre mensual inteligente de FINANCE PLUS. Analizá el mes calendario actual y comparalo con el mes anterior equivalente. Incluí ingresos, gastos, balance neto, variaciones absolutas y porcentuales, categorías que más explican los cambios, movimientos relevantes y compromisos próximos si están disponibles. Separá datos registrados de estimaciones, indicá si hay datos incompletos y no inventes importes ni saldos. Terminá con hasta tres acciones concretas y prudentes para el próximo mes, sin modificar mis cuentas.", "monthly"); }}><span className="vera-tool-icon" aria-hidden="true">▣</span>Generar cierre mensual inteligente</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
                     </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con FINANCE PLUS.
                         {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar FINANCE PLUS de prueba solo en Preview."); }}>Copiar ID para habilitar prueba FINANCE PLUS</button>}
