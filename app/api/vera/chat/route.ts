@@ -434,15 +434,22 @@ export async function POST(request: Request) {
       fromAccount: accountNames.get(item.from_account_id) ?? "Cuenta de origen",
       toAccount: accountNames.get(item.to_account_id) ?? "Cuenta de destino",
     }));
-    const currentTransfersCount = transferContextRows?.filter((item) =>
-      item.currency === currency && item.created_at.slice(0, 10) >= from && item.created_at.slice(0, 10) <= today
-    ).length ?? 0;
-    currentSummary.movementsCount += currentTransfersCount;
-    if (previousSummary) {
-      previousSummary.movementsCount += transferContextRows?.filter((item) =>
-        item.currency === currency && item.created_at.slice(0, 10) >= previousFrom && item.created_at.slice(0, 10) <= previousTo
-      ).length ?? 0;
-    }
+    const tomorrow = new Date(`${today}T00:00:00-03:00`);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const currentTransferQuery = supabase.from("account_transfers").select("id", { count: "exact", head: true })
+      .eq("user_id", authData.user.id).eq("currency", currency)
+      .gte("created_at", `${from}T00:00:00-03:00`).lt("created_at", tomorrow.toISOString());
+    const previousTransferQuery = supabase.from("account_transfers").select("id", { count: "exact", head: true })
+      .eq("user_id", authData.user.id).eq("currency", currency)
+      .gte("created_at", `${previousFrom}T00:00:00-03:00`).lt("created_at", `${from}T00:00:00-03:00`);
+    const [{ count: currentTransfersCount, error: currentTransferCountError }, { count: previousTransfersCount, error: previousTransferCountError }] = await Promise.all([
+      currentTransferQuery,
+      isGold ? previousTransferQuery : Promise.resolve({ count: 0, error: null }),
+    ]);
+    if (currentTransferCountError) throw currentTransferCountError;
+    if (previousTransferCountError) throw previousTransferCountError;
+    currentSummary.movementsCount += currentTransfersCount ?? 0;
+    if (previousSummary) previousSummary.movementsCount += previousTransfersCount ?? 0;
     const profileContext = {
       payFrequency: profile?.pay_frequency ?? "not_set",
       typicalIncome: profile?.typical_income == null ? null : Number(profile.typical_income),
