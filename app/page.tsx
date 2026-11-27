@@ -19,7 +19,7 @@ export default function Home() {
               {navigation.map((item) => <a key={item.href} href={item.href} className={`nav-item ${item.href === "/" ? "active" : ""}`}><NavigationIcon name={item.icon as NavigationIconName} className="nav-item-icon" /><span>{item.label}</span></a>)}
             </nav>
             <div className="nav-label" style={{ marginTop: 28 }}>CUENTA</div>
-            <nav className="nav-list"><a className="nav-item" href="/perfil"><NavigationIcon name="user" className="nav-item-icon" /><span>Perfil</span></a></nav>
+            <nav className="nav-list"><a className="nav-item" href="/perfil"><NavigationIcon name="user" className="nav-item-icon" /><span>Perfil</span></a><a className="nav-item" href="/configuracion"><NavigationIcon name="settings" className="nav-item-icon" /><span>Configuración</span></a></nav>
             <div className="sidebar-footer">Personal Finance Intelligence<br />Version 0.1.0</div>
           </aside>
           <main className="main-content">
