@@ -10,13 +10,17 @@ Ayudar a gastar menos en compras planificadas comparando productos equivalentes 
 
 ## 2. Funciones
 
-1. **Listas de compras:** crear listas por texto o imagen, cantidades, presentaciones y marcas preferidas.
-2. **Presupuesto de compra:** definir límite y detectar qué productos elevan el total; sugerir alternativas sin presionar a comprar.
-3. **Comparación de comercios:** comparar mismo producto/presentación en supermercados, farmacias y comercios admitidos.
-4. **Descuentos y promociones:** cupones, bancos, tarjetas y promociones con fuente, vigencia, requisitos, restricciones y condiciones.
-5. **Alternativas económicas:** marcas, variantes y tamaños comparables; normalizar precio por kg, litro o unidad y explicar diferencias.
-6. **Optimización de canasta:** comparar compra en un solo comercio frente a varios; considerar entrega, mínimo de compra, distancia, transporte y otros costes.
-7. **Análisis de ahorro:** estimar oportunidades y registrar ahorro realizado solo cuando el usuario confirme el precio real de compra.
+0. **Calculadora básica Free:** el usuario ingresa cuánto puede separar por mes y ve proyecciones aritméticas desde 2, 3, 6 y 12 meses. Debe aclarar que no incluye intereses, inflación, retiros ni garantiza resultados; no recomienda un importe sin evaluar capacidad.
+1. **Operación de Ahorro (Plus):** planes prediseñados y personalizados a partir de un importe y plazo elegidos. FINANCE: ALGORITMO solo puede recomendar aportes después de evaluar ingresos, gastos esenciales, compromisos, reservas y objetivos autorizados. Permitir reducir, pausar o cancelar sin penalizaciones.
+
+
+2. **Listas de compras:** crear listas por texto o imagen, cantidades, presentaciones y marcas preferidas.
+3. **Presupuesto de compra:** definir límite y detectar qué productos elevan el total; sugerir alternativas sin presionar a comprar.
+4. **Comparación de comercios:** comparar mismo producto/presentación en supermercados, farmacias y comercios admitidos.
+5. **Descuentos y promociones:** cupones, bancos, tarjetas y promociones con fuente, vigencia, requisitos, restricciones y condiciones.
+6. **Alternativas económicas:** marcas, variantes y tamaños comparables; normalizar precio por kg, litro o unidad y explicar diferencias.
+7. **Optimización de canasta:** comparar compra en un solo comercio frente a varios; considerar entrega, mínimo de compra, distancia, transporte y otros costes.
+8. **Análisis de ahorro:** estimar oportunidades y registrar ahorro realizado solo cuando el usuario confirme el precio real de compra.
 
 ## 3. Canasta mensual familiar
 
@@ -98,7 +102,7 @@ Modo Ahorro completo es Plus. Free puede ver una presentación o vista previa y 
 - Persistencia, endpoints, integración de comercios y precios autorizados no están completos.
 - No activar ofertas hasta validar licencia, calidad, frescura, seguridad y coste total.
 
-## 11. Criterios de aceptación
+## 11. Primera entrega prevista\n\n- Free: calculadora con aporte mensual ingresado por la persona y proyecciones a 2, 3, 6 y 12 meses.\n- Plus: Operación de Ahorro y herramientas de planificación/compras; las comparaciones y ofertas reales permanecen desactivadas hasta integrar fuentes autorizadas.\n- Las notificaciones de seguimiento requieren preferencias/permisos y una fuente de datos persistente; no se simulan como activas en esta primera interfaz.\n- La primera interfaz no persiste aún el plan ni la lista en Supabase; no debe presentarse como seguimiento automático.\n\n## 12. Criterios de aceptación
 
 - Comparaciones de productos equivalentes y cantidades normalizadas.
 - Coste total considera gastos conocidos y condiciones.
