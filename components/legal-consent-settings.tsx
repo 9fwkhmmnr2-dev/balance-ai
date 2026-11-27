@@ -27,10 +27,7 @@ export default function LegalConsentSettings() {
   const [acceptance, setAcceptance] = useState<Acceptance | null>(null);
   const [birthDate, setBirthDate] = useState("");
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-  const [terms, setTerms] = useState(false);
-  const [privacy, setPrivacy] = useState(false);
-  const [veraTerms, setVeraTerms] = useState(false);
-  const [veraPrivacy, setVeraPrivacy] = useState(false);
+  const [allLegalAccepted, setAllLegalAccepted] = useState(false);
   const [aiConsent, setAiConsent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,8 +55,8 @@ export default function LegalConsentSettings() {
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(""); setMessage("");
-    if (!birthDate || !ageConfirmed || !terms || !privacy || !veraTerms || !veraPrivacy) {
-      setError("Completá la fecha de nacimiento y todas las confirmaciones obligatorias.");
+    if (!birthDate || !ageConfirmed || !allLegalAccepted) {
+      setError("Completá la fecha de nacimiento y aceptá las condiciones obligatorias.");
       return;
     }
     setSaving(true);
@@ -139,22 +136,28 @@ export default function LegalConsentSettings() {
         <label style={labelStyle}><input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} required style={{ marginTop: 4 }} />Confirmo que tengo 18 años o más y que la fecha indicada es correcta.</label>
         <details style={{ border: "1px solid #34363D", borderRadius: 10, padding: 12, background: "#191B22" }}>
           <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Permisos y condiciones de uso</summary>
-          <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
-            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Consultá las condiciones generales de FINANCE.TRACK, las condiciones específicas de VERA y cómo se procesan los datos.</p>
-            <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Términos y Condiciones</Link>
-            <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Política de Privacidad</Link>
+          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+            <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>FINANCE.TRACK · Condiciones generales</p>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Regulan el acceso, las responsabilidades de la persona titular, las funciones disponibles y las limitaciones del servicio.</p>
+            <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Leer Términos y Condiciones</Link>
+            <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Privacidad y datos personales</p>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Explica qué información se recopila, para qué se utiliza, cómo se protege y qué controles tiene la persona titular.</p>
+            <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Leer Política de Privacidad</Link>
+            <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Condiciones específicas de VERA</p>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>VERA ofrece análisis financiero informativo; no reemplaza asesoramiento profesional ni garantiza resultados. Sus respuestas pueden contener errores y deben verificarse.</p>
+            <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Procesamiento mediante inteligencia artificial</p>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Si se autoriza, los mensajes y datos necesarios pueden enviarse a proveedores externos de IA habilitados. La autorización puede revocarse desde Perfil; al hacerlo, las funciones que dependan de esos proveedores dejan de estar disponibles.</p>
+            <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Edad mínima</p>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>VERA está destinada exclusivamente a personas titulares mayores de 18 años. La verificación debe completarla la propia persona titular.</p>
           </div>
         </details>
-        <label style={labelStyle}><input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} required style={{ marginTop: 4 }} />Acepto los Términos y Condiciones generales de FINANCE.TRACK.</label>
-        <label style={labelStyle}><input type="checkbox" checked={privacy} onChange={e => setPrivacy(e.target.checked)} required style={{ marginTop: 4 }} />Acepto la Política de Privacidad general de FINANCE.TRACK.</label>
-        <label style={labelStyle}><input type="checkbox" checked={veraTerms} onChange={e => setVeraTerms(e.target.checked)} required style={{ marginTop: 4 }} />Acepto los Términos y Condiciones específicos de VERA.</label>
-        <label style={labelStyle}><input type="checkbox" checked={veraPrivacy} onChange={e => setVeraPrivacy(e.target.checked)} required style={{ marginTop: 4 }} />Acepto la Política de Privacidad específica de VERA.</label>
+        <label style={labelStyle}><input type="checkbox" checked={allLegalAccepted} onChange={e => setAllLegalAccepted(e.target.checked)} required style={{ marginTop: 4 }} />Leí y acepto en una sola confirmación los Términos y Condiciones y las Políticas de Privacidad de FINANCE.TRACK y VERA.</label>
         <div style={{ borderTop: "1px solid #34363D", paddingTop: 14 }}>
           <label style={labelStyle}><input type="checkbox" checked={aiConsent} onChange={e => setAiConsent(e.target.checked)} style={{ marginTop: 4 }} /><span>Autorizo por separado el procesamiento de mis mensajes y datos financieros mediante proveedores externos de IA, cuando la función y el proveedor estén habilitados. Este permiso es opcional y puedo revocarlo.</span></label>
         </div>
         {error && <p role="alert" style={{ color: "#E6A39B", fontSize: 12, lineHeight: 1.5 }}>{error}</p>}
         {message && <p role="status" style={{ color: "#9BC7A5", fontSize: 12, lineHeight: 1.5 }}>{message}</p>}
-        <button type="submit" disabled={saving} style={{ border: 0, borderRadius: 9, padding: 13, background: "#C8A96B", color: "#17130B", fontWeight: 700, opacity: saving ? .65 : 1 }}>{saving ? "Guardando aceptaciones…" : "Actualizar permisos y aceptaciones"}</button>
+        <button type="submit" disabled={saving} style={{ border: 0, borderRadius: 9, padding: 13, background: "#C8A96B", color: "#17130B", fontWeight: 700, opacity: saving ? .65 : 1 }}>{saving ? "Guardando aceptaciones…" : "Guardar y continuar"}</button>
       </form>
     </section>
   );
