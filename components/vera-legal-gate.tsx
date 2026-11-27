@@ -3,12 +3,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { VERA_PRIVACY_VERSION, VERA_TERMS_VERSION } from "@/lib/legal-versions";
+import { PRIVACY_VERSION, TERMS_VERSION, VERA_PRIVACY_VERSION, VERA_TERMS_VERSION } from "@/lib/legal-versions";
 import FinanceTrackLoader from "./finance-track-loader";
 
 export default function VeraLegalGate({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(true);
   const [accepted, setAccepted] = useState(false);
+  const [blockedMessage, setBlockedMessage] = useState("");
   const [termsChecked, setTermsChecked] = useState(false);
   const [privacyChecked, setPrivacyChecked] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -25,7 +26,7 @@ export default function VeraLegalGate({ children }: { children: ReactNode }) {
     }
     const { data, error: queryError } = await supabase
       .from("registration_acceptances")
-      .select("vera_terms_version, vera_privacy_version")
+      .select("age_eligible, terms_version, privacy_version, ai_data_consent, vera_terms_version, vera_privacy_version")
       .eq("user_id", auth.user.id)
       .maybeSingle();
 
@@ -34,9 +35,24 @@ export default function VeraLegalGate({ children }: { children: ReactNode }) {
       setChecking(false);
       return;
     }
+    if (!data || data.age_eligible !== true) {
+      setBlockedMessage("VERA está disponible únicamente para cuentas cuya persona titular tenga 18 años o más. La persona titular debe completar la verificación desde Perfil.");
+      setChecking(false);
+      return;
+    }
+    if (data.terms_version !== TERMS_VERSION || data.privacy_version !== PRIVACY_VERSION) {
+      setBlockedMessage("Primero hay que actualizar los términos y la política de privacidad generales desde Perfil.");
+      setChecking(false);
+      return;
+    }
+    if (data.ai_data_consent !== true) {
+      setBlockedMessage("La persona titular debe autorizar el procesamiento mediante proveedores de IA desde Perfil para utilizar VERA.");
+      setChecking(false);
+      return;
+    }
     setAccepted(
-      data?.vera_terms_version === VERA_TERMS_VERSION &&
-      data?.vera_privacy_version === VERA_PRIVACY_VERSION
+      data.vera_terms_version === VERA_TERMS_VERSION &&
+      data.vera_privacy_version === VERA_PRIVACY_VERSION
     );
     setChecking(false);
   }
@@ -81,6 +97,16 @@ export default function VeraLegalGate({ children }: { children: ReactNode }) {
 
   if (checking) return <FinanceTrackLoader message="Verificando las condiciones de VERA" />;
   if (accepted) return <>{children}</>;
+  if (blockedMessage) return (
+    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: "#090A0D", color: "#F2F0EB" }}>
+      <section style={{ width: "100%", maxWidth: 560, padding: 28, borderRadius: 18, border: "1px solid #34363D", background: "#17191F" }}>
+        <p style={{ color: "#C8A96B", fontSize: 11, letterSpacing: 2, fontWeight: 700 }}>FINANCE TRACK · VERA</p>
+        <h1 style={{ fontSize: 25, margin: "10px 0" }}>Requisitos para utilizar VERA</h1>
+        <p style={{ color: "#AAA7B0", fontSize: 14, lineHeight: 1.65 }}>{blockedMessage}</p>
+        <Link href="/perfil" style={{ display: "inline-block", marginTop: 18, color: "#D8B66A", textDecoration: "underline" }}>Ir a Perfil</Link>
+      </section>
+    </main>
+  );
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 20, background: "#090A0D", color: "#F2F0EB" }}>
