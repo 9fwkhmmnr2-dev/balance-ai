@@ -60,3 +60,38 @@
 .stockNotice p{margin-top:8px;color:var(--market-gray);font-size:12px;line-height:1.65}
 @media(max-width:700px){.header{margin-bottom:20px}.toolbar{align-items:stretch;flex-direction:column}.toolbar select{max-width:none;width:100%}.toolbar button{width:100%}.metrics{grid-template-columns:1fr}.groupContent{padding:12px}.marketGroupSummary{align-items:flex-start;padding:15px;font-size:13px}.groupMeta{font-size:10px}.source{align-items:flex-start;flex-direction:column}.metricCard p{min-height:0}.metricCard{padding:17px}.metricTop{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.metricCard,.toolbar button{transition:none}}
+
+.favoriteButton{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:34px;margin-top:12px;padding:7px 11px;border:1px solid #51452D;border-radius:999px;background:#211E18;color:var(--market-gold-text);font-size:11px;font-weight:800;line-height:1.3;cursor:pointer;transition:background .2s ease,border-color .2s ease}
+.favoriteButton:hover,.favoriteButton.isActive{background:#332A1B;border-color:var(--market-champagne)}
+.favoriteButton:disabled{opacity:.55;cursor:wait}
+.favoriteButton:focus-visible{outline:3px solid rgba(200,169,107,.35);outline-offset:2px}
+.wallStreetPanel{margin:8px 0 22px;padding:20px;background:linear-gradient(135deg,#1D2028,#17191F);border:1px solid #51452D;border-radius:16px;box-shadow:0 5px 20px rgba(0,0,0,.2)}
+.panelHeading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.panelHeading h2{font-family:Manrope,sans-serif;color:var(--market-gold-text);font-size:23px;line-height:1.25;font-weight:800}
+.panelHeading p{margin-top:5px;color:var(--market-gray);font-size:12px;line-height:1.6}
+.marketBadge{flex:0 0 auto;border:1px solid var(--market-border);border-radius:999px;padding:6px 9px;color:var(--market-gray);font-size:10px;font-weight:800}
+.marketTiles,.companyGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.marketTile,.companyTile{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:15px;background:#20232C;border:1px solid #383B46;border-radius:12px}
+.marketTile h3,.companyTile h3{margin-top:7px;color:var(--market-ink);font-size:14px;line-height:1.4;font-weight:800}
+.marketTile p,.companyTile p{margin-top:5px;color:var(--market-gray);font-size:11px;line-height:1.55;min-height:36px}
+.tileSymbol{color:var(--market-gold-text);font-size:10px;font-weight:800;letter-spacing:.4px}
+.pendingQuote{display:block;margin-top:10px;color:var(--market-muted);font-size:10px;line-height:1.45}
+.marketFootnote{margin-top:13px;color:var(--market-gray);font-size:10px;line-height:1.6}
+.companyGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.favoritesPanel{margin:14px 0;padding:0 15px;background:#17191F;border:1px solid var(--market-border);border-radius:12px}
+.favoritesPanel>summary{display:flex;justify-content:space-between;gap:10px;align-items:center;min-height:48px;cursor:pointer;list-style:none;color:var(--market-ink);font-size:12px;font-weight:800}
+.favoritesPanel>summary::-webkit-details-marker{display:none}
+.favoritesPanel>summary small{color:var(--market-gold-text);font-size:10px}
+.favoriteChips{display:flex;flex-wrap:wrap;gap:8px;padding:0 0 14px}
+.favoriteChips button{border:1px solid #51452D;border-radius:999px;background:#211E18;color:var(--market-gold-text);padding:7px 10px;font-size:10px;font-weight:700}
+.favoriteChips button span{margin-left:4px;color:var(--market-gray)}
+.favoriteError{margin:10px 0;padding:10px 12px;border:1px solid #694646;border-radius:9px;color:#F0B5B5;background:#281C1C;font-size:11px;line-height:1.5}
+.veraEntryCard{display:flex;align-items:center;gap:16px;margin-top:24px;padding:20px;text-decoration:none;background:linear-gradient(120deg,#211E2C,#191A22);border:1px solid #55446F;border-radius:16px;box-shadow:0 5px 20px rgba(0,0,0,.2);transition:border-color .2s ease,transform .2s ease}
+.veraEntryCard:hover{border-color:#A48AD8;transform:translateY(-1px)}
+.veraMark{display:grid;place-items:center;flex:0 0 48px;width:48px;height:48px;border:1px solid #8B70C5;border-radius:15px;background:#2A2238;color:#D8C7F5;font-family:Manrope,sans-serif;font-size:25px;font-weight:800}
+.veraEntryCard h2{color:#E6DDF7;font-family:Manrope,sans-serif;font-size:17px;line-height:1.35;font-weight:800}
+.veraEntryCard p{margin-top:5px;color:var(--market-gray);font-size:11px;line-height:1.6}
+.veraEntryCard small{display:block;margin-top:7px;color:#B7A5D8;font-size:10px;line-height:1.45}
+.veraArrow{margin-left:auto;color:#C5B0EB;font-size:25px}
+@media(max-width:700px){.marketTiles{grid-template-columns:1fr}.companyGrid{grid-template-columns:1fr}.wallStreetPanel{padding:15px}.panelHeading{flex-direction:column}.veraEntryCard{align-items:flex-start;padding:16px}.veraMark{flex-basis:42px;width:42px;height:42px}.veraArrow{font-size:20px}}
+@media(prefers-reduced-motion:reduce){.favoriteButton,.veraEntryCard{transition:none}}
