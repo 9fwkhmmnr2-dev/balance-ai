@@ -69,6 +69,59 @@ function summarizeMovements(movements: MovementRow[]) {
   };
 }
 
+function detectRecurringExpenses(movements: Array<{
+  type: "income" | "expense";
+  description: string | null;
+  amount: number | string;
+  currency: string;
+  movement_date: string;
+}>) {
+  const groups = new Map<string, Array<{ description: string; amount: number; currency: string; date: string }>>();
+  for (const movement of movements) {
+    if (movement.type !== "expense" || !movement.description?.trim()) continue;
+    const normalized = movement.description.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase().replace(/\b\d+\b/g, " ").replace(/[^a-z]/g, " ").replace(/\s+/g, " ").trim();
+    if (normalized.length < 3) continue;
+    const amount = Number(movement.amount);
+    if (!Number.isFinite(amount) || amount <= 0) continue;
+    const key = normalized + "|" + movement.currency;
+    const list = groups.get(key) ?? [];
+    list.push({ description: movement.description.trim().slice(0, 80), amount, currency: movement.currency, date: movement.movement_date });
+    groups.set(key, list);
+  }
+
+  const candidates: Array<{ description: string; amount: number; currency: string; frequency: "weekly" | "monthly" | "yearly"; occurrences: number; lastDate: string; confidence: "possible" | "likely" }> = [];
+  for (const list of groups.values()) {
+    const ordered = list.sort((a, b) => a.date.localeCompare(b.date))
+      .filter((item, index, items) => index === 0 || item.date !== items[index - 1].date);
+    if (ordered.length < 2) continue;
+    const amounts = ordered.map((item) => item.amount).sort((a, b) => a - b);
+    const median = amounts[Math.floor(amounts.length / 2)];
+    const stable = ordered.filter((item) => Math.abs(item.amount - median) / median <= 0.15);
+    if (stable.length < 2) continue;
+    const gaps = stable.slice(1).map((item, index) =>
+      Math.round((Date.parse(item.date + "T00:00:00Z") - Date.parse(stable[index].date + "T00:00:00Z")) / 86400000)
+    );
+    const monthly = gaps.filter((gap) => gap >= 25 && gap <= 35).length;
+    const weekly = gaps.filter((gap) => gap >= 6 && gap <= 8).length;
+    const yearly = gaps.filter((gap) => gap >= 350 && gap <= 380).length;
+    const best = Math.max(monthly, weekly, yearly);
+    if (!best) continue;
+    const frequency = best === monthly ? "monthly" : best === weekly ? "weekly" : "yearly";
+    const matching = stable.length;
+    candidates.push({
+      description: stable[stable.length - 1].description,
+      amount: Math.round((stable.reduce((sum, item) => sum + item.amount, 0) / matching) * 100) / 100,
+      currency: stable[stable.length - 1].currency,
+      frequency,
+      occurrences: matching,
+      lastDate: stable[stable.length - 1].date,
+      confidence: matching >= 3 && best >= 2 ? "likely" : "possible",
+    });
+  }
+  return candidates.sort((a, b) => b.occurrences - a.occurrences).slice(0, 15);
+}
+
 function detectPurchase(messages: VeraMessage[]) {
   const userMessages = messages.filter((message) => message.role === "user").map((message) => message.content);
   const combined = userMessages.join("\n");
@@ -274,13 +327,14 @@ export async function POST(request: Request) {
 
     let financialPosition: VeraFinancialContext["financialPosition"];
     let decisionSimulation: VeraFinancialContext["decisionSimulation"];
+    let recurringExpenses: VeraFinancialContext["recurringExpenses"];
     if (isPlus) {
       const sixMonthsAgo = new Date(`${today}T00:00:00.000Z`);
       sixMonthsAgo.setUTCDate(sixMonthsAgo.getUTCDate() - 179);
       const positionFrom = sixMonthsAgo.toISOString().slice(0, 10);
       const [{ data: accountRows, error: accountError }, { data: balanceRows, error: balanceError }] = await Promise.all([
         supabase.from("financial_accounts").select("id, currency, initial_balance, is_archived").eq("user_id", authData.user.id).eq("currency", currency).eq("is_archived", false),
-        supabase.from("movements").select("account_id, type, amount, movement_date").eq("user_id", authData.user.id).eq("currency", currency).gte("movement_date", "2000-01-01").lte("movement_date", today).order("movement_date", { ascending: true }).limit(10000),
+        supabase.from("movements").select("account_id, type, amount, movement_date, description, currency").eq("user_id", authData.user.id).eq("currency", currency).gte("movement_date", "2000-01-01").lte("movement_date", today).order("movement_date", { ascending: true }).limit(10000),
       ]);
       if (accountError) throw accountError;
       if (balanceError) throw balanceError;
@@ -295,6 +349,7 @@ export async function POST(request: Request) {
       });
       const liquidBalance = accounts.length ? Array.from(balances.values()).reduce((sum, value) => sum + value, 0) : null;
       const recentMovements = accountMovements.filter((movement) => movement.movement_date >= positionFrom);
+      recurringExpenses = detectRecurringExpenses(recentMovements);
       const oldest = recentMovements[0]?.movement_date;
       const sampleDays = oldest
         ? Math.max(1, Math.min(180, Math.ceil((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${oldest}T00:00:00Z`)) / 86400000) + 1))
@@ -478,6 +533,7 @@ export async function POST(request: Request) {
       experience: isPlus ? "plus" : "standard",
       ...(financialPosition ? { financialPosition } : {}),
       ...(decisionSimulation ? { decisionSimulation } : {}),
+      ...(isPlus ? { recurringExpenses: recurringExpenses ?? [] } : {}),
       ...(previousSummary ? {
         previousPeriod: {
           from: previousFrom,
