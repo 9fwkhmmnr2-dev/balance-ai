@@ -109,7 +109,7 @@ export default function LegalConsentSettings() {
     <section style={cardStyle}>
       <h2 style={{ fontSize: 17, margin: "0 0 7px" }}>Configuración de permisos</h2>
       <p style={{ color: "#A7A7AD", fontSize: 13, lineHeight: 1.6, marginBottom: 14 }}>
-        Revisá y actualizá desde acá la edad mínima, los términos, la privacidad y el permiso independiente para el procesamiento mediante IA.
+        Revisá y actualizá desde Configuración la edad mínima, los términos, la privacidad y el permiso independiente para el procesamiento mediante IA.
       </p>
       <div style={{ display: "grid", gap: 8, marginBottom: 16, padding: 12, borderRadius: 10, background: "#1D2027" }}>
         <p style={{ fontSize: 12, color: "#D5D1DC" }}>Estado actual</p>
@@ -139,7 +139,7 @@ export default function LegalConsentSettings() {
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Condiciones específicas de VERA</p>
             <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>VERA ofrece análisis financiero informativo; no reemplaza asesoramiento profesional ni garantiza resultados. Sus respuestas pueden contener errores y deben verificarse.</p>
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Procesamiento mediante inteligencia artificial</p>
-            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Si se autoriza, los mensajes y datos necesarios pueden enviarse a proveedores externos de IA habilitados. La autorización puede revocarse desde Perfil; al hacerlo, las funciones que dependan de esos proveedores dejan de estar disponibles.</p>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Si se autoriza, los mensajes y datos necesarios pueden enviarse a proveedores externos de IA habilitados. La autorización puede revocarse desde Configuración; al hacerlo, las funciones que dependan de esos proveedores dejan de estar disponibles.</p>
             <p style={{ color: "#E7D6B5", fontSize: 12, fontWeight: 600 }}>Edad mínima</p>
             <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>VERA está destinada exclusivamente a personas titulares mayores de 18 años. La verificación debe completarla la propia persona titular.</p>
           </div>
