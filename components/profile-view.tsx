@@ -96,6 +96,7 @@ export default function ProfileView() {
         const { data: commitmentData } = await supabase
           .from("financial_commitments")
           .select("id, name, category, amount, currency, frequency, due_date")
+          .eq("user_id", userData.user.id)
           .eq("is_active", true)
           .order("due_date", { ascending: true, nullsFirst: false });
         setCommitments((commitmentData ?? []) as Commitment[]);
@@ -113,6 +114,7 @@ export default function ProfileView() {
         const { data, error: movementsError } = await supabase
           .from("movements")
           .select("type, amount, currency, movement_date")
+          .eq("user_id", userData.user.id)
           .order("movement_date", { ascending: false });
 
         if (movementsError) throw movementsError;
