@@ -118,7 +118,7 @@ export default function VeraLegalGate({ children }: { children: ReactNode }) {
         </p>
         <div style={{ display: "grid", gap: 14, margin: "24px 0" }}>
           <details style={{ border: "1px solid #34363D", borderRadius: 10, padding: 12, background: "#1D2027" }}>
-            <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Leer términos y privacidad</summary>
+            <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Permisos y condiciones de uso</summary>
             <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
               <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Ver Términos y Condiciones</Link>
               <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Ver Política de Privacidad</Link>
