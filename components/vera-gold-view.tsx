@@ -5,14 +5,20 @@ import { supabase } from "@/lib/supabase";
 import styles from "./vera-gold.module.css";
 
 const features = [
-  ["Mayor capacidad para conversar", false, true],
-  ["Comparación avanzada de períodos", false, true],
+  ["Cuentas, movimientos y transferencias", true, true],
+  ["Presupuestos y objetivos básicos", true, true],
+  ["VERA: consultas básicas", true, true],
+  ["Resumen mensual básico", true, true],
+  ["Notificaciones esenciales", true, true],
+  ["Mayor capacidad para conversar y contexto ampliado", false, true],
+  ["Comparación avanzada de períodos y tendencias", false, true],
   ["Simulador de compras, pagos y decisiones", false, true],
   ["Planificación personalizada de objetivos", false, true],
   ["Lector de imágenes y PDF con contexto escrito", false, true],
   ["Cierre mensual inteligente con VERA", false, true],
-  ["Notificaciones personalizadas y alertas", false, "En desarrollo"],
-  ["VERA: Modo Ahorro inteligente", false, true],
+  ["VERA: Modo Ahorro (listas, presupuesto y comparación avanzada)", false, true],
+  ["Comparador de comercios y descuentos verificados", false, "En desarrollo"],
+  ["Notificaciones personalizadas y alertas avanzadas", false, "En desarrollo"],
   ["Análisis de archivos XLSX, CSV y DOCX", false, "En desarrollo"],
 ] as const;
 
@@ -60,6 +66,15 @@ export default function FinancePlusView() {
           <div className={styles.wordmark}>VERA <span>FINANCE PLUS</span></div>
           <h1>Más profundidad para entender tu dinero.</h1>
           <p>La misma VERA que ya conocés, con más capacidad para sostener conversaciones y profundizar tus análisis.</p>
+        </section>
+
+        <section className={styles.checkout}>
+          <div className={styles.sectionHeading}>
+            <div><span className={styles.eyebrow}>NUEVO MÓDULO PLUS</span><h2>VERA: Modo Ahorro</h2></div>
+            <span className={styles.goldPill}>EXCLUSIVO PLUS</span>
+          </div>
+          <p className={styles.note}>Prepará tu lista, definí un presupuesto y organizá tus compras. El comparador de precios y promociones se activará cuando existan fuentes verificadas.</p>
+          <a className={styles.buyButton} href="/finance-plus/ahorro" style={{display:"block",textAlign:"center",textDecoration:"none"}}>Abrir Modo Ahorro →</a>
         </section>
 
         <section className={styles.checkout} aria-label="Comparar planes y elegir FINANCE PLUS">
