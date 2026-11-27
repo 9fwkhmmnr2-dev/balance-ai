@@ -148,12 +148,12 @@ export default function VeraView() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showCorePanel, setShowCorePanel] = useState(false);
   const [showGoldPanel, setShowGoldPanel] = useState(false);
-  const [isGold, setIsGold] = useState(false);
+  const [isPlus, setIsPlus] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
   const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "nucleus-gold" | "focus" | "transform" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
-  const [goldWorkspaceMode, setGoldWorkspaceMode] = useState<"actions" | "planning" | null>(null);
+  const [plusWorkspaceMode, setPlusWorkspaceMode] = useState<"actions" | "planning" | null>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const attachmentRef = useRef<HTMLInputElement | null>(null);
   const [listening, setListening] = useState(false);
@@ -206,14 +206,14 @@ export default function VeraView() {
         cache: "no-store",
       });
       if (!response.ok) return;
-      const entitlement = await response.json() as { isGold?: boolean; accountId?: string };
+      const entitlement = await response.json() as { isPlus?: boolean; accountId?: string };
       if (!active) return;
       setAccountId(entitlement.accountId ?? "");
-      if (!entitlement.isGold) return;
-      setIsGold(true);
+      if (!entitlement.isPlus) return;
+      setIsPlus(true);
       let welcomeSeen = false;
       try {
-        const key = `vera-gold-welcome-seen:${entitlement.accountId}`;
+        const key = `finance-plus-welcome-seen:${entitlement.accountId}`;
         welcomeSeen = window.localStorage.getItem(key) === "true";
         if (!welcomeSeen) window.localStorage.setItem(key, "true");
       } catch {
@@ -450,7 +450,7 @@ export default function VeraView() {
   const visibleConversations = showArchived ? archived : conversations;
 
   return (
-    <div className={`vera-page${isGold ? " is-gold-active" : ""}${goldDemoPhase !== "idle" ? ` gold-demo-${goldDemoPhase}` : ""}`}>
+    <div className={`vera-page${isPlus ? " is-gold-active" : ""}${goldDemoPhase !== "idle" ? ` gold-demo-${goldDemoPhase}` : ""}`}>
       <style>{`
         .vera-page{--v:#a78bfa;--v2:#7c3aed;--ink:#09090d;--panel:#14121c;--line:rgba(196,181,253,.15);color:#f5f3fa;max-width:1000px;margin:0 auto;padding:12px 0 48px}
         .vera-shell{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(167,139,250,.22);border-radius:26px;background:radial-gradient(ellipse at 50% -10%,rgba(124,58,237,.22),transparent 48%),linear-gradient(155deg,#171020,#0d0a14 58%,#09080e);box-shadow:0 22px 65px rgba(0,0,0,.22)}
@@ -653,7 +653,7 @@ export default function VeraView() {
         <button className="vera-demo-continue" type="button" onClick={() => setGoldDemoPhase("dismissed")}>Continuar</button>
       </div>}
 
-      {showGoldWelcome && isGold && <div className="vera-gold-cinematic" role="dialog" aria-modal="true" aria-label="Bienvenida a FINANCE PLUS" onClick={() => setShowGoldWelcome(false)}>
+      {showGoldWelcome && isPlus && <div className="vera-gold-cinematic" role="dialog" aria-modal="true" aria-label="Bienvenida a FINANCE PLUS" onClick={() => setShowGoldWelcome(false)}>
         <button className="vera-gold-skip" type="button" onClick={() => setShowGoldWelcome(false)}>Omitir animación</button>
         <div className="vera-gold-sparks" aria-hidden="true">{Array.from({ length: 9 }, (_, index) => <i key={index} />)}</div>
         <div className="vera-gold-cinematic-content">
@@ -701,11 +701,11 @@ export default function VeraView() {
         </aside>
       </div>}
 
-      <section className={`vera-shell${sending ? " is-thinking" : ""}${isGold || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
+      <section className={`vera-shell${sending ? " is-thinking" : ""}${isPlus || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
 
         <section className="vera-chat" aria-label="Conversación con VERA">
           <div className="vera-gold-entry">
-            {isGold ? <span className="vera-gold-status" aria-label="Plan FINANCE PLUS activo">FINANCE PLUS</span> : <button className="vera-gold-trigger" type="button" aria-expanded={showGoldPanel} aria-controls="vera-gold-panel" onClick={() => setShowGoldPanel((current) => !current)}>✦ Mejorar a FINANCE PLUS</button>}
+            {isPlus ? <span className="vera-gold-status" aria-label="Plan FINANCE PLUS activo">FINANCE PLUS</span> : <button className="vera-gold-trigger" type="button" aria-expanded={showGoldPanel} aria-controls="vera-gold-panel" onClick={() => setShowGoldPanel((current) => !current)}>✦ Mejorar a FINANCE PLUS</button>}
           </div>
           {showGoldPanel && <section className="vera-gold-panel" id="vera-gold-panel" aria-label="Comparación de planes VERA">
             <div className="vera-gold-panel-head"><div><span className="vera-gold-panel-mark">FINANCETRACK / VERA</span><h2>Elegí cómo querés usar VERA.</h2><p className="vera-gold-panel-intro">VERA sigue siendo útil en Free. FINANCE PLUS suma más capacidad y análisis más profundos.</p></div><button className="vera-gold-close" type="button" onClick={() => setShowGoldPanel(false)} aria-label="Cerrar comparación">×</button></div>
@@ -716,13 +716,13 @@ export default function VeraView() {
               <tr><td>Comparaciones y análisis profundos</td><td>Básico</td><td>✓</td></tr>
               <tr><td>Documentos y planificación avanzada</td><td>—</td><td>En preparación</td></tr>
             </tbody></table></div>
-            <div className="vera-gold-panel-price"><div><strong>FINANCE PLUS desde USD 3,99/mes</strong><span>Plan anual propuesto: USD 39,99</span></div><a className="vera-gold-buy" href="/vera/gold">Ver precio y medios de pago <span aria-hidden="true">→</span></a></div>
+            <div className="vera-gold-panel-price"><div><strong>FINANCE PLUS desde USD 3,99/mes</strong><span>Plan anual propuesto: USD 39,99</span></div><a className="vera-gold-buy" href="/finance-plus">Ver precio y medios de pago <span aria-hidden="true">→</span></a></div>
             <p className="vera-gold-panel-note">Precios orientativos. La compra se habilitará cuando el cobro esté integrado y verificado.</p>
           </section>}
           <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
-                <VeraCore3D variant={isGold || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? "gold" : "violet"} className={`${sending ? "is-thinking" : ""} ${goldDemoPhase === "unstable" ? "is-demo-unstable" : ""} ${goldDemoPhase === "nucleus-gold" || goldDemoPhase === "focus" ? "is-demo-gold" : ""}`} label="Núcleo 3D de VERA" />
+                <VeraCore3D variant={isPlus || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? "gold" : "violet"} className={`${sending ? "is-thinking" : ""} ${goldDemoPhase === "unstable" ? "is-demo-unstable" : ""} ${goldDemoPhase === "nucleus-gold" || goldDemoPhase === "focus" ? "is-demo-gold" : ""}`} label="Núcleo 3D de VERA" />
               </button>
               {messages.length > 0 && <div className="vera-brand-copy"><strong>VERA</strong><small>Entendé tu dinero</small></div>}
             </div>
@@ -775,10 +775,10 @@ export default function VeraView() {
                   </section>
                   <section className="vera-tools-group gold">
                     <VeraIsotype className="vera-menu-isotype" /><span className="vera-tools-group-title">FINANCE PLUS</span>
-                    {isGold ? <>
+                    {isPlus ? <>
                       <button className="vera-tools-action gold" type="button" title="Compara ingresos, gastos y categorías con el período anterior equivalente; muestra variaciones y tendencias respaldadas por tus movimientos." onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
-                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("actions"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simulador de acciones</button>
-                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
+                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setPlusWorkspaceMode("actions"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simulador de acciones</button>
+                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setPlusWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
                     </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con FINANCE PLUS.
                         {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar FINANCE PLUS de prueba solo en Preview."); }}>Copiar ID para habilitar prueba FINANCE PLUS</button>}
@@ -799,7 +799,7 @@ export default function VeraView() {
           </div>
         </section>
       </section>
-      {goldWorkspaceMode && <VeraGoldWorkspace mode={goldWorkspaceMode} onClose={() => setGoldWorkspaceMode(null)} onSend={(text) => { setGoldWorkspaceMode(null); void sendMessage(text); }} />}
+      {plusWorkspaceMode && <VeraGoldWorkspace mode={plusWorkspaceMode} onClose={() => setPlusWorkspaceMode(null)} onSend={(text) => { setPlusWorkspaceMode(null); void sendMessage(text); }} />}
     </div>
   );
 }
