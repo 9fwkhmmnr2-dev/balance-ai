@@ -25,6 +25,17 @@ export type VeraFinancialContext = {
   netBalance: number;
   movementsCount: number;
   categoryTotals: Array<{ category: string; amount: number }>;
+  profile?: {
+    payFrequency: string;
+    typicalIncome: number | null;
+    incomeSources: string[];
+    expenseCategories: string[];
+    protectedReserveAmount: number | null;
+    protectedReserveCurrency: string | null;
+  };
+  accounts?: Array<{ name: string; type: string; currency: string; balance: number; archived: boolean }>;
+  commitments?: Array<{ name: string; category: string; amount: number; currency: string; frequency: string; dueDate: string | null }>;
+  transfers?: Array<{ date: string; amount: number; currency: string; fromAccount: string; toAccount: string }>;
   previousPeriod?: {
     from: string;
     to: string;
