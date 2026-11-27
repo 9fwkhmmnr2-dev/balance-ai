@@ -102,7 +102,7 @@ Help users spend less on planned purchases by comparing trustworthy local offers
 ## Billing and go-to-market
 
 - Keep checkout disabled until the plan matrix, costs, legal terms, taxes, billing ownership and provider contracts are validated.
-- Existing UI price is provisional only: USD 3.99/month and USD 39.99/year; validate before publishing.
+- Current pricing hypothesis: USD 6.99/month or USD 59.99/year. Compared with 12 monthly payments (USD 83.88), the annual price is approximately 28.5% lower; communicate “casi 30%”, not an exact 30% discount. A beta hypothesis of USD 3.99/month or USD 29.99/year was also discussed, but duration and eligibility remain undecided. Validate costs, taxes, fees, market and willingness to pay before publishing. See `docs/product/free-vs-plus-matrix.md`.
 - Payment account and contracts must be held by an eligible adult/legal business representative; do not bypass provider age or identity requirements.
 - Later billing work: provider adapter, signed webhook verification, idempotent subscription updates, cancellation/expiry handling, receipts and support/refund flow.
 - Later marketing: public landing page, feature comparison, onboarding, product demos, launch content and referral measurement. Start organic and measure activation, retention and conversion before paid acquisition.
@@ -128,3 +128,15 @@ Help users spend less on planned purchases by comparing trustworthy local offers
 ## Acquisition, personalization and notifications
 
 The approved design for user acquisition and ethical conversion to FINANCE PLUS is documented in [`docs/marketing/plus-acquisition-and-personalization.md`](./marketing/plus-acquisition-and-personalization.md). It connects TikTok discovery, the guided PERFIL FINANCE flow, declared interests and goals, FINANCE: ALGORITMO, personalized recommendations, and transparent Plus previews. It also separates service/security notifications, personalized recommendations, and promotional communications with independent controls and consent. Treat all marketing examples and prices as illustrative until verified. This is a design specification only; it does not authorize deployment or production activation.
+
+
+## Canonical product specifications
+
+The detailed decisions are consolidated in these documents:
+- [FINANCE: ALGORITMO architecture](./product/finance-algorithm-spec.md)
+- [VERA: Modo Ahorro](./product/modo-ahorro-spec.md)
+- [FINANCE FREE vs. FINANCE PLUS](./product/free-vs-plus-matrix.md)
+- [Acquisition, personalization and notifications](./marketing/plus-acquisition-and-personalization.md)
+- [Registration and guided PERFIL FINANCE](./onboarding-and-legal-flow.md)
+
+These are design specifications, not claims that all capabilities are implemented. Keep the release restrictions above in force.
