@@ -75,7 +75,7 @@ export default function LoginPage() {
         if (acceptanceError || !acceptance ||
             acceptance.terms_version !== TERMS_VERSION ||
             acceptance.privacy_version !== PRIVACY_VERSION) {
-          router.replace("/legal/accept");
+          router.replace("/perfil");
         } else {
           router.replace("/");
         }
