@@ -64,9 +64,18 @@ export default function LegalConsentSettings() {
     }
     setSaving(true);
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (sessionError || !token) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+      // Reuse the current session when valid; renew it automatically before posting if it is near expiry.
+      let { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw new Error("No pudimos comprobar tu sesión. Actualizá la página e intentá nuevamente.");
+      let session = sessionData.session;
+      const expiresSoon = !session?.expires_at || session.expires_at <= Math.floor(Date.now() / 1000) + 60;
+      if (session && expiresSoon) {
+        const refreshed = await supabase.auth.refreshSession();
+        if (!refreshed.error && refreshed.data.session) session = refreshed.data.session;
+        else throw new Error("No pudimos renovar tu sesión automáticamente. Cerrá y volvé a ingresar para continuar.");
+      }
+      const token = session?.access_token;
+      if (!token) throw new Error("Tu sesión ya no está activa. Volvé a ingresar para continuar.");
 
       const generalResponse = await fetch("/api/legal/accept", {
         method: "POST",
