@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { AI_CONSENT_VERSION, PRIVACY_VERSION, TERMS_VERSION } from "@/lib/legal-versions";
+import { AI_CONSENT_VERSION, PRIVACY_VERSION, TERMS_VERSION, VERA_PRIVACY_VERSION, VERA_TERMS_VERSION } from "@/lib/legal-versions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -61,6 +61,9 @@ export async function POST(request: Request) {
       ...(verifiesAge ? { age_eligible: true, minimum_age_years: 18 } : {}),
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
+      vera_terms_version: VERA_TERMS_VERSION,
+      vera_privacy_version: VERA_PRIVACY_VERSION,
+      vera_accepted_at: acceptedAt,
       ai_data_consent: body.aiDataConsent,
       ai_consent_version: body.aiDataConsent ? AI_CONSENT_VERSION : null,
       accepted_at: acceptedAt,
