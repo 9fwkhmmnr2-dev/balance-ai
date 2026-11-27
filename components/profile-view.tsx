@@ -4,7 +4,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import SocialProfilePanel from "./social-profile-panel";
-import LegalConsentSettings from "./legal-consent-settings";
 
 type Profile = {
   pay_frequency: string;
@@ -47,6 +46,19 @@ const frequencies: Record<string, string> = {
   none: "Sin ingresos actualmente",
   not_set: "No configurada"
 };
+
+
+function categoryLabel(value: string) {
+  const labels: Record<string, string> = {
+    housing: "Vivienda", food: "Alimentación", education: "Educación",
+    transport: "Transporte", services: "Servicios", health: "Salud",
+    installment: "Cuotas", subscription: "Suscripciones",
+    other_essential: "Otros gastos esenciales", other_commitment: "Otro compromiso",
+    entertainment: "Entretenimiento", groceries: "Alimentación",
+    rent: "Alquiler", utilities: "Servicios",
+  };
+  return labels[value.trim().toLocaleLowerCase("en")] ?? value;
+}
 
 export default function ProfileView() {
   const [email, setEmail] = useState("");
@@ -275,7 +287,7 @@ export default function ProfileView() {
           Categorías de gastos habituales
         </p>
         <p style={{ marginTop: 8, fontSize: 14 }}>
-          {profile?.expense_categories?.join(", ") || "Sin información"}
+          {profile?.expense_categories?.map(categoryLabel).join(", ") || "Sin información"}
         </p>
       </section>
 
@@ -289,7 +301,7 @@ export default function ProfileView() {
               <div key={item.id} style={{ display: "flex", justifyContent: "space-between", gap: 14, paddingBottom: 10, borderBottom: "1px solid rgba(148,163,184,.16)" }}>
                 <div>
                   <strong style={{ fontSize: 14 }}>{item.name}</strong>
-                  <p className="card-note" style={{ marginTop: 4 }}>{item.category} · {item.frequency === "weekly" ? "Semanal" : item.frequency === "monthly" ? "Mensual" : "Anual"}{item.due_date ? " · Próximo vencimiento: " + item.due_date : ""}</p>
+                  <p className="card-note" style={{ marginTop: 4 }}>{categoryLabel(item.category)} · {item.frequency === "weekly" ? "Semanal" : item.frequency === "monthly" ? "Mensual" : "Anual"}{item.due_date ? " · Próximo vencimiento: " + item.due_date : ""}</p>
                 </div>
                 <strong style={{ whiteSpace: "nowrap", fontSize: 14 }}>{new Intl.NumberFormat("es-AR", { style: "currency", currency: item.currency, maximumFractionDigits: 2 }).format(Number(item.amount))}</strong>
               </div>
@@ -345,7 +357,6 @@ export default function ProfileView() {
         </p>
       </section>
 
-      <LegalConsentSettings />
     </div>
   );
 }
