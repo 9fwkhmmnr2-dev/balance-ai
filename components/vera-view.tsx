@@ -157,6 +157,7 @@ export default function VeraView() {
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<File | null>(null);
   const [attachmentContext, setAttachmentContext] = useState("");
+  const [attachmentPreviewUrl, setAttachmentPreviewUrl] = useState("");
   const attachmentRef = useRef<HTMLInputElement | null>(null);
   const [listening, setListening] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -164,6 +165,16 @@ export default function VeraView() {
   const [savingTitle, setSavingTitle] = useState(false);
   const speechRecognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const composeRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (!selectedAttachment?.type.startsWith("image/")) {
+      setAttachmentPreviewUrl("");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(selectedAttachment);
+    setAttachmentPreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [selectedAttachment]);
 
   const getToken = useCallback(async () => {
     const { data, error: sessionError } = await supabase.auth.getSession();
@@ -783,6 +794,7 @@ export default function VeraView() {
           {messages.length === 0 && <div className="vera-starters"><div className="vera-starters-label">Algunas ideas para empezar</div>{starters.map((starter) => <button className="vera-starter" key={starter} type="button" disabled={sending} onClick={() => void sendMessage(starter)}>{starter}</button>)}</div>}
           {error && <div className="vera-error" role="alert">{error}</div>}
           {selectedAttachment && <section aria-label="Información adicional del archivo" style={{ margin: "0 16px 12px", padding: "14px", border: "1px solid rgba(196,181,253,.28)", borderRadius: "16px", background: "rgba(24,18,36,.92)" }}>
+            {attachmentPreviewUrl && <img src={attachmentPreviewUrl} alt="Vista previa del documento seleccionado" style={{ display: "block", width: "100%", maxHeight: "220px", objectFit: "contain", borderRadius: "10px", marginBottom: "10px", background: "#100d17" }} />}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", marginBottom: "8px" }}>
               <strong style={{ fontSize: "13px", overflowWrap: "anywhere" }}>Archivo: {selectedAttachment.name}</strong>
               <button type="button" onClick={() => { setSelectedAttachment(null); setAttachmentContext(""); }} disabled={attachmentBusy} aria-label="Quitar archivo" style={{ color: "#d8ccf7", background: "transparent", border: 0, fontSize: "20px" }}>×</button>
