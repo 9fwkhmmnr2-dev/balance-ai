@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { getFinancePlanAccess } from "@/lib/server/gold-access";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,11 +21,18 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return NextResponse.json({ error: "Tu sesión venció." }, { status: 401 });
 
-  const isPreview = process.env.VERCEL_ENV === "preview";
-  return NextResponse.json({
-    isGold: isGoldEnabledForUser(data.user),
-    accountId: data.user.id,
-    previewAccessPending: isPreview && !process.env.VERA_GOLD_PREVIEW_USER_ID,
-    previewOnly: isPreview,
-  }, { headers: { "Cache-Control": "no-store" } });
+  try {
+    const planAccess = await getFinancePlanAccess(supabase, data.user.id);
+    const isPreview = process.env.VERCEL_ENV === "preview";
+    return NextResponse.json({
+      plan: planAccess.plan,
+      isPlus: planAccess.isPlus,
+      // Temporary compatibility for clients not yet renamed from VERA GOLD.
+      isGold: planAccess.isPlus,
+      accountId: data.user.id,
+      previewOnly: isPreview,
+    }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ error: "No pudimos verificar tu plan. Intentá nuevamente." }, { status: 503 });
+  }
 }
