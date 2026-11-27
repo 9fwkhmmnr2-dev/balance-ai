@@ -106,7 +106,7 @@ function isPeriod(value: unknown): value is Period {
 }
 
 function isMessages(value: unknown): value is VeraMessage[] {
-  if (!Array.isArray(value) || value.length < 1 || value.length > 12) return false;
+  if (!Array.isArray(value) || value.length < 1 || value.length > 32) return false;
   return value.every((item) =>
     item &&
     (item.role === "user" || item.role === "model") &&
@@ -245,6 +245,9 @@ export async function POST(request: Request) {
     const from = startDate(input.period, today);
     const planAccess = await getFinancePlanAccess(supabase, authData.user.id);
     const isPlus = planAccess.isPlus;
+    if (!isPlus && input.messages.length > 12) {
+      return NextResponse.json({ error: "El historial extendido de VERA requiere FINANCE PLUS." }, { status: 403 });
+    }
     const previousFrom = previousStartDate(input.period, from);
     const previousToDate = new Date(`${from}T00:00:00.000Z`);
     previousToDate.setUTCDate(previousToDate.getUTCDate() - 1);
