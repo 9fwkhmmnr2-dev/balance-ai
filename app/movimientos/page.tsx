@@ -158,6 +158,7 @@ function MovementsContent() {
   }, [filtered]);
 
   function startEditing(item: Movement) {
+    if (item.type === "transfer") return;
     setNotice("");
     setEditing(item);
     setDraft({
