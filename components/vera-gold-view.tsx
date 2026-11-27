@@ -12,7 +12,7 @@ const features = [
   ["Lector de imágenes y PDF con contexto escrito", false, true],
   ["Cierre mensual inteligente con VERA", false, true],
   ["Notificaciones personalizadas y alertas", false, "En desarrollo"],
-  ["Detector de gastos recurrentes y suscripciones", false, true],
+  ["VERA: Modo Ahorro inteligente", false, true],
   ["Análisis de archivos XLSX, CSV y DOCX", false, "En desarrollo"],
 ] as const;
 
