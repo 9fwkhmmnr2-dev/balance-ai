@@ -153,7 +153,7 @@ export default function VeraView() {
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
   const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "nucleus-gold" | "focus" | "transform" | "complete" | "dismissed">("idle");
   const [showTools, setShowTools] = useState(false);
-  const [goldWorkspaceMode, setGoldWorkspaceMode] = useState<"purchase" | "decision" | "planning" | null>(null);
+  const [goldWorkspaceMode, setGoldWorkspaceMode] = useState<"actions" | "planning" | null>(null);
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const attachmentRef = useRef<HTMLInputElement | null>(null);
   const [listening, setListening] = useState(false);
@@ -777,8 +777,7 @@ export default function VeraView() {
                     {isGold ? <>
                       <button className="vera-tools-action gold" type="button" title="Compara ingresos, gastos y categorías con el período anterior equivalente; muestra variaciones y tendencias respaldadas por tus movimientos." onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
                       <p className="vera-tools-locked">Compara ingresos, gastos y categorías contra el período anterior equivalente. Detecta variaciones en dinero y porcentaje, tendencias y datos faltantes.</p>
-                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("purchase"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular una compra</button>
-                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("decision"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simular otra decisión</button>
+                      <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("actions"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simulador de acciones</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
                       <p className="vera-tools-locked">Los archivos adjuntos se procesan con Gemini para extraer información. VERA analiza el resultado y no guarda movimientos sin tu confirmación.</p>
