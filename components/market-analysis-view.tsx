@@ -220,36 +220,41 @@ export default function MarketAnalysisView() {
         <button type="button" onClick={() => setRefresh((value) => value + 1)} disabled={loading}>Actualizar</button>
       </div>
 
-      <div className={styles.sectionIntro}>
-        <div><h2>{countryName}</h2><p>Indicadores macroeconómicos seleccionados</p></div>
-        <span>Frecuencia: anual</span>
-      </div>
-
       {loading ? <p className={styles.status}>Consultando fuentes económicas e internacionales…</p> :
         error ? <div className={styles.error}><p>{error}</p><button type="button" onClick={() => setRefresh((value) => value + 1)}>Reintentar</button></div> :
-        payload ? <>
-          <div className={styles.metrics}>
-            {payload.metrics.map((metric) => <MetricCard metric={metric} key={metric.id} />)}
-          </div>
-          <div className={styles.source}>
-            <div><strong>Fuente de indicadores económicos</strong><p>{payload.provider} · Consulta: {formatDate(payload.fetchedAt)}</p></div>
-            <a href={payload.providerUrl} target="_blank" rel="noreferrer">Ver fuente oficial ↗</a>
-          </div>
-          <p className={styles.notice}>{payload.notice} Los valores más recientes pueden corresponder a años anteriores al actual; cada tarjeta muestra el año efectivo del dato.</p>
-        </> : null}
+        payload ? (
+          <details className={styles.marketGroup} open>
+            <summary className={styles.marketGroupSummary}>
+              <span>Indicadores económicos · {countryName}</span>
+              <small className={styles.groupMeta}>{payload.metrics.length} indicadores · frecuencia anual</small>
+            </summary>
+            <div className={styles.groupContent}>
+              <div className={styles.metrics}>
+                {payload.metrics.map((metric) => <MetricCard metric={metric} key={metric.id} />)}
+              </div>
+              <div className={styles.source}>
+                <div><strong>Fuente de indicadores económicos</strong><p>{payload.provider} · Consulta: {formatDate(payload.fetchedAt)}</p></div>
+                <a href={payload.providerUrl} target="_blank" rel="noreferrer">Ver fuente oficial ↗</a>
+              </div>
+              <p className={styles.notice}>{payload.notice} Los valores más recientes pueden corresponder a años anteriores al actual; cada tarjeta muestra el año efectivo del dato.</p>
+            </div>
+          </details>
+        ) : null}
 
-      <div className={styles.sectionIntro + " " + styles.assetsIntro}>
-        <div><h2>Monedas y activos internacionales</h2><p>Tipos de referencia y series disponibles de fuentes oficiales</p></div>
-        <span>Actualización según cada fuente</span>
-      </div>
+      <div className={styles.groupHeading}><h2>Mercados y activos internacionales</h2><p>Elegí una categoría para desplegar sus tarjetas</p></div>
       {assetError ? <div className={styles.error}><p>{assetError}</p></div> : assetPayload ? <>
         {assetPayload.groups.map((group) => (
-          <section className={styles.assetGroup} key={group.category}>
-            <h3>{group.category}</h3>
-            <div className={styles.metrics}>
-              {group.assets.map((asset) => <AssetCard asset={asset} key={asset.code} />)}
+          <details className={styles.marketGroup} key={group.category}>
+            <summary className={styles.marketGroupSummary}>
+              <span>{group.category}</span>
+              <small className={styles.groupMeta}>{group.assets.length} activos</small>
+            </summary>
+            <div className={styles.groupContent}>
+              <div className={styles.metrics}>
+                {group.assets.map((asset) => <AssetCard asset={asset} key={asset.code} />)}
+              </div>
             </div>
-          </section>
+          </details>
         ))}
         <div className={styles.source}>
           <div><strong>Fuente de monedas y activos</strong><p>{assetPayload.provider} · Consulta: {formatDate(assetPayload.fetchedAt)}</p></div>
@@ -257,6 +262,20 @@ export default function MarketAnalysisView() {
         </div>
         <p className={styles.notice}>{assetPayload.notice}</p>
       </> : null}
+
+      <details className={styles.marketGroup}>
+        <summary className={styles.marketGroupSummary}>
+          <span>Bolsas de valores y empresas</span>
+          <small className={styles.groupMeta}>Wall Street y mercados nacionales</small>
+        </summary>
+        <div className={styles.groupContent}>
+          <div className={styles.stockNotice}>
+            <strong>Integración bursátil en preparación</strong>
+            <p>Vamos a incorporar índices de Wall Street y acciones de empresas de los países disponibles. Antes de publicar cotizaciones necesitamos confirmar una fuente que permita mostrar sus datos dentro de FINANCE.TRACK, con cobertura, retraso y permisos claros.</p>
+            <p>Por ahora no mostramos precios estimados ni valores inventados. La sección se habilitará cuando la fuente esté validada.</p>
+          </div>
+        </div>
+      </details>
     </section>
   );
 }
