@@ -24,10 +24,10 @@ se realiza dentro de FINANCETRACK y no pidas que los peguen aquí.
 function isGeneralKnowledgeQuestion(message: string): boolean {
   const normalized = message.trim();
   if (!normalized || normalized.length > 600) return false;
-  if (/[\\d$€£%]/.test(normalized)) return false;
-  if (/@|https?:|\\b(cbu|cvu|alias|tarjeta|cuenta|banco|saldo|movimiento|transferencia|deuda|cuota|sueldo|ingreso|gasto|cobré|gasté|ahorré|invertí|mi dinero|mis finanzas|mi cuenta|mis gastos|mis ingresos)\\b/i.test(normalized)) return false;
-  if (/\\b(mi|mis|mío|mía|tengo|cobro|gasto|ahorro|debo|deuda|compro|compré|quiero comprar)\\b/i.test(normalized)) return false;
-  return /^(qué es|que es|explicá|explica|explicame|cómo funciona|como funciona|cuál es la diferencia|cual es la diferencia|definí|define|qué significa|que significa)\\b/i.test(normalized);
+  if (/[\d$€£%]/.test(normalized)) return false;
+  if (/@|https?:|\b(cbu|cvu|alias|tarjeta|cuenta|banco|saldo|movimiento|transferencia|deuda|cuota|sueldo|ingreso|gasto|cobré|gasté|ahorré|invertí|mi dinero|mis finanzas|mi cuenta|mis gastos|mis ingresos)\b/i.test(normalized)) return false;
+  if (/\b(mi|mis|mío|mía|tengo|cobro|gasto|ahorro|debo|deuda|compro|compré|quiero comprar)\b/i.test(normalized)) return false;
+  return /^(qué es|que es|explicá|explica|explicame|cómo funciona|como funciona|cuál es la diferencia|cual es la diferencia|definí|define|qué significa|que significa)\b/i.test(normalized);
 }
 
 function formatMoney(value: number, currency: string): string {
@@ -109,7 +109,7 @@ function buildLocalFinancialReply(context?: VeraFinancialContext): string {
   }
 
   lines.push("", "Estos resultados describen únicamente la información registrada; no necesariamente incluyen efectivo, cuentas externas, deudas u otros compromisos no cargados.");
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
 export class GeminiVeraProvider implements VeraProvider {
