@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isGoldEnabledForUser } from "@/lib/server/gold-access";
+import { getFinancePlanAccess } from "@/lib/server/gold-access";
 import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 export const runtime = "nodejs";
@@ -87,7 +87,8 @@ export async function POST(request: Request) {
     const eligibility = await checkVeraAiEligibility(supabase, authData.user.id);
     if (!eligibility.allowed) return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
 
-    if (!isGoldEnabledForUser(authData.user)) return NextResponse.json({ error: "Esta herramienta requiere VERA GOLD." }, { status: 403 });
+    const planAccess = await getFinancePlanAccess(supabase, authData.user.id);
+    if (!planAccess.isPlus) return NextResponse.json({ error: "El análisis de documentos requiere FINANCE PLUS." }, { status: 403 });
 
     const form = await request.formData();
     const file = form.get("file");
