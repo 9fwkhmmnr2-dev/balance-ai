@@ -8,7 +8,6 @@ type GeminiResponse = {
 
 import type {
   VeraConversationInput,
-  VeraFinancialContext,
   VeraProvider,
   VeraProviderResponse,
 } from "../types";
@@ -42,88 +41,6 @@ function buildContextPrompt(input: VeraConversationInput): string {
     conversation: history,
     instruction: "Respondé al último mensaje teniendo en cuenta el contexto y la conversación. No generes un resumen genérico si no fue solicitado.",
   });
-}
-
-function formatMoney(value: number, currency: string): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
-function percentChange(current: number, previous: number): string {
-  if (previous === 0) return current === 0 ? "sin cambios sobre una base de cero" : "sin variación porcentual válida porque el período anterior fue cero";
-  const change = ((current - previous) / Math.abs(previous)) * 100;
-  const direction = change > 0 ? "subió" : change < 0 ? "bajó" : "no cambió";
-  return `${direction} un ${Math.abs(change).toFixed(1)}%`;
-}
-
-function buildLocalFinancialReply(context?: VeraFinancialContext): string {
-  if (!context) {
-    return "Puedo ayudarte a revisar tus finanzas con los datos registrados en FINANCETRACK. En este momento no recibí un resumen financiero verificable para esta consulta.";
-  }
-
-  const lines = [
-    "Revisé los datos que FINANCETRACK tiene registrados para este período.",
-    "",
-    `**Resumen del período:** ingresos: ${formatMoney(context.income, context.currency)}; gastos: ${formatMoney(context.expenses, context.currency)}; balance neto: ${formatMoney(context.netBalance, context.currency)}. Se consideran ${context.movementsCount} movimientos.`,
-  ];
-
-  if (context.previousPeriod) {
-    const previous = context.previousPeriod;
-    lines.push(
-      "",
-      `**Comparación GOLD:** frente al período anterior (${previous.from} al ${previous.to}), los ingresos ${percentChange(context.income, previous.income)} y los gastos ${percentChange(context.expenses, previous.expenses)}. El balance neto anterior fue ${formatMoney(previous.netBalance, context.currency)}.`,
-    );
-    const categoryChanges = context.categoryTotals
-      .map((item) => {
-        const prior = previous.categoryTotals.find((entry) => entry.category === item.category)?.amount ?? 0;
-        return { category: item.category, amount: item.amount - prior };
-      })
-      .filter((item) => item.amount !== 0)
-      .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
-      .slice(0, 3);
-    if (categoryChanges.length) {
-      lines.push("Las categorías con mayores diferencias en el período actual son: " +
-        categoryChanges.map((item) => `${item.category} (${item.amount > 0 ? "+" : ""}${formatMoney(item.amount, context.currency)})`).join(", ") + ".");
-    }
-  }
-
-  if (context.financialPosition) {
-    const position = context.financialPosition;
-    lines.push(
-      "",
-      `**Situación financiera GOLD:** evaluación orientativa: ${position.healthRating}. Promedios mensuales observados: ingresos ${formatMoney(position.monthlyIncomeAverage, position.currency)}, gastos ${formatMoney(position.monthlyExpensesAverage, position.currency)} y diferencia ${formatMoney(position.monthlySurplusAverage, position.currency)}. La muestra cubre ${position.sampleDays} días.`,
-    );
-    if (position.liquidBalance !== null) lines.push(`Liquidez reconstruida de las cuentas registradas: ${formatMoney(position.liquidBalance, position.currency)}.`);
-    if (position.savingsRatePercent !== null) lines.push(`Tasa de ahorro observada: ${position.savingsRatePercent.toFixed(1)}%.`);
-    if (position.expenseCoverageMonths !== null) lines.push(`Cobertura estimada de gastos: ${position.expenseCoverageMonths.toFixed(1)} meses.`);
-    if (!position.balanceComplete) lines.push("La reconstrucción del saldo puede estar incompleta porque se alcanzó el límite de movimientos consultados.");
-  }
-
-  if (context.goals) {
-    lines.push("", "**Objetivos registrados:**");
-    if (!context.goals.length) lines.push("No hay objetivos registrados actualmente.");
-    for (const goal of context.goals) {
-      lines.push(`- ${goal.title}: ${goal.progressPercent.toFixed(1)}% completado; acumulado ${formatMoney(goal.savedAmount, goal.currency)} de ${formatMoney(goal.targetAmount, goal.currency)}. Estado: ${goal.status}.`);
-    }
-  }
-
-  if (context.decisionSimulation) {
-    const simulation = context.decisionSimulation;
-    lines.push(
-      "",
-      `**Simulación de compra GOLD — ${simulation.item}:** precio ${formatMoney(simulation.amount, simulation.currency)}. Liquidez luego del pago al contado: ${simulation.liquidBalanceAfterCashPurchase === null ? "no disponible" : formatMoney(simulation.liquidBalanceAfterCashPurchase, simulation.currency)}.`,
-    );
-    for (const projection of simulation.projections) {
-      lines.push(`A ${projection.months} meses: escenario con compra ${projection.purchaseScenarioLiquidBalance === null ? "no disponible" : formatMoney(projection.purchaseScenarioLiquidBalance, simulation.currency)}; escenario sin compra ${projection.baselineLiquidBalance === null ? "no disponible" : formatMoney(projection.baselineLiquidBalance, simulation.currency)}.`);
-    }
-    lines.push("La proyección supone que el promedio mensual reciente se mantiene y no incorpora inflación, imprevistos ni costos no informados.");
-  }
-
-  lines.push("", "Estos resultados describen únicamente la información registrada; no necesariamente incluyen efectivo, cuentas externas, deudas u otros compromisos no cargados.");
-  return lines.join("\n");
 }
 
 export class GeminiVeraProvider implements VeraProvider {
