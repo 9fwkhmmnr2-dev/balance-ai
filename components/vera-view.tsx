@@ -766,6 +766,7 @@ export default function VeraView() {
               <div className="vera-compose-tools">
                 <button className="vera-tool-trigger" type="button" aria-label="Abrir herramientas" aria-expanded={showTools} onClick={() => setShowTools((current) => !current)} disabled={sending}>＋</button>
                 {showTools && <div className="vera-tools-menu" role="group" aria-label="Herramientas rápidas">
+                  <button className="vera-tools-close" type="button" aria-label="Cerrar herramientas" onClick={() => setShowTools(false)}>×</button>
                   <VeraIsotype className="vera-menu-isotype" /><strong className="vera-tools-title">Funciones disponibles</strong>
                   <section className="vera-tools-group">
                     <VeraIsotype className="vera-menu-isotype" /><span className="vera-tools-group-title">VERA FREE</span>
@@ -776,11 +777,9 @@ export default function VeraView() {
                     <VeraIsotype className="vera-menu-isotype" /><span className="vera-tools-group-title">VERA GOLD</span>
                     {isGold ? <>
                       <button className="vera-tools-action gold" type="button" title="Compara ingresos, gastos y categorías con el período anterior equivalente; muestra variaciones y tendencias respaldadas por tus movimientos." onClick={() => { setShowTools(false); void sendMessage("Analizá mis finanzas en profundidad comparando el período seleccionado con el anterior equivalente. Identificá los principales cambios en ingresos, gastos y categorías, explicá qué datos respaldan cada conclusión y señalá cualquier límite de la información disponible."); }}><span className="vera-tool-icon" aria-hidden="true">✦</span>Análisis comparativo avanzado</button>
-                      <p className="vera-tools-locked">Compara ingresos, gastos y categorías contra el período anterior equivalente. Detecta variaciones en dinero y porcentaje, tendencias y datos faltantes.</p>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("actions"); }}><span className="vera-tool-icon" aria-hidden="true">◇</span>Simulador de acciones</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setGoldWorkspaceMode("planning"); }}><span className="vera-tool-icon" aria-hidden="true">✧</span>Planificación personalizada</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
-                      <p className="vera-tools-locked">Los archivos adjuntos se procesan con Gemini para extraer información. VERA analiza el resultado y no guarda movimientos sin tu confirmación.</p>
                     </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con GOLD.
                         {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar GOLD de prueba solo en Preview."); }}>Copiar ID para habilitar prueba GOLD</button>}
                       </div>}
