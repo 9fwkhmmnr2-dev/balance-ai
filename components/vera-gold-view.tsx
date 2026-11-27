@@ -16,9 +16,9 @@ const features = [
   ["Simulador de acciones: compras, pagos y decisiones", false, true],
 ] as const;
 
-export default function VeraGoldView() {
+export default function FinancePlusView() {
   const [isPreview, setIsPreview] = useState(false);
-  const [isGold, setIsGold] = useState(false);
+  const [isPlus, setIsPlus] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -33,10 +33,10 @@ export default function VeraGoldView() {
         cache: "no-store",
       });
       if (!response.ok) return;
-      const result = await response.json() as { isGold?: boolean; accountId?: string; previewOnly?: boolean };
+      const result = await response.json() as { isPlus?: boolean; accountId?: string; previewOnly?: boolean };
       if (!active) return;
       setIsPreview(Boolean(result.previewOnly));
-      setIsGold(Boolean(result.isGold));
+      setIsPlus(Boolean(result.isPlus));
       setAccountId(result.accountId ?? "");
     })();
     return () => { active = false; };
@@ -69,9 +69,9 @@ export default function VeraGoldView() {
           </div>
           <div className={styles.tableWrap}>
             <table className={styles.comparison}>
-              <thead><tr><th>Incluye</th><th>VERA</th><th>FINANCE PLUS</th></tr></thead>
-              <tbody>{features.map(([name, free, gold]) => (
-                <tr key={name}><td>{name}</td><td>{free ? <span className={styles.check}>✓</span> : "—"}</td><td>{gold === true ? <span className={styles.check}>✓</span> : gold}</td></tr>
+              <thead><tr><th>Incluye</th><th>FINANCE FREE</th><th>FINANCE PLUS</th></tr></thead>
+              <tbody>{features.map(([name, free, plus]) => (
+                <tr key={name}><td>{name}</td><td>{free ? <span className={styles.check}>✓</span> : "—"}</td><td>{plus === true ? <span className={styles.check}>✓</span> : gold}</td></tr>
               ))}</tbody>
             </table>
           </div>
@@ -94,8 +94,8 @@ export default function VeraGoldView() {
             <p>Tarjeta y PayPal. La disponibilidad final, moneda de cobro e impuestos se confirmarán antes de habilitar la compra.</p>
           </div>
           {isPreview ? (
-            <button className={styles.buyButton} type="button" onClick={requestPreviewAccess} disabled={isGold || !accountId}>
-              {isGold ? "FINANCE PLUS de prueba activo" : "Solicitar acceso FINANCE PLUS de prueba"}
+            <button className={styles.buyButton} type="button" onClick={requestPreviewAccess} disabled={isPlus || !accountId}>
+              {isPlus ? "FINANCE PLUS de prueba activo" : "Solicitar acceso FINANCE PLUS de prueba"}
             </button>
           ) : (
             <button className={styles.buyButton} type="button" disabled aria-disabled="true">Comprar FINANCE PLUS · Próximamente</button>
