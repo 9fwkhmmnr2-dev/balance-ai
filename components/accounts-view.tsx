@@ -151,7 +151,19 @@ export default function AccountsView() {
       resetForm();
       await loadAccounts();
     } catch (err) {
-      setNotice(err instanceof Error ? err.message : "No pudimos crear la cuenta.");
+      const databaseError = err && typeof err === "object"
+        ? err as { code?: string; message?: string }
+        : null;
+      const message = databaseError?.message ?? "";
+      if (databaseError?.code === "23514" && message.includes("financial_accounts_currency_check")) {
+        setNotice("La moneda elegida todavía no está habilitada en la base de datos. Aplicá la migración de monedas y volvé a intentarlo.");
+      } else if (databaseError?.code === "42501" || /row-level security|permission denied/i.test(message)) {
+        setNotice("No se pudo guardar por los permisos de esta sesión. Verificá que hayas aceptado los Términos y la Política de Privacidad vigentes y volvé a iniciar sesión.");
+      } else if (databaseError?.code === "23514") {
+        setNotice("Revisá el nombre, el tipo de cuenta y la moneda seleccionada.");
+      } else {
+        setNotice("No pudimos guardar la cuenta. Revisá los datos e intentá nuevamente.");
+      }
     } finally {
       setSaving(false);
     }
