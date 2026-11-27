@@ -52,9 +52,18 @@ export default function VeraLegalGate({ children }: { children: ReactNode }) {
     }
     setSaving(true);
     try {
-      const { data, error: sessionError } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (sessionError || !token) throw new Error("Tu sesión venció. Volvé a iniciar sesión.");
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw new Error("No pudimos comprobar tu sesión. Actualizá la página e intentá nuevamente.");
+      let session = sessionData.session;
+      if (session && (!session.expires_at || session.expires_at <= Math.floor(Date.now() / 1000) + 60)) {
+        const refreshed = await supabase.auth.refreshSession();
+        if (refreshed.error || !refreshed.data.session) {
+          throw new Error("No pudimos renovar tu sesión. Cerrá y volvé a ingresar para continuar.");
+        }
+        session = refreshed.data.session;
+      }
+      const token = session?.access_token;
+      if (!token) throw new Error("Tu sesión ya no está activa. Volvé a ingresar para continuar.");
       const response = await fetch("/api/vera/legal/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -81,14 +90,21 @@ export default function VeraLegalGate({ children }: { children: ReactNode }) {
         <p style={{ color: "#AAA7B0", fontSize: 14, lineHeight: 1.65 }}>
           La primera vez que ingresás, necesitamos que revises y aceptes las condiciones de uso y privacidad específicas de esta experiencia. Esta confirmación se guarda en tu cuenta y no te la volveremos a pedir mientras estas versiones sigan vigentes.
         </p>
-        <div style={{ display: "grid", gap: 16, margin: "24px 0" }}>
+        <div style={{ display: "grid", gap: 14, margin: "24px 0" }}>
+          <details style={{ border: "1px solid #34363D", borderRadius: 10, padding: 12, background: "#1D2027" }}>
+            <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Leer términos y privacidad</summary>
+            <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+              <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Ver Términos y Condiciones</Link>
+              <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Ver Política de Privacidad</Link>
+            </div>
+          </details>
           <label style={{ display: "flex", gap: 11, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6 }}>
             <input type="checkbox" required checked={termsChecked} onChange={(event) => setTermsChecked(event.target.checked)} style={{ marginTop: 4 }} />
-            <span>Acepto los <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline" }}>Términos y Condiciones</Link> de FINANCE.TRACK y VERA.</span>
+            Acepto los Términos y Condiciones de FINANCE.TRACK y VERA.
           </label>
           <label style={{ display: "flex", gap: 11, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6 }}>
             <input type="checkbox" required checked={privacyChecked} onChange={(event) => setPrivacyChecked(event.target.checked)} style={{ marginTop: 4 }} />
-            <span>Leí y acepto la <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline" }}>Política de Privacidad</Link>, incluido el apartado referido al tratamiento de datos para VERA.</span>
+            Leí y acepto la Política de Privacidad, incluido el tratamiento de datos para VERA.
           </label>
         </div>
         {error && <p role="alert" style={{ color: "#E6A39B", fontSize: 12, lineHeight: 1.5, marginBottom: 14 }}>{error}</p>}
