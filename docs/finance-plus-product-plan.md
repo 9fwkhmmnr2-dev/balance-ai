@@ -123,3 +123,8 @@ Help users spend less on planned purchases by comparing trustworthy local offers
 - Do not merge to `main` or deploy production without explicit approval.
 - Validate preview build, RLS, server-side entitlement checks and user isolation before considering release.
 - Database migrations must be committed alongside code and applied only to the intended environment after review.
+
+
+## Acquisition, personalization and notifications
+
+The approved design for user acquisition and ethical conversion to FINANCE PLUS is documented in [`docs/marketing/plus-acquisition-and-personalization.md`](./marketing/plus-acquisition-and-personalization.md). It connects TikTok discovery, the guided PERFIL FINANCE flow, declared interests and goals, FINANCE: ALGORITMO, personalized recommendations, and transparent Plus previews. It also separates service/security notifications, personalized recommendations, and promotional communications with independent controls and consent. Treat all marketing examples and prices as illustrative until verified. This is a design specification only; it does not authorize deployment or production activation.
