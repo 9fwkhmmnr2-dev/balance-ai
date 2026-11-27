@@ -5,15 +5,14 @@ import { supabase } from "@/lib/supabase";
 import styles from "./vera-gold.module.css";
 
 const features = [
-  ["Consultas financieras habituales", true, true],
-  ["Resumen y análisis de gastos", true, true],
-  ["Comparación básica de períodos", true, true],
-  ["Objetivos con aportes manuales", true, true],
-  ["Progreso automático desde una cuenta vinculada", false, "Exclusivo FINANCE PLUS · En preparación"],
   ["Mayor capacidad para conversar", false, true],
-  ["Análisis financieros más profundos", false, true],
-  ["Análisis de PDF e imágenes; XLSX, CSV y DOCX en preparación", false, true],
-  ["Simulador de acciones: compras, pagos y decisiones", false, true],
+  ["Comparación avanzada de períodos", false, true],
+  ["Simulador de compras, pagos y decisiones", false, true],
+  ["Planificación personalizada de objetivos", false, true],
+  ["Extracción de movimientos desde PDF e imágenes", false, true],
+  ["Cierre mensual inteligente con VERA", false, "En desarrollo"],
+  ["Notificaciones personalizadas y alertas", false, "En desarrollo"],
+  ["Análisis de archivos XLSX, CSV y DOCX", false, "En desarrollo"],
 ] as const;
 
 export default function FinancePlusView() {
