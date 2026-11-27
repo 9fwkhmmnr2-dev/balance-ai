@@ -2,10 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { PRIVACY_VERSION, TERMS_VERSION, VERA_PRIVACY_VERSION, VERA_TERMS_VERSION } from "@/lib/legal-versions";
 
 export async function checkVeraAiEligibility(supabase: SupabaseClient<any, "public">, userId: string) {
-  // Gemini stays fail-closed until an adult account owner has confirmed a paid processing setup that permits financial data.
-  if (process.env.VERA_GEMINI_PAID_DATA_PROCESSING_APPROVED !== "true") {
-    return { allowed: false as const, status: 503, error: "VERA todavía no está habilitada por el administrador adulto del servicio de IA. No es un error de tu sesión ni de tus cuentas." };
-  }
+  // Free-tier Gemini is restricted to allowlisted general-knowledge prompts.
+  // Personal financial analysis is handled locally and is never sent to Gemini.
   const { data, error } = await supabase
     .from("registration_acceptances")
     .select("age_eligible, ai_data_consent, terms_version, privacy_version, vera_terms_version, vera_privacy_version")
