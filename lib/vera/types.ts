@@ -36,6 +36,7 @@ export type VeraFinancialContext = {
   accounts?: Array<{ name: string; type: string; currency: string; balance: number; archived: boolean }>;
   commitments?: Array<{ name: string; category: string; amount: number; currency: string; frequency: string; dueDate: string | null }>;
   transfers?: Array<{ date: string; amount: number; currency: string; fromAccount: string; toAccount: string }>;
+  recurringExpenses?: Array<{ description: string; amount: number; currency: string; frequency: "weekly" | "monthly" | "yearly"; occurrences: number; lastDate: string; confidence: "possible" | "likely" }>;
   previousPeriod?: {
     from: string;
     to: string;
