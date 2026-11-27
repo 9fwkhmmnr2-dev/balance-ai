@@ -12,7 +12,7 @@ const features = [
   ["Progreso automático desde una cuenta vinculada", false, "Exclusivo FINANCE PLUS · En preparación"],
   ["Mayor capacidad para conversar", false, true],
   ["Análisis financieros más profundos", false, true],
-  ["Análisis avanzado de documentos", false, "En preparación"],
+  ["Análisis de PDF e imágenes; XLSX, CSV y DOCX en preparación", false, true],
   ["Simulador de acciones: compras, pagos y decisiones", false, true],
 ] as const;
 
@@ -71,7 +71,7 @@ export default function FinancePlusView() {
             <table className={styles.comparison}>
               <thead><tr><th>Incluye</th><th>FINANCE FREE</th><th>FINANCE PLUS</th></tr></thead>
               <tbody>{features.map(([name, free, plus]) => (
-                <tr key={name}><td>{name}</td><td>{free ? <span className={styles.check}>✓</span> : "—"}</td><td>{plus === true ? <span className={styles.check}>✓</span> : gold}</td></tr>
+                <tr key={name}><td>{name}</td><td>{free ? <span className={styles.check}>✓</span> : "—"}</td><td>{plus === true ? <span className={styles.check}>✓</span> : plus}</td></tr>
               ))}</tbody>
             </table>
           </div>
