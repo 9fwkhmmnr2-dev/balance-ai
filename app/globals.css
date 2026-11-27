@@ -2631,3 +2631,7 @@ select option{background:#211a2d;color:#f4efff}
 button[role="tab"]{accent-color:#9b7bd1}
 button[role="tab"][aria-selected="true"]{background-color:#493260;border-color:#8d6bb7;color:#fff}
 button[role="tab"]:focus-visible,select:focus-visible{outline:2px solid #a98bd4;outline-offset:2px}
+
+
+.movements-type-mark.transfer{background:#8d6bb7}
+.amount-transfer{color:#76529b}
