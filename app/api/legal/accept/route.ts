@@ -18,34 +18,33 @@ function isAdult(birthDate: unknown) {
   return age >= 18;
 }
 
-function clients() {
-  // The server validates the user's JWT with the project secret key; no browser anon key is needed here.
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_SUPABASE_URL;
-  const serverKey = process.env.NEXT_SUPABASE_SECRET_KEY ||
-    process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serverKey) return null;
-  const adminClient = createClient(url, serverKey, {
+function clients(token: string) {
+  // Use the project's public anon key plus the user's JWT. RLS permits each
+  // authenticated user to update only their own registration_acceptances row.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) return null;
+  return createClient(url, anonKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
-  return { adminClient };
 }
 
 export async function POST(request: Request) {
   try {
     const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
-    const supabase = clients();
+    const supabase = clients(token);
     if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
 
-    const { data: auth, error: authError } = await supabase.adminClient.auth.getUser(token);
+    const { data: auth, error: authError } = await supabase.auth.getUser(token);
     if (authError || !auth.user) {
       console.error("[LEGAL_AUTH_DIAGNOSTIC]", {
         code: authError?.code ?? null,
         status: authError?.status ?? null,
         message: authError?.message?.slice(0, 180) ?? "No se recibió un usuario autenticado",
-        urlConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_SUPABASE_URL),
-        secretConfigured: Boolean(process.env.NEXT_SUPABASE_SECRET_KEY || process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
+        urlConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+        anonKeyConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
       });
       return NextResponse.json({ error: "No pudimos validar tu sesión con el servicio de autenticación. Actualizá la página e intentá nuevamente." }, { status: 401 });
     }
@@ -78,7 +77,7 @@ export async function POST(request: Request) {
       accepted_at: acceptedAt,
       updated_at: acceptedAt,
     };
-    const { data: updated, error: updateError } = await supabase.adminClient
+    const { data: updated, error: updateError } = await supabase
       .from("registration_acceptances").update(acceptanceValues)
       .eq("user_id", auth.user.id).select("user_id").maybeSingle();
     if (updateError) {
@@ -87,7 +86,7 @@ export async function POST(request: Request) {
     }
     if (!updated) {
       if (!verifiesAge) return NextResponse.json({ error: "No encontramos un registro de edad verificada para esta cuenta. No podemos habilitar VERA sin completar la verificación." }, { status: 409 });
-      const { error: insertError } = await supabase.adminClient.from("registration_acceptances")
+      const { error: insertError } = await supabase.from("registration_acceptances")
         .insert({ user_id: auth.user.id, ...acceptanceValues });
       if (insertError) {
         console.error("[LEGAL_ACCEPTANCE_INSERT_DIAGNOSTIC]", { code: insertError.code ?? null, message: insertError.message?.slice(0, 180) ?? null });
@@ -104,11 +103,11 @@ export async function DELETE(request: Request) {
   try {
     const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (!token) return NextResponse.json({ error: "Iniciá sesión para continuar." }, { status: 401 });
-    const supabase = clients();
+    const supabase = clients(token);
     if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
-    const { data: auth, error: authError } = await supabase.adminClient.auth.getUser(token);
+    const { data: auth, error: authError } = await supabase.auth.getUser(token);
     if (authError || !auth.user) return NextResponse.json({ error: "La sesión venció." }, { status: 401 });
-    const { error } = await supabase.adminClient.from("registration_acceptances")
+    const { error } = await supabase.from("registration_acceptances")
       .update({ ai_data_consent: false, ai_consent_version: null, updated_at: new Date().toISOString() })
       .eq("user_id", auth.user.id);
     if (error) return NextResponse.json({ error: "No pudimos actualizar tu preferencia." }, { status: 503 });
