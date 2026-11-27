@@ -54,7 +54,7 @@ export class GeminiVeraProvider implements VeraProvider {
     const requestBody = JSON.stringify({
       systemInstruction: { parts: [{ text: VERA_GEMINI_INSTRUCTIONS }] },
       contents: [{ role: "user", parts: [{ text: buildContextPrompt(input) }] }],
-      generationConfig: { temperature: 0.65, maxOutputTokens: input.financialContext?.experience === "gold" ? 3000 : 1600 },
+      generationConfig: { temperature: 0.65, maxOutputTokens: input.financialContext?.experience === "plus" ? 3000 : 1600 },
     });
     let response: Response | undefined;
     const requestStartedAt = Date.now();
