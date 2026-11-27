@@ -20,7 +20,7 @@ function isAdult(birthDate: unknown) {
 
 function clients() {
   // The server validates the user's JWT with the project secret key; no browser anon key is needed here.
-  const url = process.env.NEXT_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_SUPABASE_URL;
   const serverKey = process.env.NEXT_SUPABASE_SECRET_KEY ||
     process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -39,7 +39,16 @@ export async function POST(request: Request) {
     if (!supabase) return NextResponse.json({ error: "El servicio de permisos no está configurado." }, { status: 503 });
 
     const { data: auth, error: authError } = await supabase.adminClient.auth.getUser(token);
-    if (authError || !auth.user) return NextResponse.json({ error: "La sesión venció. Volvé a ingresar." }, { status: 401 });
+    if (authError || !auth.user) {
+      console.error("[LEGAL_AUTH_DIAGNOSTIC]", {
+        code: authError?.code ?? null,
+        status: authError?.status ?? null,
+        message: authError?.message?.slice(0, 180) ?? "No se recibió un usuario autenticado",
+        urlConfigured: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_SUPABASE_URL),
+        secretConfigured: Boolean(process.env.NEXT_SUPABASE_SECRET_KEY || process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
+      });
+      return NextResponse.json({ error: "No pudimos validar tu sesión con el servicio de autenticación. Actualizá la página e intentá nuevamente." }, { status: 401 });
+    }
 
     const body = await request.json() as {
       acceptedTerms?: unknown; acceptedPrivacy?: unknown; aiDataConsent?: unknown;
