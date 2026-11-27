@@ -13,7 +13,8 @@ const navigation = [
   { label: "Conversor", href: "/conversor", icon: "exchange" },
   { label: "FINANCE WRAPPED", href: "/wrapped", icon: "activity" },
   { label: "VERA", href: "/vera", icon: "vera" },
-  { label: "Perfil", href: "/perfil", icon: "user" }
+  { label: "Perfil", href: "/perfil", icon: "user" },
+  { label: "Configuración", href: "/configuracion", icon: "settings" }
 ];
 
 export default function MobileMenu() {
