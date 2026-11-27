@@ -9,9 +9,10 @@ const features = [
   ["Comparación avanzada de períodos", false, true],
   ["Simulador de compras, pagos y decisiones", false, true],
   ["Planificación personalizada de objetivos", false, true],
-  ["Extracción de movimientos desde PDF e imágenes", false, true],
+  ["Lector de imágenes y PDF con contexto escrito", false, true],
   ["Cierre mensual inteligente con VERA", false, true],
   ["Notificaciones personalizadas y alertas", false, "En desarrollo"],
+  ["Detector de gastos recurrentes y suscripciones", false, true],
   ["Análisis de archivos XLSX, CSV y DOCX", false, "En desarrollo"],
 ] as const;
 
