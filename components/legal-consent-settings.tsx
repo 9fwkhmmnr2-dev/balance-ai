@@ -114,8 +114,7 @@ export default function LegalConsentSettings() {
     acceptance.terms_version === TERMS_VERSION &&
     acceptance.privacy_version === PRIVACY_VERSION &&
     acceptance.vera_terms_version === VERA_TERMS_VERSION &&
-    acceptance.vera_privacy_version === VERA_PRIVACY_VERSION &&
-    acceptance.ai_data_consent);
+    acceptance.vera_privacy_version === VERA_PRIVACY_VERSION);
 
   return (
     <section style={cardStyle}>
@@ -138,10 +137,18 @@ export default function LegalConsentSettings() {
           <p style={{ color: "#85838D", fontSize: 11, marginTop: 5 }}>La fecha no se guarda en la base de datos. VERA requiere tener al menos 18 años.</p>
         </div>
         <label style={labelStyle}><input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} required style={{ marginTop: 4 }} />Confirmo que tengo 18 años o más y que la fecha indicada es correcta.</label>
-        <label style={labelStyle}><input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} required style={{ marginTop: 4 }} /><span>Acepto los <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline" }}>Términos y Condiciones</Link> vigentes de FINANCE.TRACK.</span></label>
-        <label style={labelStyle}><input type="checkbox" checked={privacy} onChange={e => setPrivacy(e.target.checked)} required style={{ marginTop: 4 }} /><span>Acepto la <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline" }}>Política de Privacidad</Link> vigente de FINANCE.TRACK.</span></label>
-        <label style={labelStyle}><input type="checkbox" checked={veraTerms} onChange={e => setVeraTerms(e.target.checked)} required style={{ marginTop: 4 }} /><span>Acepto los <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline" }}>Términos y Condiciones</Link> aplicables a VERA.</span></label>
-        <label style={labelStyle}><input type="checkbox" checked={veraPrivacy} onChange={e => setVeraPrivacy(e.target.checked)} required style={{ marginTop: 4 }} /><span>Acepto la <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline" }}>Política de Privacidad</Link> aplicable a VERA.</span></label>
+        <details style={{ border: "1px solid #34363D", borderRadius: 10, padding: 12, background: "#191B22" }}>
+          <summary style={{ cursor: "pointer", color: "#E7D6B5", fontSize: 13, fontWeight: 600 }}>Leer términos y privacidad</summary>
+          <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
+            <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.6 }}>Las condiciones generales de FINANCE.TRACK y las condiciones específicas de VERA se aplican conjuntamente.</p>
+            <Link href="/terminos" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Ver Términos y Condiciones</Link>
+            <Link href="/privacidad" target="_blank" style={{ color: "#D8B66A", textDecoration: "underline", fontSize: 13 }}>Ver Política de Privacidad</Link>
+          </div>
+        </details>
+        <label style={labelStyle}>
+          <input type="checkbox" checked={terms && privacy && veraTerms && veraPrivacy} onChange={e => { setTerms(e.target.checked); setPrivacy(e.target.checked); setVeraTerms(e.target.checked); setVeraPrivacy(e.target.checked); }} required style={{ marginTop: 4 }} />
+          Confirmo que leí y acepto los términos y la política de privacidad de FINANCE.TRACK y VERA.
+        </label>
         <div style={{ borderTop: "1px solid #34363D", paddingTop: 14 }}>
           <label style={labelStyle}><input type="checkbox" checked={aiConsent} onChange={e => setAiConsent(e.target.checked)} style={{ marginTop: 4 }} /><span>Autorizo por separado el procesamiento de mis mensajes y datos financieros mediante proveedores externos de IA, cuando la función y el proveedor estén habilitados. Este permiso es opcional y puedo revocarlo.</span></label>
         </div>
