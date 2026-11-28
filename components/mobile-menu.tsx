@@ -9,6 +9,7 @@ const navigation: Array<{ label: string; href: string; icon: NavigationIconName 
   { label: "Movimientos", href: "/movimientos", icon: "activity" },
   { label: "Mis cuentas", href: "/cuentas", icon: "wallet" },
   { label: "Objetivos", href: "/objetivos", icon: "target" },
+  { label: "Operaciones", href: "/operaciones", icon: "activity" },
   { label: "Transferencias", href: "/transferencias", icon: "transfer" },
   { label: "Conversor", href: "/conversor", icon: "exchange" },
   { label: "Mercados", href: "/mercados", icon: "markets" },
