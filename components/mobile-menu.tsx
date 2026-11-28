@@ -12,6 +12,7 @@ const navigation: Array<{ label: string; href: string; icon: NavigationIconName 
   { label: "Transferencias", href: "/transferencias", icon: "transfer" },
   { label: "Conversor", href: "/conversor", icon: "exchange" },
   { label: "Mercados", href: "/mercados", icon: "markets" },
+  { label: "VERA:AHORRO", href: "/finance-plus/ahorro", icon: "wallet" },
   { label: "FINANCE WRAPPED", href: "/wrapped", icon: "activity" },
   { label: "VERA IA", href: "/vera", icon: "vera" },
   { label: "Perfil", href: "/perfil", icon: "user" },
@@ -41,7 +42,7 @@ export default function MobileMenu() {
       {open && (
         <nav className="mobile-menu-panel" id="mobile-navigation" aria-label="Navegación principal">
           {navigation.map((item) => {
-            const active = pathname === item.href || (item.href === "/vera" && pathname.startsWith("/vera/"));
+            const active = pathname === item.href || (item.href === "/vera" && pathname.startsWith("/vera/")) || (item.href === "/finance-plus/ahorro" && pathname.startsWith("/finance-plus/ahorro"));
             return (
               <a
                 key={item.href}
