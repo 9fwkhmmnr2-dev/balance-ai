@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     for (const raw of body.transactions) {
       if (!raw || typeof raw !== "object") return NextResponse.json({ error: "Hay movimientos con datos inválidos." }, { status: 400 });
       const row = raw as Record<string, unknown>;
-      if (typeof row.date !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(row.date) ||
+      if (typeof row.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(row.date) ||
           typeof row.description !== "string" || !row.description.trim() || row.description.length > 180 ||
           typeof row.amount !== "number" || !Number.isFinite(row.amount) || row.amount <= 0 ||
           typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) ||
