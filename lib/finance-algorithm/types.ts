@@ -1,6 +1,7 @@
 export type FinanceAlgorithmMode = "automatic" | "on-demand" | "follow-up" | "deep";
 export type FinancePriority = "saving" | "expense_organization" | "debt_management" | "cost_reduction" | "purchase_planning";
 export type FinanceAlertIntensity = "important_only" | "balanced" | "detailed";
+export type FinanceOperationType = "saving_plan" | "expense_review" | "debt_review" | "purchase_planning" | "price_tracking" | "goal_follow_up";
 export type FinanceConfidence = "limited" | "moderate" | "high";
 
 export type FinanceAlgorithmPreferences = {
@@ -8,7 +9,11 @@ export type FinanceAlgorithmPreferences = {
   priorities?: FinancePriority[];
   alertIntensity?: FinanceAlertIntensity;
   interests?: string[];
+  operationTypes?: FinanceOperationType[];
   personalizationEnabled?: boolean;
+  aiAssistanceConsent?: boolean;
+  crossModuleDataConsent?: boolean;
+  adaptiveLearningConsent?: boolean;
 };
 
 export type FinanceProfileInput = {
