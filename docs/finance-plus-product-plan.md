@@ -17,14 +17,14 @@ Base branch: `feature/mis-cuentas`
 
 ### FREE
 - Accounts, movements, transfers, budgets and goals: core functionality.
-- VERA: basic assistant access, shorter context and conservative fair-use limits.
+- VERA: 20 messages/day, up to 40 accumulated credits, and context of up to 12 messages. Credits are shared across conversations, roll over daily up to the cap, and technical failures are refunded.
 - Markets: public market overview, company directory, favorites and daily data when display licensing permits.
 - Notifications: essential in-app alerts and a low-frequency summary.
 - Price comparison, local merchant offers, promotion search and smart basket optimization are not included in Free.
 - Monthly finance summary: basic, factual totals and categories.
 
 ### FINANCE PLUS
-- VERA: higher fair-use allowance, longer conversations, more detailed answers and deeper analysis.
+- VERA: 100 messages/day, up to 200 accumulated credits, and context of up to 32 messages. Credits are shared across conversations, roll over daily up to the cap, and technical failures are refunded. Responses can be longer and analysis deeper.
 - Financial analysis: compare periods, categories and trends; explain changes using the user's actual records.
 - Decision simulator: purchases, payments, installments and alternatives; separate known data from assumptions.
 - Financial position: historical cash-flow view, liquidity estimate and coverage indicators with clear data-quality caveats.
