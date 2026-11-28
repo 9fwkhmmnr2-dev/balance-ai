@@ -25,7 +25,7 @@
 
 ## 3. FINANCE PLUS
 
-- VERA ampliado: **40 mensajes diarios**, saldo acumulable máximo **80**.
+- VERA ampliado: **100 mensajes diarios**, saldo acumulable máximo **200**.
 - Respuestas más detalladas, análisis profundo y contexto ampliado dentro de límites sostenibles.
 - Modo Ahorro: Operación de Ahorro personalizada, listas, presupuesto, comparación, ofertas verificadas, alternativas, canasta familiar y optimización de cesta cuando haya fuentes autorizadas.
 - Evolución e historial de ahorro con estimaciones, confirmaciones y dinero reservado separados.
