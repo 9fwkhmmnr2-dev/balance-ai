@@ -163,3 +163,17 @@ No usar una etiqueta genérica “verificado” si no hubo una comprobación ind
 - La búsqueda por necesidad será una capa posterior de IA sobre el mismo catálogo estructurado; nunca debe inventar productos ni precios.
 - No persistir archivos SEPA completos de gran volumen en tablas transaccionales de Supabase sin evaluar almacenamiento, particionado, índices y costes.
 - No crear migraciones ni activar conectores hasta validar contratos de datos, límites, licencia y estrategia de almacenamiento.
+
+
+## 14. Calculadora de ahorro multidivisa — primera implementación
+
+- Monedas iniciales: ARS, USD, EUR y BRL.
+- El usuario define el objetivo y aporte mensual en una moneda original.
+- La vista permite mostrar ambas monedas, solo la original o solo la moneda equivalente.
+- La equivalencia usa la cotización publicada por la API oficial de Estadísticas Cambiarias del BCRA para USD, EUR y BRL; ARS funciona como unidad base.
+- La conversión se calcula con la cotización disponible y no proyecta tipos de cambio futuros. La moneda original conserva su importe nominal en todos los plazos.
+- Se informa fecha y procedencia de la cotización. Si el BCRA no entrega todas las cotizaciones requeridas, no se inventan valores: se mantiene la proyección en moneda original y se informa que la conversión no está disponible.
+- La referencia del BCRA no debe describirse como precio minorista de compra/venta ni como cotización garantizada para una operación.
+- Advertencia visible obligatoria: las proyecciones son matemáticas y no contemplan inflación, devaluación, variaciones futuras del tipo de cambio, cambios de precios, impuestos, comisiones, intereses, retiros ni otros acontecimientos económicos; el poder adquisitivo futuro puede diferir.
+- Los importes de lista de compras y presupuesto permanecen expresados en ARS en esta etapa; la multidivisa aplica a la calculadora y a la Operación de Ahorro.
+- No se guarda ni persiste una meta multidivisa en esta primera entrega.
