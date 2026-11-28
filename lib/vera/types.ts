@@ -17,6 +17,8 @@ export type VeraConversationInput = {
   memories?: VeraMemory[];
 };
 
+import type { FinanceAlgorithmAnalysis } from "@/lib/finance-algorithm/types";
+
 export type VeraFinancialContext = {
   currency: string;
   period: "daily" | "weekly" | "monthly" | "yearly";
@@ -25,6 +27,7 @@ export type VeraFinancialContext = {
   netBalance: number;
   movementsCount: number;
   categoryTotals: Array<{ category: string; amount: number }>;
+  algorithmAnalysis?: FinanceAlgorithmAnalysis;
   profile?: {
     payFrequency: string;
     typicalIncome: number | null;
