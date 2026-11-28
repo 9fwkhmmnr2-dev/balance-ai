@@ -13,46 +13,46 @@
 - Entitlements validados server-side; nunca confiar en el estado visual del cliente.
 - No realizar operaciones financieras sin confirmación explícita.
 
-## 2. FREE
+## 2. FINANCE FREE
 
-- Funciones esenciales para cuentas, movimientos, presupuestos y objetivos según disponibilidad del producto.
-- VERA básico: **20 mensajes diarios**, saldo acumulable máximo **40**. Mensajes no usados se acumulan hasta el tope.
+- Funciones esenciales para cuentas, movimientos, transferencias, presupuestos y objetivos según disponibilidad del producto.
+- VERA: **20 mensajes diarios**, con hasta **40 créditos acumulables**.
+- Contexto conversacional de hasta **12 mensajes**.
 - Resúmenes financieros básicos basados en datos reales.
-- Notificaciones de servicio, seguridad y avisos financieros importantes.
-- Centro de notificaciones y preferencias esenciales.
-- Calculadora básica de Modo Ahorro: importe mensual elegido por el usuario y proyecciones simples a 2, 3, 6 y 12 meses, sin intereses ni inflación.\n- Vista previa y explicación de FINANCE PLUS.
-- Acceso a funciones generales de administración financiera que no estén expresamente designadas como Plus.
+- Recomendaciones generales y sencillas basadas en los datos disponibles.
+- Notificaciones esenciales de servicio, seguridad y avisos financieros importantes.
+- Sin acceso funcional al Modo Ahorro ni a la canasta básica/familiar; solo puede consultar una vista previa informativa.
+- Sin análisis avanzado de documentos, simulador avanzado, cierre mensual inteligente ni planificación Plus.
 
 ## 3. FINANCE PLUS
 
-- VERA ampliado: **100 mensajes diarios**, saldo acumulable máximo **200**.
-- Respuestas más detalladas, análisis profundo y contexto ampliado dentro de límites sostenibles.
-- Modo Ahorro: Operación de Ahorro personalizada, listas, presupuesto, comparación, ofertas verificadas, alternativas, canasta familiar y optimización de cesta cuando haya fuentes autorizadas.
-- Evolución e historial de ahorro con estimaciones, confirmaciones y dinero reservado separados.
-- Simulador de decisiones y cuotas usando datos existentes de FINANCE.TRACK.
-- Importación inteligente y análisis avanzado de documentos: PDF, XLSX, CSV, DOCX e imágenes, con extracción y categorización propuesta; el usuario revisa antes de guardar.
-- Informes de cierre mensual y análisis financiero avanzado.
-- Planificación y proyección avanzada de objetivos.
-- Recomendaciones y seguimiento personalizado más profundos.
-- FINANCE Wrapped avanzado.
-- Notificaciones inteligentes, umbrales configurables, proyecciones y recomendaciones Plus.
-- Personalización Para vos y análisis cruzado según permisos.
+- VERA: **100 mensajes diarios**, con hasta **200 créditos acumulables**.
+- Contexto conversacional de hasta **32 mensajes**.
+- Respuestas más extensas, análisis más profundos y planificación personalizada.
+- Análisis comparativo de períodos, categorías y tendencias.
+- Simulador de decisiones, compras y cuotas usando datos existentes de FINANCE.TRACK.
+- Modo Ahorro, listas, presupuestos de compra y canasta básica/familiar.
+- Comparación de comercios, descuentos verificados, alternativas y optimización de canastas solo cuando existan fuentes autorizadas y vigentes.
+- Análisis e importación documental con revisión del usuario antes de guardar. Los formatos y límites técnicos dependen de las capacidades efectivamente implementadas.
+- Cierre mensual inteligente, planificación avanzada, alertas y Wrapped avanzado.
+- Las funciones Plus amplían el análisis, pero no autorizan a inventar información ni a ejecutar operaciones financieras sin confirmación.
 
 ## 4. Cuotas de VERA
 
-- Free: 20 mensajes diarios; saldo máximo 40.
-- Plus: 40 mensajes diarios; saldo máximo 80.
-- Cuota compartida entre conversaciones.
-- Reinicio diario a medianoche según zona horaria de la cuenta.
-- Solo cuentan solicitudes del usuario procesadas correctamente; fallos técnicos no consumen cuota.
-- Al agotarse la cuota, conservar historial y explicar cuándo vuelve a estar disponible.
-- Enforcement en servidor; nunca depender del contador del navegador.
-- Ajustar límites si costes, abuso o capacidad lo requieren; comunicar cambios antes de aplicarlos.
+- Free: 20 créditos por día; máximo acumulable 40.
+- Plus: 100 créditos por día; máximo acumulable 200.
+- Contador único compartido entre todas las conversaciones del usuario.
+- Los créditos se renuevan diariamente según la zona horaria de la cuenta y los no utilizados se acumulan hasta el máximo del plan.
+- Solo consume un crédito una solicitud que termina con una respuesta generada correctamente.
+- Los errores técnicos no descuentan créditos; si una solicitud reservó un crédito y falla técnicamente, el servidor lo devuelve.
+- Al agotarse la cuota, se conserva el historial y se informa que debe esperar la renovación.
+- El control es server-side y atómico; nunca depende del contador del navegador.
+- No hay una cuota mensual aprobada. No inventar límites de longitud, archivos, memoria o prioridad/modelo hasta definirlos y documentarlos.
 
 ## 5. Notificaciones por plan y por categoría
 
 Separar tres categorías:
-1. **Servicio/seguridad:** actividad de cuenta, movimientos registrados, alertas importantes, situaciones adversas y seguridad. No paywalled.
+1. **Servicio/seguridad:** actividad de cuenta, movimientos registrados, alertas importantes, situaciones adversas y seguridad. No son exclusivas de Plus.
 2. **Recomendaciones personalizadas:** avances, análisis, oportunidades y proyecciones; controles y permisos claros.
 3. **Promocionales:** campañas, anuncios de Plus y novedades comerciales; permiso separado, explícito y revocable.
 
@@ -66,17 +66,24 @@ Free recibe alertas esenciales y resumen básico. Plus puede recibir análisis, 
 - USD 59.99 anual frente a USD 83.88 pagando 12 meses: descuento aproximado **28.5%**, comunicar “casi 30%”, no “30% exacto”.
 - No ofrecer precio de por vida ni congelamiento permanente sin validar costes.
 - Validar IA, datos/precios, impuestos, comisiones, facturación, mercado y disposición a pagar.
-- Checkout y contratos requieren proveedor y titularidad legal apropiada; el usuario menor de edad no debe eludir requisitos de edad/identidad del proveedor.
+- Checkout y contratos requieren proveedor y titularidad legal apropiada; no eludir requisitos de edad o identidad del proveedor.
 
 ## 7. Experiencia de descubrimiento y conversión
 
-- Botón dorado bajo el menú: “Descubrí FINANCE PLUS”.
-- Vistas previas de módulos Plus accesibles desde Free.
-- Cada vista explica qué hace, qué necesita, qué está disponible y qué requiere Plus.
-- Todos los CTA conducen a una página única de comparación Free vs. Plus con beneficios y checks.
+- Botón y vistas previas Plus con explicación transparente de lo que está disponible y lo que requiere el plan.
+- Cada vista explica qué hace, qué necesita y qué está implementado.
+- Los CTA conducen a una página única de comparación Free vs. Plus.
 - No presionar, usar urgencia falsa ni bloquear funciones básicas.
 - Marketing personalizado solo con permisos aplicables. Los ejemplos de ahorro deben ser ilustrativos salvo que se basen en precios y datos comprobados.
 
-## 8. Primera entrega de Modo Ahorro\n\n- Free conserva la calculadora básica y puede conocer el importe acumulado para el plazo elegido.\n- Plus incorpora Operación de Ahorro personalizada y herramientas avanzadas; el algoritmo debe revisar capacidad real antes de recomendar un aporte.\n- Comparador, promociones y optimización en vivo solo se habilitan con fuentes autorizadas y datos frescos.\n- No confundir ahorro estimado, ahorro confirmado y dinero reservado.\n\n## 9. Estado y cautelas
+## 8. Primera entrega de Modo Ahorro
+
+- Modo Ahorro y canasta básica/familiar son exclusivos de FINANCE PLUS. Free solo ve una presentación informativa.
+- Plus incorpora calculadora, Operación de Ahorro, listas, presupuestos y planificación de compras.
+- El algoritmo debe revisar capacidad real antes de recomendar un aporte.
+- Comparador, promociones y optimización en vivo solo se habilitan con fuentes autorizadas y datos frescos.
+- No confundir ahorro estimado, ahorro confirmado y dinero reservado.
+
+## 9. Estado y cautelas
 
 Esta matriz consolida decisiones aprobadas y propuestas de precio que aún deben validarse. No implica que todas las funciones estén implementadas. Revisar el código, backend, RLS, entitlements, proveedores, legal y costes antes de publicar.
