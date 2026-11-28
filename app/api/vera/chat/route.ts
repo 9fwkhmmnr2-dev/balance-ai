@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { getVeraProvider } from "@/lib/vera/provider";
+import { assertVeraProviderConfigured, getVeraProvider } from "@/lib/vera/provider";
 import { getFinancePlanAccess } from "@/lib/server/gold-access";
 import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
@@ -189,6 +189,9 @@ export async function POST(request: Request) {
     if (!isMessages(input.messages) || !isPeriod(input.period)) {
       return NextResponse.json({ error: "La conversación no tiene un formato válido." }, { status: 400 });
     }
+
+    // Verificamos la conexión antes de leer o guardar memoria financiera.
+    assertVeraProviderConfigured();
 
     // Recuperamos el objetivo existente antes de detectar nuevos datos.
     const { data: existingGoal, error: existingGoalError } = await supabase
@@ -535,6 +538,15 @@ export async function POST(request: Request) {
     }
     if (code === "VERA_PROVIDER_TIMEOUT") {
       return NextResponse.json({ error: "La conexión con VERA tardó demasiado. Probá nuevamente." }, { status: 504 });
+    }
+    if (code === "VERA_PROVIDER_HTTP_401" || code === "VERA_PROVIDER_HTTP_403") {
+      return NextResponse.json({ error: "La conexión de VERA con Gemini rechazó la autenticación. Hay que revisar la clave y los permisos del entorno." }, { status: 503 });
+    }
+    if (code === "VERA_PROVIDER_HTTP_404") {
+      return NextResponse.json({ error: "El modelo configurado para VERA no está disponible. Hay que revisar GEMINI_MODEL." }, { status: 503 });
+    }
+    if (code === "VERA_PROVIDER_HTTP_400") {
+      return NextResponse.json({ error: "Gemini rechazó el formato de la consulta. Revisá la configuración del modelo de VERA." }, { status: 502 });
     }
     return NextResponse.json({ error: "No pude conectar con VERA en este momento. Intentá nuevamente." }, { status: 502 });
   }
