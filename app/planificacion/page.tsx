@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthGuard from "../../components/auth-guard";
 import OnboardingGate from "../../components/onboarding-gate";
 import MobileMenu from "../../components/mobile-menu";
@@ -14,6 +14,11 @@ type PlanningTab = "goals" | "actions";
 
 function PlanningContent() {
   const [activeTab, setActiveTab] = useState<PlanningTab>("goals");
+
+  useEffect(() => {
+    const section = new URLSearchParams(window.location.search).get("section");
+    if (section === "acciones") setActiveTab("actions");
+  }, []);
 
   return (
     <div className="planning-page">
