@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { requirePremium } from "@/lib/server/plan-access";
+import { getFinancePlanAccess } from "@/lib/server/gold-access";
+import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,8 +34,20 @@ export async function POST(request: Request) {
     const { data: authData, error: authError } = await supabase.auth.getUser(token);
     if (authError || !authData.user) return NextResponse.json({ error: "Tu sesión venció." }, { status: 401 });
 
-    const access = await requirePremium(supabase, authData.user.id);
-    if (!access.allowed) return NextResponse.json({ error: access.error }, { status: access.status });
+    // El guardado también debe respetar la elegibilidad legal y de edad de VERA.
+    const eligibility = await checkVeraAiEligibility(supabase, authData.user.id);
+    if (!eligibility.allowed) return NextResponse.json({ error: eligibility.error }, { status: eligibility.status });
+
+    // Usamos la misma fuente de verdad de FINANCE PLUS que el endpoint de análisis.
+    let planAccess: Awaited<ReturnType<typeof getFinancePlanAccess>>;
+    try {
+      planAccess = await getFinancePlanAccess(supabase, authData.user.id);
+    } catch {
+      return NextResponse.json({ error: "No pudimos verificar tu plan. Intentá nuevamente." }, { status: 503 });
+    }
+    if (!planAccess.isPlus) {
+      return NextResponse.json({ error: "La importación de documentos requiere FINANCE PLUS." }, { status: 403 });
+    }
 
     const body = await request.json() as { transactions?: unknown };
     if (!Array.isArray(body.transactions) || body.transactions.length < 1 || body.transactions.length > 200) {
@@ -45,7 +58,7 @@ export async function POST(request: Request) {
     for (const raw of body.transactions) {
       if (!raw || typeof raw !== "object") return NextResponse.json({ error: "Hay movimientos con datos inválidos." }, { status: 400 });
       const row = raw as Record<string, unknown>;
-      if (typeof row.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(row.date) ||
+      if (typeof row.date !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(row.date) ||
           typeof row.description !== "string" || !row.description.trim() || row.description.length > 180 ||
           typeof row.amount !== "number" || !Number.isFinite(row.amount) || row.amount <= 0 ||
           typeof row.currency !== "string" || !/^[A-Z]{3}$/.test(row.currency) ||
