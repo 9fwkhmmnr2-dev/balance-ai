@@ -5,18 +5,27 @@ import { supabase } from "@/lib/supabase";
 import styles from "./vera-savings-mode.module.css";
 import { buildSavingsProjections, calculateSavingsProjection } from "@/lib/finance-algorithm/savings";
 
+type SavingsCurrency = "ARS" | "USD" | "EUR" | "BRL";
+type ExchangeRates = { date: string; source: string; rates: Partial<Record<SavingsCurrency, number>> };
+
 type ShoppingItem = { id: number; name: string; quantity: number; unitPrice: string };
 
 const periods = [2, 3, 6, 12];
 
-function money(value: number) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(value);
+function money(value: number, currency: SavingsCurrency) {
+  return new Intl.NumberFormat("es-AR", { style: "currency", currency, maximumFractionDigits: currency === "ARS" ? 0 : 2 }).format(value);
 }
 
 export default function VeraSavingsMode() {
   const [isPlus, setIsPlus] = useState(false);
   const [loading, setLoading] = useState(true);
   const [monthlySaving, setMonthlySaving] = useState("50000");
+  const [savingCurrency, setSavingCurrency] = useState<SavingsCurrency>("ARS");
+  const [displayMode, setDisplayMode] = useState<"both" | "original" | "converted">("both");
+  const [convertedCurrency, setConvertedCurrency] = useState<SavingsCurrency>("USD");
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRates | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(true);
+  const [ratesError, setRatesError] = useState("");
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("1");
   const [unitPrice, setUnitPrice] = useState("");
@@ -46,7 +55,24 @@ export default function VeraSavingsMode() {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/vera/ahorro/cotizaciones", { cache: "no-store" })
+      .then(async (response) => { if (!response.ok) throw new Error("Cotizaciones no disponibles"); return await response.json() as ExchangeRates; })
+      .then((data) => { if (active) { setExchangeRates(data); setRatesError(""); } })
+      .catch(() => { if (active) setRatesError("No hay cotizaciones disponibles ahora. Podés seguir usando la proyección en tu moneda original."); })
+      .finally(() => { if (active) setRatesLoading(false); });
+    return () => { active = false; };
+  }, []);
+
   const monthlyValue = Number(monthlySaving);
+  const originalRate = savingCurrency === "ARS" ? 1 : exchangeRates?.rates[savingCurrency];
+  const targetRate = convertedCurrency === "ARS" ? 1 : exchangeRates?.rates[convertedCurrency];
+  const canConvert = savingCurrency !== convertedCurrency && Number.isFinite(originalRate) && Number.isFinite(targetRate) && Number(originalRate) > 0 && Number(targetRate) > 0;
+  const projectedIn = (months: number) => {
+    const original = monthlyValue * months;
+    return { original, converted: canConvert ? original * Number(originalRate) / Number(targetRate) : null };
+  };
   const validMonthlySaving = monthlySaving.trim() !== "" && Number.isFinite(monthlyValue) && monthlyValue > 0;
   const total = useMemo(() => items.reduce((sum, item) => {
     const price = Number(item.unitPrice);
@@ -112,23 +138,32 @@ export default function VeraSavingsMode() {
             <div><span className={styles.eyebrow}>01 / CALCULADORA</span><h2>¿Cuánto podrías ahorrar?</h2></div>
             <span className={styles.plusTag}>FINANCE PLUS</span>
           </div>
-          <label className={styles.monthlyInput}>¿Cuánto estarías dispuesto/a a separar por mes?
-            <div><span>$</span><input type="number" min="1" max="100000000" step="100" inputMode="decimal" value={monthlySaving} onChange={(event) => setMonthlySaving(event.target.value)} placeholder="Ej. 50000" /></div>
-          </label>
-          {validMonthlySaving ? (
-            <div className={styles.projectionGrid}>
-              {buildSavingsProjections(monthlyValue, periods).map(({ months: month, total: projectedTotal }) => (
-                <article key={month} className={month === 12 ? styles.projectionHighlight : styles.projection}>
-                  <span>{month} {month === 1 ? "mes" : "meses"}</span>
-                  <strong>{money(projectedTotal)}</strong>
-                  <small>{money(monthlyValue)} por mes</small>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className={styles.disclaimer}>Ingresá un importe mensual mayor a cero para calcular tus proyecciones.</p>
-          )}
-          <p className={styles.disclaimer}>Cálculo simple: aporte mensual × cantidad de meses. No contempla inflación, intereses, variaciones de ingresos ni retiros. No es una recomendación de cuánto deberías ahorrar.</p>
+          <div className={styles.currencyControls}>
+            <label className={styles.monthlyInput}>¿Cuánto estarías dispuesto/a a separar por mes?
+              <div><span>{savingCurrency}</span><input type="number" min="0.01" max="100000000" step="0.01" inputMode="decimal" value={monthlySaving} onChange={(event) => setMonthlySaving(event.target.value)} placeholder="Ej. 50" /></div>
+            </label>
+            <label className={styles.currencySelect}>Moneda del objetivo
+              <select value={savingCurrency} onChange={(event) => setSavingCurrency(event.target.value as SavingsCurrency)}><option value="ARS">ARS · Peso argentino</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="BRL">BRL · Real brasileño</option></select>
+            </label>
+          </div>
+          <div className={styles.displayControls}>
+            <label className={styles.currencySelect}>Visualización
+              <select value={displayMode} onChange={(event) => setDisplayMode(event.target.value as typeof displayMode)}><option value="both">Mostrar ambas monedas</option><option value="original">Solo moneda del objetivo</option><option value="converted">Solo moneda convertida</option></select>
+            </label>
+            <label className={styles.currencySelect}>Ver equivalencia en
+              <select value={convertedCurrency} onChange={(event) => setConvertedCurrency(event.target.value as SavingsCurrency)}><option value="ARS">ARS · Peso argentino</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="BRL">BRL · Real brasileño</option></select>
+            </label>
+          </div>
+          {validMonthlySaving ? <div className={styles.projectionGrid}>
+            {periods.map((month) => { const projection = projectedIn(month); return <article key={month} className={month === 12 ? styles.projectionHighlight : styles.projection}>
+              <span>{month} meses</span>
+              {displayMode !== "converted" && <strong>{money(projection.original, savingCurrency)}</strong>}
+              {displayMode !== "original" && (canConvert && projection.converted !== null ? <strong className={styles.convertedAmount}>{money(projection.converted, convertedCurrency)}</strong> : <small>Equivalencia no disponible</small>)}
+              <small>{money(monthlyValue, savingCurrency)} por mes</small>
+            </article>; })}
+          </div> : <p className={styles.disclaimer}>Ingresá un importe mensual mayor a cero para calcular tus proyecciones.</p>}
+          <div className={styles.exchangeInfo}>{ratesLoading ? "Consultando cotizaciones de referencia…" : exchangeRates && canConvert ? `Referencia BCRA · ${exchangeRates.date} · Cotización oficial publicada; no representa necesariamente el precio minorista de compra o venta.` : ratesError || "Elegí dos monedas distintas para ver su equivalencia."}</div>
+          <p className={styles.disclaimer}>Importante: estas proyecciones son estimaciones matemáticas basadas en el aporte indicado y, para la conversión, en la cotización disponible al momento del cálculo. No contemplan inflación, devaluación, cambios futuros del tipo de cambio, variaciones de precios, impuestos, comisiones, intereses, retiros ni otros acontecimientos económicos. El valor real y el poder adquisitivo del ahorro pueden ser diferentes. No es una recomendación financiera ni una predicción.</p>
         </section>
 
         {loading ? (
@@ -149,8 +184,8 @@ export default function VeraSavingsMode() {
               <p>Usamos el importe que elegiste para mostrar un punto de partida. Antes de recomendar un ritmo, FINANCE: ALGORITMO deberá contrastarlo con tus ingresos, gastos esenciales, compromisos y reservas disponibles.</p>
               {validMonthlySaving ? (
                 <div className={styles.operationResult}>
-                  <div><span>En 6 meses</span><strong>{money(calculateSavingsProjection(monthlyValue, 6) ?? 0)}</strong></div>
-                  <div><span>En 12 meses</span><strong>{money(calculateSavingsProjection(monthlyValue, 12) ?? 0)}</strong></div>
+                  <div><span>En 6 meses</span><strong>{money(calculateSavingsProjection(monthlyValue, 6) ?? 0, savingCurrency)}</strong></div>
+                  <div><span>En 12 meses</span><strong>{money(calculateSavingsProjection(monthlyValue, 12) ?? 0, savingCurrency)}</strong></div>
                 </div>
               ) : <p className={styles.disclaimer}>Ingresá un importe válido para ver el escenario.</p>}
               <p className={styles.disclaimer}>Esta primera vista es una simulación aritmética. Todavía no verifica capacidad de ahorro ni crea una reserva de dinero.</p>
@@ -179,9 +214,9 @@ export default function VeraSavingsMode() {
                 <ul className={styles.items}>
                   {items.map((item) => (
                     <li key={item.id}>
-                      <div className={styles.itemName}><strong>{item.name}</strong><span>Cantidad: {item.quantity}{item.unitPrice ? ` · ${money(Number(item.unitPrice))} por unidad` : " · Sin precio de referencia"}</span></div>
+                      <div className={styles.itemName}><strong>{item.name}</strong><span>Cantidad: {item.quantity}{item.unitPrice ? ` · ${money(Number(item.unitPrice), "ARS")} por unidad` : " · Sin precio de referencia"}</span></div>
                       <div className={styles.itemEnd}>
-                        <strong>{item.unitPrice ? money(Number(item.unitPrice) * item.quantity) : "—"}</strong>
+                        <strong>{item.unitPrice ? money(Number(item.unitPrice) * item.quantity, "ARS") : "—"}</strong>
                         <button type="button" onClick={() => setItems((current) => current.filter((entry) => entry.id !== item.id))} aria-label={`Quitar ${item.name}`}>Quitar</button>
                       </div>
                     </li>
@@ -198,8 +233,8 @@ export default function VeraSavingsMode() {
                   <div><span>$</span><input type="number" min="0" step="0.01" inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="Ej. 50000" /></div>
                 </label>
                 <div className={styles.budgetStats}>
-                  <div><span>Total estimado con precios cargados</span><strong>{money(total)}</strong></div>
-                  {hasBudget && <div><span>{difference !== null && difference >= 0 ? "Presupuesto disponible" : "Exceso sobre el presupuesto"}</span><strong className={difference !== null && difference < 0 ? styles.over : styles.remaining}>{money(Math.abs(difference ?? 0))}</strong></div>}
+                  <div><span>Total estimado con precios cargados</span><strong>{money(total, "ARS")}</strong></div>
+                  {hasBudget && <div><span>{difference !== null && difference >= 0 ? "Presupuesto disponible" : "Exceso sobre el presupuesto"}</span><strong className={difference !== null && difference < 0 ? styles.over : styles.remaining}>{money(Math.abs(difference ?? 0), "ARS")}</strong></div>}
                 </div>
                 {items.length > pricedItems && <p className={styles.disclaimer}>{items.length - pricedItems} producto(s) no tienen precio de referencia; el total no representa el costo completo de la compra.</p>}
                 <p className={styles.disclaimer}>Los precios ingresados son referencias tuyas, no cotizaciones actuales ni ofertas verificadas. Moneda: ARS.</p>
