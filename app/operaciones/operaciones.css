@@ -23,3 +23,27 @@
 
 .operations-embedded .operations-main{padding:0 0 28px}
 @media(max-width:700px){.operations-embedded .operations-main{padding:0 0 25px}}
+
+/* Dark charcoal cards in the FINANCE.TRACK palette */
+.operations-stat{background:#202329;border-color:#343941;color:#F4F5F6}
+.operations-stat span{color:#C0C5CD}
+.operations-stat small{color:#9299A4}
+.operations-type-card{background:#17191D;border-color:#343941;color:#F4F5F6}
+.operations-type-card:hover{background:#22262C;border-color:#D99A19}
+.operations-type-card small{color:#A7AEB8}
+.operations-type-icon,.operation-card-icon{background:#302719;color:#F9B52B}
+.operation-card{background:#202329;border-color:#343941;color:#F4F5F6}
+.operation-type-label{color:#F9B52B}
+.operation-card-details{border-top-color:#373C44}
+.operation-card-details small{color:#A0A7B1}
+.operation-card-details strong{color:#F1F2F4}
+.operation-note{color:#B9C0C9}
+.operation-actions{border-top-color:#373C44}
+.operation-actions button{color:#F9B52B}
+.operations-empty{background:#202329;border-color:#444B55;color:#F4F5F6}
+.operations-empty p{color:#A7AEB8}
+.operations-empty>span{background:#302719;color:#F9B52B}
+.operations-section-heading>span{color:#9299A4}
+.operations-filter{color:#B9C0C9}
+.operations-filter select{background:#202329;border-color:#343941;color:#F4F5F6}
+.operation-card-icon svg,.operations-type-icon svg{display:block}
