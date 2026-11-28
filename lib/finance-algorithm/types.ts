@@ -84,7 +84,7 @@ export type FinanceAlgorithmAnalysis = {
     currency: string;
     knownMonthlyCommitments: number;
     amountBeforeUnlistedExpenses: number;
-    status: "commitments_exceed_reported_income" | "positive_before_unlisted_expenses" | "not_comparable";
+    status: "commitments_exceed_reported_income" | "nonnegative_before_unlisted_expenses" | "not_comparable";
   } | null;
   dataQuality: {
     confidence: FinanceConfidence;
