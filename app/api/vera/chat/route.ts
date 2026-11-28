@@ -157,6 +157,7 @@ function extractComputerGoal(messages: VeraMessage[], hasExistingGoal: boolean) 
 }
 
 export async function POST(request: Request) {
+  let refundReservedCredit: (() => Promise<void>) | null = null;
   try {
     const authorization = request.headers.get("authorization") || "";
     const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
@@ -491,14 +492,48 @@ export async function POST(request: Request) {
     };
 
     const provider = getVeraProvider();
+    const { data: creditData, error: creditError } = await supabase.rpc("claim_vera_message_credit");
+    if (creditError || !creditData || typeof creditData !== "object") {
+      throw new Error("VERA_USAGE_UNAVAILABLE");
+    }
+    const credit = creditData as {
+      allowed?: boolean;
+      plan?: "free" | "plus";
+      remaining?: number;
+      dailyAllowance?: number;
+      maxCredits?: number;
+      resetAt?: string;
+    };
+    const usage = {
+      plan: credit.plan ?? (isPlus ? "plus" : "free"),
+      remaining: Number(credit.remaining ?? 0),
+      dailyAllowance: Number(credit.dailyAllowance ?? (isPlus ? 100 : 20)),
+      maxCredits: Number(credit.maxCredits ?? (isPlus ? 200 : 40)),
+      resetAt: credit.resetAt ?? null,
+    };
+    if (credit.allowed !== true) {
+      return NextResponse.json({
+        error: "Llegaste al límite de mensajes de VERA por hoy. Tus créditos se renuevan automáticamente y los que no uses se acumulan hasta el máximo de tu plan.",
+        code: "VERA_DAILY_LIMIT_REACHED",
+        usage,
+      }, { status: 429 });
+    }
+
+    refundReservedCredit = async () => {
+      const { error } = await supabase.rpc("refund_vera_message_credit");
+      if (error) console.error("[VERA_USAGE_REFUND_FAILED]");
+    };
     const result = await provider.generate({
       messages: input.messages,
       financialContext,
       memories,
     });
+    // A response generated successfully consumes one credit. Technical failures are refunded in catch.
+    refundReservedCredit = null;
 
     return NextResponse.json({
       reply: result.text,
+      usage,
       financialSummary: {
         currency: financialContext.currency,
         period: financialContext.period,
@@ -509,6 +544,10 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (refundReservedCredit) {
+      try { await refundReservedCredit(); } catch { console.error("[VERA_USAGE_REFUND_FAILED]"); }
+      refundReservedCredit = null;
+    }
     const rawCode = error instanceof Error ? error.message : "";
     const providerHttpMatch = rawCode.match(/^VERA_PROVIDER_HTTP_(\d{3})$/);
     const safeCode = [
@@ -517,6 +556,7 @@ export async function POST(request: Request) {
       "VERA_EMPTY_RESPONSE",
       "VERA_PROVIDER_TIMEOUT",
       "VERA_PROVIDER_NETWORK_ERROR",
+      "VERA_USAGE_UNAVAILABLE",
     ].includes(rawCode)
       ? rawCode
       : providerHttpMatch
@@ -527,6 +567,9 @@ export async function POST(request: Request) {
     console.error("[VERA_CHAT_DIAGNOSTIC]", { code: safeCode });
 
     const code = rawCode;
+    if (code === "VERA_USAGE_UNAVAILABLE") {
+      return NextResponse.json({ error: "El sistema de créditos de VERA todavía no está disponible. Intentá nuevamente más tarde." }, { status: 503 });
+    }
     if (code === "VERA_AI_NOT_CONFIGURED") {
       return NextResponse.json({ error: "VERA todavía no tiene su conexión de IA configurada." }, { status: 503 });
     }
