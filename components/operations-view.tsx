@@ -157,13 +157,13 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
       cadence: form.cadence === "weekly" ? "Cada semana" : form.cadence === "monthly" ? "Cada mes" : "Revisión manual",
       nextDate: form.nextDate,
       status: "active",
-      note: form.note.trim() || "Operación creada manualmente en esta vista preliminar.",
+      note: form.note.trim() || "Operación creada manualmente en esta demostración.",
     };
     setOperations((current) => [next, ...current]);
     setForm(emptyForm);
     setShowForm(false);
     setFilter("all");
-    setNotice("Operación agregada a la vista preliminar. Todavía no se guardó en tu cuenta.");
+    setNotice("Operación agregada a la demostración. Todavía no se guardó en tu cuenta.");
   }
 
   function updateStatus(id: string, status: OperationStatus) {
@@ -172,7 +172,7 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
 
   function removeOperation(id: string) {
     setOperations((current) => current.filter((item) => item.id !== id));
-    setNotice("Operación quitada de la vista preliminar.");
+    setNotice("Operación quitada de la demostración.");
   }
 
   return (
@@ -199,48 +199,6 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
             <span aria-hidden="true">＋</span> Nueva operación
           </button>
         </div>
-
-        <div className="operations-preview-note">
-          <span className="operations-preview-dot" />
-          <div>
-            <strong>Vista preliminar</strong>
-            <p>Los ejemplos y cambios de esta pantalla son temporales. Todavía no se guardan en tu cuenta ni se conectan al algoritmo.</p>
-          </div>
-        </div>
-
-        <section className="operations-stats" aria-label="Resumen de operaciones">
-          <article className="operations-stat">
-            <span>Operaciones en total</span>
-            <strong>{operations.length}</strong>
-            <small>Incluye todos los estados</small>
-          </article>
-          <article className="operations-stat">
-            <span>En seguimiento</span>
-            <strong>{activeCount}</strong>
-            <small>Operaciones activas</small>
-          </article>
-          <article className="operations-stat">
-            <span>Pausadas</span>
-            <strong>{pausedCount}</strong>
-            <small>Sin seguimiento activo</small>
-          </article>
-        </section>
-
-        <section className="operations-types">
-          <div className="operations-section-heading">
-            <div><p className="operations-eyebrow">QUÉ PODÉS ORGANIZAR</p><h2>Tipos de operación</h2></div>
-            <span>6 categorías iniciales</span>
-          </div>
-          <div className="operations-type-grid">
-            {(Object.keys(typeLabels) as OperationType[]).map((type, index) => (
-              <button key={type} type="button" className="operations-type-card" onClick={() => { setForm({ ...emptyForm, type }); setShowForm(true); setNotice(""); }}>
-                <span className="operations-type-icon" aria-hidden="true">{["↗", "◷", "▤", "◇", "⌕", "◎"][index]}</span>
-                <strong>{typeLabels[type]}</strong>
-                <small>{typeDescriptions[type]}</small>
-              </button>
-            ))}
-          </div>
-        </section>
 
         <section className="operations-list-section">
           <div className="operations-section-heading">
@@ -270,7 +228,7 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
                 <article className="operation-card" key={operation.id}>
                   <div className="operation-card-top">
                     <div className="operation-card-title">
-                      <span className="operation-card-icon" aria-hidden="true">{operation.type === "saving_plan" ? "↗" : operation.type === "expense_review" ? "◷" : operation.type === "debt_review" ? "▤" : operation.type === "purchase_planning" ? "◇" : operation.type === "price_tracking" ? "⌕" : "◎"}</span>
+                      <span className="operation-card-icon" aria-hidden="true"><OperationTypeIcon type={operation.type} /></span>
                       <div><span className="operation-type-label">{typeLabels[operation.type]}</span><h3>{operation.title}</h3></div>
                     </div>
                     <span className={`operation-status status-${operation.status}`}>{operation.status === "active" ? "Activa" : operation.status === "paused" ? "Pausada" : "Completada"}</span>
@@ -291,6 +249,41 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
               ))}
             </div>
           )}
+        </section>
+
+
+        <section className="operations-stats" aria-label="Resumen de operaciones">
+          <article className="operations-stat">
+            <span>Operaciones en total</span>
+            <strong>{operations.length}</strong>
+            <small>Incluye todos los estados</small>
+          </article>
+          <article className="operations-stat">
+            <span>En seguimiento</span>
+            <strong>{activeCount}</strong>
+            <small>Operaciones activas</small>
+          </article>
+          <article className="operations-stat">
+            <span>Pausadas</span>
+            <strong>{pausedCount}</strong>
+            <small>Sin seguimiento activo</small>
+          </article>
+        </section>
+
+        <section className="operations-types">
+          <div className="operations-section-heading">
+            <div><p className="operations-eyebrow">QUÉ PODÉS ORGANIZAR</p><h2>Tipos de operación</h2></div>
+            <span>6 categorías iniciales</span>
+          </div>
+          <div className="operations-type-grid">
+            {(Object.keys(typeLabels) as OperationType[]).map((type, index) => (
+              <button key={type} type="button" className="operations-type-card" onClick={() => { setForm({ ...emptyForm, type }); setShowForm(true); setNotice(""); }}>
+                <span className="operations-type-icon" aria-hidden="true"><OperationTypeIcon type={type} /></span>
+                <strong>{typeLabels[type]}</strong>
+                <small>{typeDescriptions[type]}</small>
+              </button>
+            ))}
+          </div>
         </section>
 
         <p className="operations-footer-note">En esta etapa, una operación es un plan de organización y seguimiento. No realiza pagos, transferencias ni cambios en tus movimientos.</p>
@@ -317,12 +310,27 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
               <label>Notas <span>(opcional)</span><textarea value={form.note} onChange={(event) => setForm({ ...form, note: event.target.value })} maxLength={300} rows={3} placeholder="Agregá contexto o condiciones para esta operación." /></label>
               <div className="operations-form-disclaimer">La frecuencia organiza tus revisiones; no programa pagos ni movimientos automáticos.</div>
               {notice && <p className="operations-notice" role="alert">{notice}</p>}
-              <div className="operations-form-actions"><button type="button" className="operations-secondary" onClick={() => setShowForm(false)}>Cancelar</button><button type="submit" className="operations-primary">Agregar a la vista</button></div>
+              <div className="operations-form-actions"><button type="button" className="operations-secondary" onClick={() => setShowForm(false)}>Cancelar</button><button type="submit" className="operations-primary">Agregar operación</button></div>
             </form>
           </section>
         </div>
       )}
     </div>
+  );
+}
+
+
+function OperationTypeIcon({ type }: { type: OperationType }) {
+  const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      {type === "saving_plan" && <><path {...common} d="M4 9.5h16v9H4z" /><path {...common} d="M4 9.5 6 6h12l2 3.5M8 6V4h8v2" /><circle {...common} cx="12" cy="14" r="2.2" /></>}
+      {type === "expense_review" && <><path {...common} d="M4 19V5M4 19h16" /><path {...common} d="M7 15v-3h3v3M12 15V8h3v7M17 15v-5h3v5" /></>}
+      {type === "debt_review" && <><path {...common} d="M7 3.8h8l3 3V20H7z" /><path {...common} d="M15 3.8v3h3M10 11h5M10 14h5M10 17h3" /></>}
+      {type === "purchase_planning" && <><path {...common} d="M5 8h14l-1 12H6L5 8Z" /><path {...common} d="M9 8a3 3 0 0 1 6 0" /></>}
+      {type === "price_tracking" && <><path {...common} d="m4 11 7-7h8v8l-7 7-8-8Z" /><circle {...common} cx="15.5" cy="8.5" r="1.1" /><path {...common} d="m8.5 12.5 3 3" /></>}
+      {type === "goal_follow_up" && <><circle {...common} cx="12" cy="12" r="8.5" /><circle {...common} cx="12" cy="12" r="4.8" /><circle {...common} cx="12" cy="12" r="1.2" /></>}
+    </svg>
   );
 }
 
