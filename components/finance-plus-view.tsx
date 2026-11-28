@@ -8,6 +8,10 @@ const features = [
   ["Cuentas, movimientos y transferencias", true, true],
   ["Presupuestos y objetivos básicos", true, true],
   ["VERA: consultas básicas", true, true],
+  ["VERA FREE: 20 mensajes/día · hasta 40 créditos acumulados", true, false],
+  ["VERA PLUS: 100 mensajes/día · hasta 200 créditos acumulados", false, true],
+  ["Contexto conversacional de hasta 12 mensajes", true, false],
+  ["Contexto conversacional de hasta 32 mensajes", false, true],
   ["Resumen mensual básico", true, true],
   ["Notificaciones esenciales", true, true],
   ["Mayor capacidad para conversar y contexto ampliado", false, true],
@@ -94,20 +98,21 @@ export default function FinancePlusView() {
 
           <div className={styles.prices}>
             <article className={styles.priceCard}>
-              <span>Mensual · precio propuesto</span>
-              <strong>USD 3,99<small>/mes</small></strong>
-              <p>Cancelación mensual cuando la suscripción esté habilitada.</p>
+              <span>Mensual · precio objetivo orientativo</span>
+              <strong>USD 6,99<small>/mes</small></strong>
+              <p>Suscripción mensual. Precio sujeto a validación y sin cobros habilitados.</p>
             </article>
             <article className={styles.priceCard}>
-              <span>Anual · precio propuesto</span>
-              <strong>USD 39,99<small>/año</small></strong>
-              <p>Equivale a USD 3,33 por mes.</p>
+              <span>Anual · precio objetivo orientativo</span>
+              <strong>USD 59,99<small>/año</small></strong>
+              <p>Equivale a USD 5,00 por mes; casi 30% menos que doce pagos mensuales al precio objetivo.</p>
             </article>
           </div>
 
           <div className={styles.payment}>
-            <strong>Medios de pago previstos</strong>
-            <p>Tarjeta y PayPal. La disponibilidad final, moneda de cobro e impuestos se confirmarán antes de habilitar la compra.</p>
+            <strong>Modalidades de suscripción y medios de pago</strong>
+            <p>Podrás elegir entre pago mensual o anual. Tarjeta y PayPal son medios previstos, sujetos a confirmar con el proveedor de cobro. La moneda final, impuestos, renovación automática, cancelación y reembolsos se informarán antes de contratar.</p>
+            <p><strong>Precio beta en evaluación:</strong> USD 3,99 por mes o USD 29,99 por año. No está activo ni garantizado; sus condiciones y duración deberán definirse antes de ofrecerlo.</p>
           </div>
           {isPreview ? (
             <button className={styles.buyButton} type="button" onClick={requestPreviewAccess} disabled={isPlus || !accountId}>
@@ -117,7 +122,7 @@ export default function FinancePlusView() {
             <button className={styles.buyButton} type="button" disabled aria-disabled="true">Comprar FINANCE PLUS · Próximamente</button>
           )}
           {notice && <p role="status" className={styles.note}>{notice}</p>}
-          <p className={styles.note}>Todavía no se realizan cobros ni se solicitan tarjetas. En Preview, el acceso de prueba se habilita individualmente. Los precios son orientativos y las funciones marcadas “En preparación” aún no están disponibles.</p>
+          <p className={styles.note}>Todavía no se realizan cobros ni se solicitan tarjetas. La comparación está disponible también para cuentas FREE. En Preview, el acceso especial de prueba se habilita individualmente y no equivale a una suscripción paga. Los precios son orientativos y las funciones marcadas “En desarrollo” aún no están disponibles. Las alertas esenciales, la seguridad y los controles de privacidad no dependen de PLUS.</p>
           <a className={styles.backToVera} href="/vera">Volver a VERA</a>
         </section>
       </main>
