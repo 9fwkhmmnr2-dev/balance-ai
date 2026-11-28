@@ -1,7 +1,7 @@
 # FINANCE.TRACK: Modo Ahorro — Especificación completa de producto
 
 **Plan:** FINANCE PLUS.
-**Estado:** interfaz inicial parcialmente implementada. La calculadora Free usa una función determinista compartida; Operación de Ahorro Plus aún es una proyección de referencia, no una evaluación de capacidad ni un plan persistido. Comparación real, ofertas y optimización avanzada dependen de fuentes autorizadas y backend.
+**Estado:** interfaz inicial parcialmente implementada. El módulo está bloqueado para Free. Operación de Ahorro Plus aún es una proyección de referencia, no una evaluación de capacidad ni un plan persistido. Comparación real, ofertas y optimización avanzada dependen de fuentes autorizadas y backend.
 **Rama:** `feature/finance-plus-unification`.
 
 ## 1. Promesa
@@ -10,17 +10,15 @@ Ayudar a gastar menos en compras planificadas comparando productos equivalentes 
 
 ## 2. Funciones
 
-0. **Acceso Plus:** todo el espacio Modo Ahorro, incluidas calculadora, Operación de Ahorro, listas y presupuestos, es exclusivo de FINANCE PLUS. Free solo puede ver una presentación informativa sin usar las herramientas.
-1. **Operación de Ahorro (Plus):** planes prediseñados y personalizados a partir de un importe y plazo elegidos. FINANCE: ALGORITMO solo puede recomendar aportes después de evaluar ingresos, gastos esenciales, compromisos, reservas y objetivos autorizados. Permitir reducir, pausar o cancelar sin penalizaciones.
-
-
-2. **Listas de compras:** crear listas por texto o imagen, cantidades, presentaciones y marcas preferidas.
-3. **Presupuesto de compra:** definir límite y detectar qué productos elevan el total; sugerir alternativas sin presionar a comprar.
-4. **Comparación de comercios:** comparar mismo producto/presentación en supermercados, farmacias y comercios admitidos.
-5. **Descuentos y promociones:** cupones, bancos, tarjetas y promociones con fuente, vigencia, requisitos, restricciones y condiciones.
-6. **Alternativas económicas:** marcas, variantes y tamaños comparables; normalizar precio por kg, litro o unidad y explicar diferencias.
-7. **Optimización de canasta:** comparar compra en un solo comercio frente a varios; considerar entrega, mínimo de compra, distancia, transporte y otros costes.
-8. **Análisis de ahorro:** estimar oportunidades y registrar ahorro realizado solo cuando el usuario confirme el precio real de compra.
+1. **Acceso Plus:** todo el espacio Modo Ahorro, incluidas calculadora, Operación de Ahorro, listas y presupuestos, es exclusivo de FINANCE PLUS. Free solo puede ver una presentación informativa sin usar las herramientas.
+2. **Operación de Ahorro (Plus):** planes prediseñados y personalizados a partir de un importe y plazo elegidos. FINANCE: ALGORITMO solo puede recomendar aportes después de evaluar ingresos, gastos esenciales, compromisos, reservas y objetivos autorizados. Permitir reducir, pausar o cancelar sin penalizaciones.
+3. **Listas de compras:** crear listas por texto o imagen, cantidades, presentaciones y marcas preferidas.
+4. **Presupuesto de compra:** definir límite y detectar qué productos elevan el total; sugerir alternativas sin presionar a comprar.
+5. **Comparación de comercios:** comparar mismo producto/presentación en supermercados, farmacias y comercios admitidos.
+6. **Descuentos y promociones:** cupones, bancos, tarjetas y promociones con fuente, vigencia, requisitos, restricciones y condiciones.
+7. **Alternativas económicas:** marcas, variantes y tamaños comparables; normalizar precio por kg, litro o unidad y explicar diferencias.
+8. **Optimización de canasta:** comparar compra en un solo comercio frente a varios; considerar entrega, mínimo de compra, distancia, transporte y otros costes.
+9. **Análisis de ahorro:** estimar oportunidades y registrar ahorro realizado solo cuando el usuario confirme el precio real de compra.
 
 ## 3. Canasta mensual familiar
 
@@ -96,13 +94,20 @@ Todo Modo Ahorro y la canasta básica/familiar son exclusivos de FINANCE PLUS. F
 ## 10. Estado técnico conocido
 
 - Existe una primera interfaz en `components/vera-savings-mode.tsx`, CSS asociado y ruta `/finance-plus/ahorro`.
-- La interfaz incluye lista, cantidades, presupuesto y cálculos con precios de referencia ingresados por el usuario.
+- La interfaz Plus incluye lista, cantidades, presupuesto y cálculos con precios de referencia ingresados por el usuario.
 - La UI inicial no equivale a cotizaciones en vivo.
 - Comparador, descuentos y optimización avanzada fueron marcados como próximos.
 - Persistencia, endpoints, integración de comercios y precios autorizados no están completos.
 - No activar ofertas hasta validar licencia, calidad, frescura, seguridad y coste total.
 
-## 11. Primera entrega prevista\n\n- Free: calculadora con aporte mensual ingresado por la persona y proyecciones a 2, 3, 6 y 12 meses.\n- Plus: Operación de Ahorro y herramientas de planificación/compras; las comparaciones y ofertas reales permanecen desactivadas hasta integrar fuentes autorizadas.\n- Las notificaciones de seguimiento requieren preferencias/permisos y una fuente de datos persistente; no se simulan como activas en esta primera interfaz.\n- La primera interfaz no persiste aún el plan ni la lista en Supabase; no debe presentarse como seguimiento automático.\n\n## 12. Criterios de aceptación
+## 11. Primera entrega prevista
+
+- Free: vista previa informativa, sin acceso funcional al Modo Ahorro ni a canastas.
+- Plus: calculadora, Operación de Ahorro y herramientas de planificación/compras; las comparaciones y ofertas reales permanecen desactivadas hasta integrar fuentes autorizadas.
+- Las notificaciones de seguimiento requieren preferencias/permisos y una fuente de datos persistente; no se simulan como activas en esta primera interfaz.
+- La primera interfaz no persiste aún el plan ni la lista en Supabase; no debe presentarse como seguimiento automático.
+
+## 12. Criterios de aceptación
 
 - Comparaciones de productos equivalentes y cantidades normalizadas.
 - Coste total considera gastos conocidos y condiciones.
