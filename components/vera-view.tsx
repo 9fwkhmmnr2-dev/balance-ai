@@ -148,6 +148,7 @@ export default function VeraView() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showCorePanel, setShowCorePanel] = useState(false);
   const [isPlus, setIsPlus] = useState(false);
+  const [usage, setUsage] = useState<{ plan: "free" | "plus"; remaining: number; dailyAllowance: number; maxCredits: number; resetAt: string | null } | null>(null);
   const [accountId, setAccountId] = useState("");
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
   const [goldDemoPhase, setGoldDemoPhase] = useState<"idle" | "unstable" | "nucleus-gold" | "focus" | "transform" | "complete" | "dismissed">("idle");
@@ -203,6 +204,25 @@ export default function VeraView() {
   }, [getToken]);
 
   useEffect(() => { void loadHistory(); }, [loadHistory]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const token = await getToken();
+        const response = await fetch("/api/vera/usage", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const payload = await response.json() as { usage?: { plan: "free" | "plus"; remaining: number; dailyAllowance: number; maxCredits: number; resetAt: string | null } };
+        if (active && payload.usage) setUsage(payload.usage);
+      } catch {
+        // La conversación sigue disponible aunque no se pueda cargar el indicador de créditos.
+      }
+    })();
+    return () => { active = false; };
+  }, [getToken]);
 
   useEffect(() => () => { speechRecognitionRef.current?.stop(); }, []);
 
@@ -441,7 +461,8 @@ export default function VeraView() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ messages: nextMessages.slice(isPlus ? -32 : -12).filter((message, index) => index > 0 || message.role === "user").map(({ role, content }) => ({ role, content })), period: selectedPeriod }),
       });
-      const payload = await response.json() as { reply?: string; error?: string; financialSummary?: FinancialSummary };
+      const payload = await response.json() as { reply?: string; error?: string; usage?: { plan: "free" | "plus"; remaining: number; dailyAllowance: number; maxCredits: number; resetAt: string | null }; financialSummary?: FinancialSummary };
+      if (payload.usage) setUsage(payload.usage);
       if (!response.ok || !payload.reply) throw new Error(payload.error || "No pude recibir una respuesta de VERA.");
       const financialSummary = payload.financialSummary && shouldShowFinancialSummary(text, messages) ? payload.financialSummary : undefined;
       const completedMessages = [...nextMessages, { role: "model" as const, content: payload.reply, ...(financialSummary ? { financialSummary } : {}) }];
@@ -765,6 +786,7 @@ export default function VeraView() {
               <button className="vera-new-chat" type="button" onClick={newConversation}>＋</button>
             </div>
           </header>
+          {usage && <div aria-live="polite" style={{ padding: "0 18px 8px", textAlign: "right", fontSize: "11px", color: "#b9a8d7" }}>{usage.remaining} de {usage.maxCredits} mensajes disponibles · {usage.plan === "plus" ? "FINANCE PLUS" : "FREE"}</div>}
           {showCorePanel && <div className="vera-core-panel" id="vera-core-panel" role="status" aria-live="polite">
             <div><strong>{sending ? "VERA está procesando" : "VERA está disponible"}</strong><p>{sending ? "Estoy analizando tu consulta." : "El núcleo acompaña visualmente la actividad de VERA."}</p></div>
             <button type="button" onClick={() => setShowCorePanel(false)}>Cerrar</button>
@@ -823,7 +845,6 @@ export default function VeraView() {
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); setPeriod("monthly"); void sendMessage("Prepará mi cierre mensual inteligente de FINANCE PLUS. Analizá el mes calendario actual y comparalo con el mes anterior equivalente. Incluí ingresos, gastos, balance neto, variaciones absolutas y porcentuales, categorías que más explican los cambios, movimientos relevantes y compromisos próximos si están disponibles. Separá datos registrados de estimaciones, indicá si hay datos incompletos y no inventes importes ni saldos. Terminá con hasta tres acciones concretas y prudentes para el próximo mes, sin modificar mis cuentas.", "monthly"); }}><span className="vera-tool-icon" aria-hidden="true">▣</span>Generar cierre mensual inteligente</button>
                       <button className="vera-tools-action gold" type="button" onClick={() => { setShowTools(false); attachmentRef.current?.click(); }}><span className="vera-tool-icon" aria-hidden="true">▤</span>Elegir imagen o documento</button>
                     </> : <div className="vera-tools-locked">Análisis avanzado, simulaciones y documentos se habilitan con FINANCE PLUS.
-                        {accountId && <button type="button" className="vera-tools-action gold" onClick={() => { void navigator.clipboard?.writeText(accountId); setError("ID de cuenta copiado. Enviámelo para habilitar FINANCE PLUS de prueba solo en Preview."); }}>Copiar ID para habilitar prueba FINANCE PLUS</button>}
                       </div>}
                   </section>
                   <label className="vera-tools-label" htmlFor="vera-compose-period">Período para el análisis</label>
