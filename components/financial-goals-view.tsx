@@ -33,7 +33,7 @@ function money(amount: number, currency: string) {
   catch { return currency + " " + amount.toLocaleString("es-AR"); }
 }
 
-export default function FinancialGoalsView() {
+export default function FinancialGoalsView({ embedded = false }: { embedded?: boolean }) {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isPremium, setIsPremium] = useState(false);
@@ -350,12 +350,12 @@ export default function FinancialGoalsView() {
   }
 
   return (
-    <div className="goals-page">
-      <MobileMenu />
-      <header className="goals-nav">
+    <div className={`goals-page ${embedded ? "goals-embedded" : ""}`}>
+      {!embedded && <MobileMenu />}
+      {!embedded && <header className="goals-nav">
         <a href="/" className="mobile-brand">FINANCE<span>.</span>TRACK</a>
-        <nav><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas">Mis cuentas</a><a href="/objetivos" aria-current="page">Objetivos</a><a href="/vera">VERA</a><a href="/perfil">Perfil</a></nav>
-      </header>
+        <nav><a href="/">Inicio</a><a href="/movimientos">Movimientos</a><a href="/cuentas">Mis cuentas</a><a href="/planificacion" aria-current="page">Planificación</a><a href="/vera">VERA</a><a href="/perfil">Perfil</a></nav>
+      </header>}
       <main className="goals-main">
         <header className="goals-heading">
           <div><p className="goals-eyebrow">PLANIFICACIÓN FINANCIERA</p><h1>Mis objetivos</h1><p>Definí una meta y registrá cada aporte para seguir tu progreso.</p></div>
