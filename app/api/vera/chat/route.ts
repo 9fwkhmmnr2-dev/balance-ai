@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { assertVeraProviderConfigured, getVeraProvider } from "@/lib/vera/provider";
 import { getFinancePlanAccess } from "@/lib/server/gold-access";
 import { checkVeraAiEligibility } from "@/lib/server/vera-ai-eligibility";
+import { analyzeFinance } from "@/lib/finance-algorithm/engine";
+import type { FinanceAlgorithmPreferences, FinanceCommitmentInput, FinanceGoalInput, FinanceProfileInput, FinancePriority, FinanceOperationType } from "@/lib/finance-algorithm/types";
 
 import type { VeraMessage, VeraFinancialContext, VeraMemory } from "@/lib/vera/types";
 
@@ -403,16 +405,18 @@ export async function POST(request: Request) {
       });
     }
 
-    const [{ data: accountContextRows, error: accountContextError }, { data: commitmentRows, error: commitmentError }, { data: transferContextRows, error: transferContextError }, { data: accountMovementRows, error: accountMovementError }] = await Promise.all([
+    const [{ data: accountContextRows, error: accountContextError }, { data: commitmentRows, error: commitmentError }, { data: transferContextRows, error: transferContextError }, { data: accountMovementRows, error: accountMovementError }, { data: preferenceRow, error: preferenceError }] = await Promise.all([
       supabase.from("financial_accounts").select("id, name, type, currency, initial_balance, is_archived").eq("user_id", authData.user.id).order("created_at", { ascending: true }).limit(200),
-      supabase.from("financial_commitments").select("name, category, amount, currency, frequency, due_date").eq("user_id", authData.user.id).eq("is_active", true).order("due_date", { ascending: true }).limit(100),
+      supabase.from("financial_commitments").select("id, name, category, amount, currency, frequency, due_date, amount_type, cost_type, is_active").eq("user_id", authData.user.id).eq("is_active", true).order("due_date", { ascending: true }).limit(100),
       supabase.from("account_transfers").select("from_account_id, to_account_id, amount, currency, created_at").eq("user_id", authData.user.id).order("created_at", { ascending: false }).limit(100),
       supabase.from("movements").select("account_id, type, amount, currency").eq("user_id", authData.user.id).not("account_id", "is", null).limit(10000),
+      supabase.from("finance_algorithm_preferences").select("algorithm_mode, priorities, alert_intensity, operation_types, interests, personalization_enabled, ai_assistance_consent, cross_module_data_consent, adaptive_learning_consent").eq("user_id", authData.user.id).maybeSingle(),
     ]);
     if (accountContextError) throw accountContextError;
     if (commitmentError) throw commitmentError;
     if (transferContextError) throw transferContextError;
     if (accountMovementError) throw accountMovementError;
+    if (preferenceError) throw preferenceError;
 
     const accountNames = new Map((accountContextRows ?? []).map((account) => [account.id, account.name]));
     const accountCurrencies = new Map((accountContextRows ?? []).map((account) => [account.id, account.currency]));
@@ -438,6 +442,56 @@ export async function POST(request: Request) {
       name: item.name, category: item.category, amount: Number(item.amount),
       currency: item.currency, frequency: item.frequency, dueDate: item.due_date,
     }));
+
+    const allowed = <T extends string>(value: unknown, values: readonly T[]): T[] =>
+      Array.isArray(value) ? value.filter((item): item is T => typeof item === "string" && values.includes(item as T)) : [];
+    const algorithmProfile: FinanceProfileInput | null = profile ? {
+      payFrequency: ["monthly", "biweekly", "weekly", "daily", "variable", "none", "not_set"].includes(profile.pay_frequency)
+        ? profile.pay_frequency as FinanceProfileInput["payFrequency"] : "not_set",
+      typicalIncome: profile.typical_income == null ? null : Number(profile.typical_income),
+      currency: profile.currency,
+      protectedReserveAmount: profile.protected_reserve_amount == null ? null : Number(profile.protected_reserve_amount),
+      protectedReserveCurrency: profile.protected_reserve_currency,
+      expenseCategories: Array.isArray(profile.expense_categories) ? profile.expense_categories : [],
+    } : null;
+    const algorithmCommitments: FinanceCommitmentInput[] = (commitmentRows ?? []).flatMap((item) => {
+      if (!["weekly", "monthly", "yearly"].includes(item.frequency) ||
+          !["exact", "approximate"].includes(item.amount_type) ||
+          !["fixed", "variable"].includes(item.cost_type)) return [];
+      return [{
+        id: item.id, name: item.name, amount: Number(item.amount), currency: item.currency,
+        frequency: item.frequency as FinanceCommitmentInput["frequency"],
+        amountType: item.amount_type as FinanceCommitmentInput["amountType"],
+        costType: item.cost_type as FinanceCommitmentInput["costType"],
+        isActive: item.is_active,
+      }];
+    });
+    const algorithmGoals: FinanceGoalInput[] = (goalRows ?? []).flatMap((item) => {
+      if (!["active", "paused", "completed", "archived"].includes(item.status)) return [];
+      return [{
+        id: item.id, title: item.title, targetAmount: Number(item.target_amount), currency: item.currency,
+        targetDate: item.target_date, status: item.status as FinanceGoalInput["status"],
+      }];
+    });
+    const algorithmPreferences: FinanceAlgorithmPreferences | undefined = preferenceRow ? {
+      mode: ["automatic", "on-demand", "follow-up", "deep"].includes(preferenceRow.algorithm_mode)
+        ? preferenceRow.algorithm_mode as FinanceAlgorithmPreferences["mode"] : "on-demand",
+      priorities: allowed<FinancePriority>(preferenceRow.priorities, ["saving", "expense_organization", "debt_management", "cost_reduction", "purchase_planning"]),
+      alertIntensity: ["important_only", "balanced", "detailed"].includes(preferenceRow.alert_intensity)
+        ? preferenceRow.alert_intensity as FinanceAlgorithmPreferences["alertIntensity"] : "balanced",
+      operationTypes: allowed<FinanceOperationType>(preferenceRow.operation_types, ["saving_plan", "expense_review", "debt_review", "purchase_planning", "price_tracking", "goal_follow_up"]),
+      interests: Array.isArray(preferenceRow.interests) ? preferenceRow.interests : [],
+      personalizationEnabled: preferenceRow.personalization_enabled,
+      aiAssistanceConsent: preferenceRow.ai_assistance_consent,
+      crossModuleDataConsent: preferenceRow.cross_module_data_consent,
+      adaptiveLearningConsent: preferenceRow.adaptive_learning_consent,
+    } : undefined;
+    const algorithmAnalysis = analyzeFinance({
+      profile: algorithmProfile,
+      commitments: algorithmCommitments,
+      goals: algorithmGoals,
+      preferences: algorithmPreferences,
+    });
     const transferContext = (transferContextRows ?? []).map((item) => ({
       date: item.created_at.slice(0, 10),
       amount: Number(item.amount),
@@ -475,6 +529,7 @@ export async function POST(request: Request) {
       period: input.period,
       ...currentSummary,
       profile: profileContext,
+      algorithmAnalysis,
       accounts: accountContext,
       commitments: commitmentContext,
       transfers: transferContext,
