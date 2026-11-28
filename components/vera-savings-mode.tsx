@@ -69,6 +69,31 @@ export default function VeraSavingsMode() {
     setUnitPrice("");
   }
 
+  if (loading) {
+    return <div className={styles.page}><main className={styles.main}><p className={styles.loading}>Comprobando FINANCE PLUS…</p></main></div>;
+  }
+
+  if (!isPlus) {
+    return (
+      <div className={styles.page}>
+        <header className={styles.topbar}>
+          <a href="/finance-plus" className={styles.back}>← FINANCE.TRACK</a>
+          <span className={styles.topTag}>FINANCE PLUS</span>
+        </header>
+        <main className={styles.main}>
+          <section className={styles.locked}>
+            <span className={styles.lockIcon}>✦</span>
+            <p className={styles.eyebrow}>HERRAMIENTA EXCLUSIVA</p>
+            <h1>Modo Ahorro y canasta inteligente</h1>
+            <p>El Modo Ahorro, la planificación de compras y el análisis de canastas básicas y familiares están incluidos en FINANCE PLUS.</p>
+            <a href="/finance-plus" className={styles.primaryLink}>Conocer FINANCE PLUS</a>
+          </section>
+          <a href="/vera" className={styles.footerLink}>Volver a conversar con VERA</a>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.topbar}>
