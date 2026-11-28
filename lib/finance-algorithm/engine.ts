@@ -89,8 +89,9 @@ export function analyzeFinance(input: FinanceAlgorithmInput): FinanceAlgorithmAn
   if (profile && !incomeCurrency) missing.push("moneda_de_ingresos");
   if (income.basis === "not_estimable") missing.push("ingresos_mensuales_estimables");
 
-  const validCommitments = input.commitments.filter((item) => item.isActive && isValidAmount(item.amount) && isCurrency(item.currency));
-  const invalidCommitmentCount = input.commitments.length - validCommitments.length;
+  const activeCommitments = input.commitments.filter((item) => item.isActive);
+  const validCommitments = activeCommitments.filter((item) => isValidAmount(item.amount) && isCurrency(item.currency));
+  const invalidCommitmentCount = activeCommitments.length - validCommitments.length;
   if (invalidCommitmentCount > 0) {
     caveats.push("Hay compromisos incompletos o inválidos que no se incluyeron en los cálculos.");
   }
