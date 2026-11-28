@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import styles from "./vera-savings-mode.module.css";
-import { buildSavingsProjections, calculateSavingsProjection } from "@/lib/finance-algorithm/savings";
+import { calculateSavingsProjection } from "@/lib/finance-algorithm/savings";
 
 type SavingsCurrency = "ARS" | "USD" | "EUR" | "BRL";
 type ExchangeRates = { date: string; source: string; rates: Partial<Record<SavingsCurrency, number>> };
