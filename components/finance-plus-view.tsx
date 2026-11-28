@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import styles from "./vera-gold.module.css";
+import styles from "./finance-plus.module.css";
 
 const features = [
   ["Cuentas, movimientos y transferencias", true, true],

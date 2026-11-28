@@ -12,7 +12,7 @@ const field: CSSProperties = { width:"100%", padding:"12px", borderRadius:10, bo
 const labelStyle: React.CSSProperties = { display:"grid", gap:7, color:"#c8c0b1", fontSize:12, marginBottom:14 };
 const button: React.CSSProperties = { border:0, borderRadius:11, padding:"12px 16px", background:"linear-gradient(135deg,#e0c58e,#b28b4e)", color:"#17130d", fontWeight:750, cursor:"pointer" };
 
-export default function VeraGoldWorkspace({ mode, onClose, onSend }: { mode: Mode; onClose:()=>void; onSend:(text:string)=>void }) {
+export default function FinancePlusWorkspace({ mode, onClose, onSend }: { mode: Mode; onClose:()=>void; onSend:(text:string)=>void }) {
   const [actionType,setActionType] = useState<"purchase"|"decision">("purchase");
   const [snapshot,setSnapshot] = useState<Snapshot|null>(null);
   const [loading,setLoading] = useState(true);

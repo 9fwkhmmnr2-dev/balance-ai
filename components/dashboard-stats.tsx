@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import MobileMenu from "./mobile-menu";
-import VeraGoldContextPromo from "./vera-gold-context-promo";
+import FinancePlusContextPromo from "./finance-plus-context-promo";
 import VeraIsotype from "./vera-isotype";
 import FinanceTrackLoader from "./finance-track-loader";
 
@@ -52,7 +52,7 @@ export default function DashboardStats() {
   const [period, setPeriod] = useState<Period>("monthly");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isGold, setIsGold] = useState(false);
+  const [isPlus, setIsGold] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -96,8 +96,8 @@ export default function DashboardStats() {
       try {
         const response = await fetch("/api/vera/entitlement", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
         if (!response.ok) return;
-        const entitlement = await response.json() as { isGold?: boolean };
-        if (active) setIsGold(Boolean(entitlement.isGold));
+        const entitlement = await response.json() as { isPlus?: boolean };
+        if (active) setIsGold(Boolean(entitlement.isPlus));
       } catch { /* La identidad Free es el valor seguro por defecto. */ }
     })();
     return () => { active = false; };
@@ -323,7 +323,7 @@ export default function DashboardStats() {
 
 
 
-      <section className={`vera-insight-card vera-insight-compact vera-membership-card ${isGold ? "is-gold" : "is-free"}`}>
+      <section className={`vera-insight-card vera-insight-compact vera-membership-card ${isPlus ? "is-plus" : "is-free"}`}>
         <VeraIsotype className="vera-card-isotype" />
         <div className="vera-insight-top">
           <div><p className="eyebrow">VERA · LECTURA RÁPIDA</p><h3>{periodMovements.length === 0 ? "Todavía no hay datos para este período." : periodNet > 0 ? "Tu balance está en positivo." : periodNet < 0 ? "Tus gastos superan tus ingresos." : "Tu balance está equilibrado."}</h3></div>
@@ -332,7 +332,7 @@ export default function DashboardStats() {
         <p>{periodMovements.length === 0 ? "Cuando registres ingresos y gastos, voy a poder mostrarte una lectura basada en tus movimientos." : periodNet > 0 ? "En " + periodLabel + " registraste " + money(periodNet, currency) + " más en ingresos que en gastos." : periodNet < 0 ? "La diferencia entre ingresos y gastos " + periodLabel + " es de " + money(Math.abs(periodNet), currency) + "." : "Tus ingresos y gastos registrados " + periodLabel + " tienen el mismo total."}</p>
       </section>
 
-      <section className={`card dashboard-financial-status vera-membership-card ${isGold ? "is-gold" : "is-free"}`}>
+      <section className={`card dashboard-financial-status vera-membership-card ${isPlus ? "is-plus" : "is-free"}`}>
         <VeraIsotype className="vera-card-isotype" />
         <div className="section-heading"><div><p className="eyebrow">VERA · DIAGNÓSTICO INTEGRAL</p><h3>Salud financiera</h3></div><span className="dashboard-status-tag">Últimos 3 meses · {currency}</span></div>
         {healthHasEnoughData ? <>
@@ -405,7 +405,7 @@ export default function DashboardStats() {
       </section>
 
       {((period === "monthly" || period === "yearly") && periodMovements.length >= 6 && categoryData.length >= 2) && (
-        <VeraGoldContextPromo plan={isGold ? "gold" : "free"} />
+        <FinancePlusContextPromo plan={isPlus ? "plus" : "free"} />
       )}
 
       <p className="dashboard-disclaimer">Los importes se muestran por moneda y se basan únicamente en tus movimientos registrados. Las transferencias entre tus cuentas no se cuentan como ingresos ni gastos.</p>

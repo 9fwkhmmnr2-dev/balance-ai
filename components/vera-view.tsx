@@ -3,7 +3,7 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "../lib/supabase";
-import VeraGoldWorkspace from "./vera-gold-workspace";
+import FinancePlusWorkspace from "./finance-plus-workspace";
 import VeraIsotype from "./vera-isotype";
 const VeraCore3D = dynamic(() => import("./vera-core-3d"), {
   ssr: false,
@@ -853,7 +853,7 @@ export default function VeraView() {
           </div>
         </section>
       </section>
-      {plusWorkspaceMode && <VeraGoldWorkspace mode={plusWorkspaceMode} onClose={() => setPlusWorkspaceMode(null)} onSend={(text) => { setPlusWorkspaceMode(null); void sendMessage(text); }} />}
+      {plusWorkspaceMode && <FinancePlusWorkspace mode={plusWorkspaceMode} onClose={() => setPlusWorkspaceMode(null)} onSend={(text) => { setPlusWorkspaceMode(null); void sendMessage(text); }} />}
     </div>
   );
 }
