@@ -7,6 +7,8 @@ import type {
   FinanceCommitmentInput,
   FinanceGoalInput,
   FinanceProfileInput,
+  FinancePriority,
+  FinanceOperationType,
 } from "@/lib/finance-algorithm/types";
 
 export const runtime = "nodejs";
@@ -120,12 +122,10 @@ export async function GET(request: Request) {
       preferences = {
         mode: isOneOf(preferenceRow.algorithm_mode, ["automatic", "on-demand", "follow-up", "deep"] as const)
           ? preferenceRow.algorithm_mode : "on-demand",
-        priorities: stringArray(preferenceRow.priorities).filter((item): item is FinanceAlgorithmPreferences["priorities"] extends (infer T)[] | undefined ? T : never =>
-          isOneOf(item, allowedPriorities)),
+        priorities: stringArray(preferenceRow.priorities).filter((item): item is FinancePriority => isOneOf(item, allowedPriorities)),
         alertIntensity: isOneOf(preferenceRow.alert_intensity, ["important_only", "balanced", "detailed"] as const)
           ? preferenceRow.alert_intensity : "balanced",
-        operationTypes: stringArray(preferenceRow.operation_types).filter((item): item is FinanceAlgorithmPreferences["operationTypes"] extends (infer T)[] | undefined ? T : never =>
-          isOneOf(item, allowedOperationTypes)),
+        operationTypes: stringArray(preferenceRow.operation_types).filter((item): item is FinanceOperationType => isOneOf(item, allowedOperationTypes)),
         interests: stringArray(preferenceRow.interests),
         personalizationEnabled: preferenceRow.personalization_enabled,
         aiAssistanceConsent: preferenceRow.ai_assistance_consent,
