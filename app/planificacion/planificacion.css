@@ -11,3 +11,13 @@
 .planning-future-note{margin:4px 0 0;padding:14px 16px;border:1px solid var(--border,#E3DFD5);border-radius:10px;background:var(--white,#FFFFFF);font-size:11px;line-height:1.6;color:var(--gray,#61594A)}
 @media(max-width:700px){.planning-nav{display:none}.planning-main{padding:25px 16px 48px}.planning-heading h1{font-size:29px}.planning-tabs{gap:6px;padding:5px}.planning-tabs button{padding:11px 10px;min-height:64px;font-size:12px}.planning-tabs button span{font-size:9px}.planning-panel .goals-main,.planning-panel .operations-main{padding:0 0 25px}}
 @media(prefers-reduced-motion:reduce){.planning-tabs button{transition:none}}
+
+
+/* FINANCETRACK · Dark planning tabs and champagne accent */
+.planning-brand span,.planning-nav nav a[aria-current=page],.planning-eyebrow{color:#C8A96B}
+.planning-tabs{background:#17191D;border-color:#343941}
+.planning-tabs button{color:#B9C0C9}
+.planning-tabs button span{color:#9299A4}
+.planning-tabs button.active{background:#292D33;border-color:#454B55;color:#F4F5F6;box-shadow:none}
+.planning-tabs button.active span{color:#D8C49A}
+.planning-future-note{background:#202329;border-color:#343941;color:#B9C0C9}
