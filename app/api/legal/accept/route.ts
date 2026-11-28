@@ -66,12 +66,15 @@ export async function POST(request: Request) {
 
     const acceptedAt = new Date().toISOString();
     const acceptanceValues = {
-      ...(verifiesAge ? { age_eligible: true, minimum_age_years: 18 } : {}),
+      ...(verifiesAge ? {
+        age_eligible: true,
+        minimum_age_years: 18,
+        vera_terms_version: VERA_TERMS_VERSION,
+        vera_privacy_version: VERA_PRIVACY_VERSION,
+        vera_accepted_at: acceptedAt,
+      } : {}),
       terms_version: TERMS_VERSION,
       privacy_version: PRIVACY_VERSION,
-      vera_terms_version: VERA_TERMS_VERSION,
-      vera_privacy_version: VERA_PRIVACY_VERSION,
-      vera_accepted_at: acceptedAt,
       ai_data_consent: body.aiDataConsent,
       ai_consent_version: body.aiDataConsent ? AI_CONSENT_VERSION : null,
       accepted_at: acceptedAt,
