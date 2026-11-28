@@ -30,9 +30,9 @@ export default function AuthGuard({ children }: { children: ReactNode }) {
         .maybeSingle();
       if (!active) return;
       if (error || !acceptance || acceptance.terms_version !== TERMS_VERSION || acceptance.privacy_version !== PRIVACY_VERSION) {
-        // Keep Profile reachable so the user can renew an outdated acceptance.
-        if (pathname !== "/perfil") {
-          router.replace("/perfil");
+        // Route users to the dedicated acceptance screen; Profile has no legal-renewal form.
+        if (pathname !== "/legal/accept") {
+          router.replace("/legal/accept");
           return;
         }
       }

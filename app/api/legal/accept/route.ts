@@ -85,7 +85,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No pudimos guardar tu aceptación. Intentá nuevamente." }, { status: 503 });
     }
     if (!updated) {
-      if (!verifiesAge) return NextResponse.json({ error: "No encontramos un registro de edad verificada para esta cuenta. No podemos habilitar VERA sin completar la verificación." }, { status: 409 });
+      // The database default keeps age_eligible=false unless a valid adult check was supplied.
+      // This lets existing accounts renew workspace terms without granting VERA eligibility.
       const { error: insertError } = await supabase.from("registration_acceptances")
         .insert({ user_id: auth.user.id, ...acceptanceValues });
       if (insertError) {
@@ -93,7 +94,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "No pudimos crear el registro de aceptaciones. Intentá nuevamente." }, { status: 503 });
       }
     }
-    return NextResponse.json({ ok: true, ageEligible: true });
+    return NextResponse.json({ ok: true, ageEligible: verifiesAge });
   } catch {
     return NextResponse.json({ error: "No pudimos completar la actualización." }, { status: 400 });
   }

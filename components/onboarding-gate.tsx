@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { parseLocalizedAmount } from "../lib/parse-localized-amount";
 import CurrencyPicker from "./currency-picker";
@@ -133,6 +133,7 @@ export default function OnboardingGate({
   mode?: "onboarding" | "edit";
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [completed, setCompleted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -197,6 +198,11 @@ export default function OnboardingGate({
       }
       if (!active) return;
 
+      if (mode === "onboarding" && !profile?.onboarding_completed && pathname !== "/perfil/editar") {
+        router.replace("/perfil/editar");
+        return;
+      }
+
       if (profile) {
         if (profile.pay_frequency && profile.pay_frequency !== "not_set") setFrequency(profile.pay_frequency);
         setIncome(profile.typical_income?.toString() ?? "");
@@ -216,7 +222,7 @@ export default function OnboardingGate({
     }
     load();
     return () => { active = false; };
-  }, [mode]);
+  }, [mode, pathname, router]);
 
   useEffect(() => {
     if (step === 1 && !essentialCategories.some((item) => item.value === category)) {
