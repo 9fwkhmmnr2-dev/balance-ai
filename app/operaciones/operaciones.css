@@ -47,3 +47,24 @@
 .operations-filter{color:#B9C0C9}
 .operations-filter select{background:#202329;border-color:#343941;color:#F4F5F6}
 .operation-card-icon svg,.operations-type-icon svg{display:block}
+
+
+/* FINANCETRACK · Champagne accents and dark operation form */
+.operations-primary{background:#C8A96B;color:#17191D}
+.operations-primary:hover{background:#D8C49A}
+.operations-eyebrow,.operations-nav nav a[aria-current=page],.operations-type-icon,.operation-card-icon,.operation-type-label,.operation-actions button{color:#D8C49A}
+.operations-type-card:hover{border-color:#C8A96B}
+.operations-type-icon,.operation-card-icon,.operations-empty>span{background:#302B22;color:#D8C49A}
+.operations-modal{background:#17191D;border-color:#343941;color:#F4F5F6}
+.operations-modal-heading p:not(.operations-eyebrow){color:#A7AEB8}
+.operations-modal-close{color:#B9C0C9}
+.operations-form label{color:#D8DCE2}
+.operations-form label span,.operations-form label small{color:#9299A4}
+.operations-form input,.operations-form select,.operations-form textarea{background:#202329;border-color:#3A4049;color:#F4F5F6;color-scheme:dark}
+.operations-form input::placeholder,.operations-form textarea::placeholder{color:#858D98}
+.operations-form input:focus,.operations-form select:focus,.operations-form textarea:focus{border-color:#C8A96B;box-shadow:0 0 0 3px rgba(200,169,107,.16)}
+.operations-form-disclaimer{background:#24272D;color:#B9C0C9}
+.operations-secondary{background:#24272D;border-color:#414751;color:#D5D9DF}
+.operations-notice{background:#302B22;color:#E5D4AE}
+.operations-form-actions .operations-primary{background:#C8A96B;color:#17191D}
+.operations-form-actions .operations-primary:hover{background:#D8C49A}
