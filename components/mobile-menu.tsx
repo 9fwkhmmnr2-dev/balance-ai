@@ -13,7 +13,7 @@ const navigation: Array<{ label: string; href: string; icon: NavigationIconName 
   { label: "Conversor", href: "/conversor", icon: "exchange" },
   { label: "Mercados", href: "/mercados", icon: "markets" },
   { label: "FINANCE WRAPPED", href: "/wrapped", icon: "activity" },
-  { label: "VERA", href: "/vera", icon: "vera" },
+  { label: "VERA IA", href: "/vera", icon: "vera" },
   { label: "Perfil", href: "/perfil", icon: "user" },
   { label: "Configuración", href: "/configuracion", icon: "settings" }
 ];
