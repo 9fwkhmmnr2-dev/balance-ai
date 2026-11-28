@@ -69,6 +69,21 @@ function createInsight(input: Omit<FinanceAlgorithmInsight, "requiresUserConfirm
   return { ...input, requiresUserConfirmation: true };
 }
 
+function rankInsights(insights: FinanceAlgorithmInsight[], priorities: string[] = []) {
+  const preferred: Record<FinanceAlgorithmInsight["kind"], string[]> = {
+    cashflow_review: ["debt_management", "expense_organization", "cost_reduction"],
+    data_gap: ["expense_organization"],
+    goal_follow_up: ["saving", "purchase_planning"],
+  };
+  return [...insights].sort((a, b) => {
+    const score = (item: FinanceAlgorithmInsight) => {
+      const index = priorities.findIndex((priority) => preferred[item.kind].includes(priority));
+      return index === -1 ? priorities.length + 1 : index;
+    };
+    return score(a) - score(b);
+  });
+}
+
 /**
  * Deterministic first-pass analysis.
  * It does not write data, move money, infer purchase intent, or convert currencies.
@@ -179,6 +194,15 @@ export function analyzeFinance(input: FinanceAlgorithmInput): FinanceAlgorithmAn
 
   if (input.preferences?.personalizationEnabled === false) {
     insights.length = 0;
+  } else {
+    const intensity = input.preferences?.alertIntensity ?? "balanced";
+    const allowed = intensity === "important_only"
+      ? ["high"]
+      : intensity === "balanced"
+        ? ["high", "medium"]
+        : ["high", "medium", "low"];
+    const visible = insights.filter((item) => allowed.includes(item.priority));
+    insights.splice(0, insights.length, ...rankInsights(visible, input.preferences?.priorities));
   }
 
   caveats.push("Esta versión solo considera compromisos registrados; todavía no incorpora el historial completo de movimientos ni todos los gastos cotidianos.");
