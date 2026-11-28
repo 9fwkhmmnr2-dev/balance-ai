@@ -276,7 +276,7 @@ export function OperationsContent({ embedded = false }: { embedded?: boolean }) 
             <span>6 categorías iniciales</span>
           </div>
           <div className="operations-type-grid">
-            {(Object.keys(typeLabels) as OperationType[]).map((type, index) => (
+            {(Object.keys(typeLabels) as OperationType[]).map((type) => (
               <button key={type} type="button" className="operations-type-card" onClick={() => { setForm({ ...emptyForm, type }); setShowForm(true); setNotice(""); }}>
                 <span className="operations-type-icon" aria-hidden="true"><OperationTypeIcon type={type} /></span>
                 <strong>{typeLabels[type]}</strong>
