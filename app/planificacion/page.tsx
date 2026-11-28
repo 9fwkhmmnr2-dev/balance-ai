@@ -6,6 +6,8 @@ import OnboardingGate from "../../components/onboarding-gate";
 import MobileMenu from "../../components/mobile-menu";
 import FinancialGoalsView from "../../components/financial-goals-view";
 import { OperationsContent } from "../../components/operations-view";
+import "../../components/financial-goals.css";
+import "../operaciones/operaciones.css";
 import "./planificacion.css";
 
 type PlanningTab = "goals" | "actions";
