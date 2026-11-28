@@ -1,6 +1,6 @@
 # FINANCE.TRACK — Registro, PERFIL FINANCE y descubrimiento de planes
 
-**Estado:** especificación funcional aprobada a nivel de producto; pendiente de implementación y validación.  
+**Estado:** PERFIL FINANCE y etapa de Preferencias implementados en la rama de trabajo; pendientes de validación integral.  
 **Rama de trabajo:** `feature/finance-plus-unification`  
 **No autoriza despliegues ni cambios en producción.**
 
@@ -24,7 +24,9 @@ El PERFIL FINANCE funciona como un proceso integrado, no como una colección de 
 - **Compromisos:** cuotas, deudas, préstamos, suscripciones y otros compromisos; permitir indicar que no existen.
 - **Reserva protegida:** monto reservado o deseado, con posibilidad de indicar cero o dejarlo para completar luego cuando no sea esencial.
 - **Objetivos y prioridades:** se pueden incorporar como configuración guiada o completar progresivamente, según el diseño final.
-- **Preferencias de FINANCE: ALGORITMO:** autonomía equilibrada, aprendizaje adaptativo y prioridad combinada (beneficio económico, metas, intereses y contexto). Explicar controles de personalización.
+- **Preferencias de FINANCE: ALGORITMO:** modo de análisis, prioridades, tipos de operaciones, intensidad de avisos e intereses. Los intereses personalizan contenido, pero no se interpretan como intención de compra.
+- **Permisos independientes:** personalización, asistencia mediante IA, análisis entre módulos y aprendizaje adaptativo. Los consentimientos opcionales comienzan desactivados y pueden revocarse.
+- **Edición posterior:** la misma etapa Preferencias se encuentra disponible desde Perfil → Editar perfil. Los datos se guardan en `finance_algorithm_preferences`, separados de `financial_profiles`, con RLS por propietario.
 - **VERA:** explicar su disponibilidad separada y requisitos de edad. No mezclar el acceso a finanzas personales con la elegibilidad de VERA.
 - **Privacidad y permisos:** explicar datos usados, finalidades, proveedores y controles. El consentimiento de IA nunca debe venir premarcado ni ser condición para utilizar módulos que no lo necesitan.
 
@@ -35,6 +37,7 @@ El PERFIL FINANCE funciona como un proceso integrado, no como una colección de 
 - No se exige crear movimientos, cuentas bancarias ni conectar servicios externos para completar el perfil.
 - Se permite guardar y continuar después, pero no acceder al Panel hasta completar los requisitos esenciales.
 - Las configuraciones avanzadas pueden completarse posteriormente desde PERFIL.
+- La etapa Preferencias se puede omitir; si se omite, se guardan los valores elegidos por defecto y los consentimientos permanecen desactivados.
 - No usar datos opcionales como si fueran datos confirmados.
 
 ## 3. Mini tutorial inicial
@@ -75,6 +78,7 @@ Contenido propuesto:
 - Evitar presión comercial, mensajes alarmistas o patrones oscuros.
 - Mostrar siempre qué funciones son actuales, cuáles son vistas previas y cuáles están en desarrollo.
 - Permitir modificar preferencias, revisar permisos y consultar nuevamente el tutorial.
+- Los consentimientos de IA, análisis entre módulos y aprendizaje adaptativo son independientes y nunca se premarcan.
 
 ## 6. Criterios de aceptación funcional
 
