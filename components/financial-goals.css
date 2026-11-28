@@ -87,3 +87,14 @@
 
 .goals-embedded .goals-main{padding:0 0 28px}
 @media(max-width:700px){.goals-embedded .goals-main{padding:0 0 25px}}
+
+
+/* FINANCETRACK · Champagne accents for goals */
+.goals-nav .mobile-brand span,.goals-nav nav a[aria-current=page],.goals-eyebrow{color:#C8A96B}
+.goals-primary{background:#C8A96B;color:#17191D}
+.goals-primary:hover:not(:disabled){background:#D8C49A}
+.goals-form input:focus,.goals-form select:focus{border-color:#C8A96B;box-shadow:0 0 0 3px rgba(200,169,107,.16)}
+.goal-progress-track span{background:linear-gradient(90deg,#A88B55,#E0CCA0)}
+.goal-progress-caption strong,.goal-history summary,.goal-actions button,.goal-recurring-list>summary,.goal-recurring-actions button,.goal-pending-actions button{color:#C8A96B}
+.goal-status{background:#3A3327;color:#E0CCA0}
+.goals-notice{color:#E0CCA0}
