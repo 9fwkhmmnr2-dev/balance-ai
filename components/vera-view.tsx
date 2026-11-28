@@ -448,6 +448,10 @@ export default function VeraView() {
       setMessages(completedMessages);
       await saveConversation(completedMessages, conversationId);
     } catch (cause) {
+      // La consulta fallida no queda como turno válido del historial.
+      // Devolvemos el texto al borrador para permitir reintentar sin duplicarlo.
+      setMessages(messages);
+      setDraft(text);
       setError(cause instanceof Error ? cause.message : "No pude conectar con VERA.");
     } finally {
       setSending(false);
