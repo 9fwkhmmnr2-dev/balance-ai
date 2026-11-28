@@ -1,10 +1,5 @@
-"use client";
-
-import AuthGuard from "../../components/auth-guard";
-import OnboardingGate from "../../components/onboarding-gate";
-import "./operaciones.css";
-import { OperationsContent } from "../../components/operations-view";
+import { redirect } from "next/navigation";
 
 export default function OperationsPage() {
-  return <AuthGuard><OnboardingGate><OperationsContent /></OnboardingGate></AuthGuard>;
+  redirect("/planificacion?section=acciones");
 }
