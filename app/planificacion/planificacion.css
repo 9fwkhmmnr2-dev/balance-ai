@@ -1,0 +1,13 @@
+.planning-page{min-height:100vh;background:var(--canvas,#F8F7F5);color:var(--graphite,#0D0D0D)}
+.planning-nav{max-width:1180px;margin:0 auto;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border,#E3DFD5)}
+.planning-brand{font-family:Manrope,sans-serif;font-size:20px;font-weight:800;letter-spacing:-.5px}.planning-brand span{color:var(--cyan,#F9A600)}
+.planning-nav nav{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--gray,#61594A)}.planning-nav nav a[aria-current=page]{color:var(--cyan-dark,#E89B01);font-weight:700}
+.planning-main{max-width:1100px;margin:0 auto;padding:38px 24px 60px}
+.planning-heading{margin-bottom:22px}.planning-eyebrow{font-size:10px;font-weight:800;letter-spacing:1.2px;color:var(--cyan-dark,#E89B01);margin-bottom:8px}.planning-heading h1{font-family:Manrope,sans-serif;font-size:clamp(28px,4vw,36px);letter-spacing:-1.2px;margin-bottom:7px}.planning-heading>p:last-child{font-size:14px;line-height:1.55;color:var(--gray,#61594A)}
+.planning-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:24px;padding:6px;background:#F0EDE7;border:1px solid var(--border,#E3DFD5);border-radius:12px}
+.planning-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-height:60px;padding:12px 15px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--gray,#61594A);text-align:left;font-size:13px;font-weight:800;transition:background .18s,border-color .18s,color .18s}
+.planning-tabs button span{font-size:10px;font-weight:500;color:var(--muted,#8F897E)}.planning-tabs button.active{background:var(--white,#FFFFFF);border-color:var(--border,#E3DFD5);color:var(--graphite,#0D0D0D);box-shadow:0 2px 8px rgba(13,13,13,.04)}.planning-tabs button.active span{color:var(--cyan-dark,#E89B01)}
+.planning-panel{min-width:0}.planning-panel .goals-main,.planning-panel .operations-main{max-width:none;padding:0 0 28px}.planning-panel .goals-nav,.planning-panel .operations-nav,.planning-panel .mobile-menu{display:none}
+.planning-future-note{margin:4px 0 0;padding:14px 16px;border:1px solid var(--border,#E3DFD5);border-radius:10px;background:var(--white,#FFFFFF);font-size:11px;line-height:1.6;color:var(--gray,#61594A)}
+@media(max-width:700px){.planning-nav{display:none}.planning-main{padding:25px 16px 48px}.planning-heading h1{font-size:29px}.planning-tabs{gap:6px;padding:5px}.planning-tabs button{padding:11px 10px;min-height:64px;font-size:12px}.planning-tabs button span{font-size:9px}.planning-panel .goals-main,.planning-panel .operations-main{padding:0 0 25px}}
+@media(prefers-reduced-motion:reduce){.planning-tabs button{transition:none}}
