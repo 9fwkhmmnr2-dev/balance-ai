@@ -10,7 +10,7 @@ Ayudar a gastar menos en compras planificadas comparando productos equivalentes 
 
 ## 2. Funciones
 
-0. **Calculadora básica Free:** el usuario ingresa cuánto puede separar por mes y ve proyecciones aritméticas desde 2, 3, 6 y 12 meses. Debe aclarar que no incluye intereses, inflación, retiros ni garantiza resultados; no recomienda un importe sin evaluar capacidad.
+0. **Acceso Plus:** todo el espacio Modo Ahorro, incluidas calculadora, Operación de Ahorro, listas y presupuestos, es exclusivo de FINANCE PLUS. Free solo puede ver una presentación informativa sin usar las herramientas.
 1. **Operación de Ahorro (Plus):** planes prediseñados y personalizados a partir de un importe y plazo elegidos. FINANCE: ALGORITMO solo puede recomendar aportes después de evaluar ingresos, gastos esenciales, compromisos, reservas y objetivos autorizados. Permitir reducir, pausar o cancelar sin penalizaciones.
 
 
@@ -91,7 +91,7 @@ Una compra más barata no significa que el importe ahorrado haya sido depositado
 
 ## 9. Límites de plan
 
-Modo Ahorro completo es Plus. Free puede ver una presentación o vista previa y conocer cómo funciona, pero no debe aparecer como si tuviera comparaciones en vivo habilitadas. Funciones esenciales de finanzas y seguridad siguen disponibles en Free.
+Todo Modo Ahorro y la canasta básica/familiar son exclusivos de FINANCE PLUS. Free solo puede ver una presentación informativa; no puede usar la calculadora del módulo, listas, presupuestos ni comparaciones. Las funciones esenciales de finanzas y seguridad siguen disponibles en Free.
 
 ## 10. Estado técnico conocido
 
