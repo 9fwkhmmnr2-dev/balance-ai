@@ -116,3 +116,50 @@ Todo Modo Ahorro y la canasta básica/familiar son exclusivos de FINANCE PLUS. F
 - El usuario puede editar/eliminar listas y controlar ubicación.
 - Sin compras, redenciones ni transferencias automáticas.
 - Datos insuficientes producen aviso, no invención.
+
+
+## 13. Beta del comparador inteligente — arquitectura de fuentes
+
+**Objetivo inicial:** permitir buscar un producto y comparar precios publicados por fuentes autorizadas, sin presentar datos incompletos como si fueran una oferta garantizada.
+
+### Fuentes candidatas para la beta
+
+1. **SEPA / Precios Claros:** primera prioridad para productos de consumo masivo. La base pública informa precios minoristas y mayoristas con actualización diaria y licencia CC BY 4.0. Atribuir siempre a SEPA y conservar fecha, comercio y sucursal cuando estén disponibles. La declaración del comercio no constituye verificación independiente del precio en góndola.
+2. **Mercado Libre:** publicaciones de marketplace mediante sus APIs oficiales, sujeto a validación de permisos, límites, atribución y términos de uso vigentes. Mostrar como publicación de marketplace, no como precio de sucursal.
+3. **Tiendanube y feeds directos:** integrar únicamente tiendas que autoricen expresamente el acceso a su catálogo.
+4. **Open Food Facts:** enriquecer identificación de alimentos por código de barras y atributos del producto; no utilizarlo como fuente de precios.
+5. **Aportes de comunidad:** etapa posterior, separados visualmente de datos comerciales y oficiales. Nunca convertir un aporte en precio verificado solo por cantidad de reportes.
+
+### Proveedor SEPA de terceros
+
+Se evaluará el proyecto público `superprecios-claros` como acelerador de la beta. Expone un manifest y búsquedas por EAN con agregaciones regionales e histórico, basados en SEPA. Antes de depender de él en producción se deben revisar disponibilidad, frecuencia real, licencia del código, términos del hosting, continuidad y atribución. Es un intermediario comunitario, no una API oficial del Estado.
+
+### Flujo técnico
+
+`Fuentes autorizadas → conectores → normalización → controles de calidad → índice de búsqueda → comparador → interfaz VERA:AHORRO`
+
+- Registrar por fuente: titular, tipo, licencia/términos, cobertura, límites, cadencia, última sincronización y estado.
+- Preferir coincidencia exacta por EAN/GTIN o SKU. Si no existe, comparar por marca, modelo, contenido y variante; indicar claramente coincidencias aproximadas.
+- Mantener separados precio de lista, precio promocional, requisitos de elegibilidad, stock, envío y costo total.
+- No consultar proveedores externos en cada pulsación de búsqueda. Sincronizar y cachear datos cuando las condiciones de la fuente lo permitan.
+- Para cada observación guardar fuente, fecha declarada, fecha de captura, comercio, sucursal/región, moneda, presentación, condición promocional y estado de disponibilidad.
+- Si un dato está vencido, incompleto o no es comparable, mostrarlo como tal o excluirlo del ranking.
+- La ubicación se ingresará manualmente. No solicitar ni almacenar ubicación precisa del dispositivo para esta función.
+
+### Etiquetas de procedencia
+
+- **Informado por comercio (SEPA)**
+- **Sincronizado con comercio**
+- **Publicado en marketplace**
+- **Aporte de comunidad**
+- **Dato histórico**
+
+No usar una etiqueta genérica “verificado” si no hubo una comprobación independiente adecuada.
+
+### Alcance y límites de la primera beta
+
+- Comenzar por productos de consumo masivo cubiertos por SEPA y ampliar categorías solo cuando haya una fuente autorizada y cobertura suficiente.
+- La cobertura nacional es un objetivo de arquitectura, no una promesa de que cada producto o localidad tendrá resultados.
+- La búsqueda por necesidad será una capa posterior de IA sobre el mismo catálogo estructurado; nunca debe inventar productos ni precios.
+- No persistir archivos SEPA completos de gran volumen en tablas transaccionales de Supabase sin evaluar almacenamiento, particionado, índices y costes.
+- No crear migraciones ni activar conectores hasta validar contratos de datos, límites, licencia y estrategia de almacenamiento.
