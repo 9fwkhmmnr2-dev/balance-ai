@@ -520,7 +520,17 @@ export async function POST(request: Request) {
     }
 
     refundReservedCredit = async () => {
-      const { error } = await supabase.rpc("refund_vera_message_credit");
+      const serviceRoleKey = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
+      if (!serviceRoleKey) {
+        console.error("[VERA_USAGE_REFUND_FAILED]");
+        return;
+      }
+      const adminSupabase = createClient(supabaseUrl, serviceRoleKey, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+      const { error } = await adminSupabase.rpc("refund_vera_message_credit", {
+        p_user_id: authData.user.id,
+      });
       if (error) console.error("[VERA_USAGE_REFUND_FAILED]");
     };
     const result = await provider.generate({
