@@ -1,5 +1,5 @@
 export type FinanceAlgorithmMode = "automatic" | "on-demand" | "follow-up" | "deep";
-export type FinanceAlgorithmEngineId = "analytics" | "predict" | "savings" | "recommend" | "profile" | "decision" | "documents" | "alerts" | "reports" | "learning";
+export type FinanceAlgorithmEngineId = "core" | "analytics" | "predict" | "savings" | "recommend" | "profile" | "decision" | "documents" | "alerts" | "reports" | "learning";
 
 export const FINANCE_ALGORITHM_POLICY = {
   autonomy: "balanced", learning: "adaptive", priority: "combined",
@@ -17,6 +17,7 @@ export const FINANCE_ALGORITHM_MODES: ReadonlyArray<{id: FinanceAlgorithmMode; l
 
 /** Registry only: a listed engine is not necessarily implemented or enabled. */
 export const FINANCE_ALGORITHM_ENGINES: ReadonlyArray<{id: FinanceAlgorithmEngineId; label: string; status: "foundation" | "planned"}> = [
+  { id: "core", label: "FINANCE ALGORITHM CORE", status: "foundation" },
   { id: "analytics", label: "FINANCE ANALYTICS", status: "planned" },
   { id: "predict", label: "FINANCE PREDICT", status: "planned" },
   { id: "savings", label: "FINANCE SAVINGS", status: "foundation" },
