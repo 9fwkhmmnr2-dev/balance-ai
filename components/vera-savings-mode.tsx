@@ -56,14 +56,16 @@ export default function VeraSavingsMode() {
   }, []);
 
   useEffect(() => {
+    if (!isPlus) return;
     let active = true;
+    setRatesLoading(true);
     void fetch("/api/vera/ahorro/cotizaciones", { cache: "no-store" })
       .then(async (response) => { if (!response.ok) throw new Error("Cotizaciones no disponibles"); return await response.json() as ExchangeRates; })
       .then((data) => { if (active) { setExchangeRates(data); setRatesError(""); } })
       .catch(() => { if (active) setRatesError("No hay cotizaciones disponibles ahora. Podés seguir usando la proyección en tu moneda original."); })
       .finally(() => { if (active) setRatesLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [isPlus]);
 
   const monthlyValue = Number(monthlySaving);
   const originalRate = savingCurrency === "ARS" ? 1 : exchangeRates?.rates[savingCurrency];
@@ -143,7 +145,7 @@ export default function VeraSavingsMode() {
               <div><span>{savingCurrency}</span><input type="number" min="0.01" max="100000000" step="0.01" inputMode="decimal" value={monthlySaving} onChange={(event) => setMonthlySaving(event.target.value)} placeholder="Ej. 50" /></div>
             </label>
             <label className={styles.currencySelect}>Moneda del objetivo
-              <select value={savingCurrency} onChange={(event) => setSavingCurrency(event.target.value as SavingsCurrency)}><option value="ARS">ARS · Peso argentino</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="BRL">BRL · Real brasileño</option></select>
+              <select value={savingCurrency} onChange={(event) => { const next = event.target.value as SavingsCurrency; setSavingCurrency(next); if (next === convertedCurrency) setConvertedCurrency(next === "ARS" ? "USD" : "ARS"); }}><option value="ARS">ARS · Peso argentino</option><option value="USD">USD · Dólar estadounidense</option><option value="EUR">EUR · Euro</option><option value="BRL">BRL · Real brasileño</option></select>
             </label>
           </div>
           <div className={styles.displayControls}>
