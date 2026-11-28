@@ -117,7 +117,7 @@ export function analyzeFinance(input: FinanceAlgorithmInput): FinanceAlgorithmAn
       currency: incomeCurrency,
       knownMonthlyCommitments: sameCurrencySummary.knownMonthlyCommitments,
       amountBeforeUnlistedExpenses: beforeUnlistedExpenses,
-      status: beforeUnlistedExpenses < 0 ? "commitments_exceed_reported_income" : "positive_before_unlisted_expenses",
+      status: beforeUnlistedExpenses < 0 ? "commitments_exceed_reported_income" : "nonnegative_before_unlisted_expenses",
     };
 
     if (beforeUnlistedExpenses < 0) {
@@ -179,6 +179,8 @@ export function analyzeFinance(input: FinanceAlgorithmInput): FinanceAlgorithmAn
   if (input.preferences?.personalizationEnabled === false) {
     insights.length = 0;
   }
+
+  caveats.push("Esta versión solo considera compromisos registrados; todavía no incorpora el historial completo de movimientos ni todos los gastos cotidianos.");
 
   const confidence: FinanceConfidence = missing.length > 1 || caveats.length > 1
     ? "limited"
