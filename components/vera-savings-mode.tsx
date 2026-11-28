@@ -110,7 +110,7 @@ export default function VeraSavingsMode() {
         <section className={styles.calculator}>
           <div className={styles.sectionTitle}>
             <div><span className={styles.eyebrow}>01 / CALCULADORA</span><h2>¿Cuánto podrías ahorrar?</h2></div>
-            <span className={styles.freeTag}>Disponible en FREE</span>
+            <span className={styles.plusTag}>FINANCE PLUS</span>
           </div>
           <label className={styles.monthlyInput}>¿Cuánto estarías dispuesto/a a separar por mes?
             <div><span>$</span><input type="number" min="1" max="100000000" step="100" inputMode="decimal" value={monthlySaving} onChange={(event) => setMonthlySaving(event.target.value)} placeholder="Ej. 50000" /></div>
@@ -205,16 +205,16 @@ export default function VeraSavingsMode() {
                 <p className={styles.disclaimer}>Los precios ingresados son referencias tuyas, no cotizaciones actuales ni ofertas verificadas. Moneda: ARS.</p>
               </article>
               <article className={styles.nextCard}>
-                <span className={styles.eyebrow}>05 / HERRAMIENTAS EN DESARROLLO</span>
-                <h2>Encontrá oportunidades</h2>
+                <span className={styles.eyebrow}>05 / VERA:AHORRO · PRÓXIMA INTEGRACIÓN</span>
+                <h2>Comparador inteligente</h2>
                 <ul>
-                  <li>Comparación de comercios y productos equivalentes</li>
-                  <li>Descuentos con vigencia y condiciones verificadas</li>
-                  <li>Alternativas económicas y precio por unidad</li>
-                  <li>Optimización de canastas y compras familiares</li>
-                  <li>Historial de ahorro potencial y ahorro confirmado</li>
+                  <li>Precios de supermercados informados en SEPA, con fecha y comercio de origen</li>
+                  <li>Publicaciones de marketplaces, identificadas como tales</li>
+                  <li>Productos equivalentes, presentación y precio por unidad</li>
+                  <li>Comparación por localidad o código postal ingresado manualmente</li>
+                  <li>Promociones y condiciones, solo cuando la fuente permita verificarlas</li>
                 </ul>
-                <div className={styles.sourceNote}>Estas herramientas se habilitarán cuando existan fuentes autorizadas, datos actualizados y persistencia segura. Esta vista no muestra ofertas en vivo.</div>
+                <div className={styles.sourceNote}>La beta todavía no muestra cotizaciones en vivo. Cada resultado deberá incluir su fuente, fecha de actualización y nivel de confianza. Un precio informado por un comercio no equivale a una verificación independiente en góndola.</div>
               </article>
             </section>
           </>
