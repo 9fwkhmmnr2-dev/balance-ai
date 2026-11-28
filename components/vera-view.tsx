@@ -147,7 +147,6 @@ export default function VeraView() {
   const [showArchived, setShowArchived] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showCorePanel, setShowCorePanel] = useState(false);
-  const [showGoldPanel, setShowGoldPanel] = useState(false);
   const [isPlus, setIsPlus] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [showGoldWelcome, setShowGoldWelcome] = useState(false);
@@ -750,21 +749,6 @@ export default function VeraView() {
       <section className={`vera-shell${sending ? " is-thinking" : ""}${isPlus || ["transform", "complete", "dismissed"].includes(goldDemoPhase) ? " is-gold" : ""}`} aria-label="Asistente financiera VERA">
 
         <section className="vera-chat" aria-label="Conversación con VERA">
-          <div className="vera-gold-entry">
-            {isPlus ? <span className="vera-gold-status" aria-label="Plan FINANCE PLUS activo">FINANCE PLUS</span> : <button className="vera-gold-trigger" type="button" aria-expanded={showGoldPanel} aria-controls="vera-gold-panel" onClick={() => setShowGoldPanel((current) => !current)}>✦ Mejorar a FINANCE PLUS</button>}
-          </div>
-          {showGoldPanel && <section className="vera-gold-panel" id="vera-gold-panel" aria-label="Comparación de planes VERA">
-            <div className="vera-gold-panel-head"><div><span className="vera-gold-panel-mark">FINANCETRACK / VERA</span><h2>Elegí cómo querés usar VERA.</h2><p className="vera-gold-panel-intro">VERA sigue siendo útil en Free. FINANCE PLUS suma más capacidad y análisis más profundos.</p></div><button className="vera-gold-close" type="button" onClick={() => setShowGoldPanel(false)} aria-label="Cerrar comparación">×</button></div>
-            <div className="vera-gold-compare-wrap"><table className="vera-gold-compare"><thead><tr><th>Beneficio</th><th>VERA</th><th>FINANCE PLUS</th></tr></thead><tbody>
-              <tr><td>Consultas financieras habituales</td><td>✓</td><td>✓</td></tr>
-              <tr><td>Resumen y análisis de gastos</td><td>✓</td><td>✓</td></tr>
-              <tr><td>Más capacidad para conversar</td><td>—</td><td>✓</td></tr>
-              <tr><td>Comparaciones y análisis profundos</td><td>Básico</td><td>✓</td></tr>
-              <tr><td>Documentos y planificación avanzada</td><td>—</td><td>En preparación</td></tr>
-            </tbody></table></div>
-            <div className="vera-gold-panel-price"><div><strong>FINANCE PLUS desde USD 3,99/mes</strong><span>Plan anual propuesto: USD 39,99</span></div><a className="vera-gold-buy" href="/finance-plus">Ver precio y medios de pago <span aria-hidden="true">→</span></a></div>
-            <p className="vera-gold-panel-note">Precios orientativos. La compra se habilitará cuando el cobro esté integrado y verificado.</p>
-          </section>}
           <header className={`vera-chat-head${messages.length === 0 ? " is-welcome" : ""}`}>
             <div className="vera-brand">
               <button className="vera-core-button" type="button" aria-label="Ver estado de VERA" aria-controls="vera-core-panel" aria-expanded={showCorePanel} onClick={() => setShowCorePanel((current) => !current)}>
