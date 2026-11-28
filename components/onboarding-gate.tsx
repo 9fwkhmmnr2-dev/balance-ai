@@ -27,7 +27,8 @@ const steps = [
   { title: "Gastos esenciales", description: "Registrá los gastos necesarios de tu vida cotidiana." },
   { title: "Otros compromisos", description: "Sumá cuotas, deudas, suscripciones y obligaciones." },
   { title: "Reserva protegida", description: "Definí cuánto querés mantener reservado." },
-  { title: "Revisión", description: "Revisá tu información antes de terminar." }
+  { title: "Revisión", description: "Revisá tu información antes de terminar." },
+  { title: "Preferencias", description: "Personalizá cómo VERA organiza sus análisis y recomendaciones." }
 ];
 
 const essentialCategories = [
@@ -45,6 +46,36 @@ const otherCategories = [
   { value: "debt", label: "Deudas y préstamos" },
   { value: "subscription", label: "Suscripciones" },
   { value: "other_commitment", label: "Otros compromisos" }
+];
+
+const priorityOptions = [
+  { value: "saving", label: "Ahorrar y alcanzar objetivos" },
+  { value: "expense_organization", label: "Organizar mis gastos" },
+  { value: "debt_management", label: "Administrar cuotas y deudas" },
+  { value: "cost_reduction", label: "Detectar oportunidades para reducir costos" },
+  { value: "purchase_planning", label: "Planificar compras importantes" }
+];
+
+const operationOptions = [
+  { value: "saving_plan", label: "Planes de ahorro" },
+  { value: "expense_review", label: "Revisión de gastos" },
+  { value: "debt_review", label: "Seguimiento de cuotas y deudas" },
+  { value: "purchase_planning", label: "Planificación de compras" },
+  { value: "price_tracking", label: "Seguimiento de precios" },
+  { value: "goal_follow_up", label: "Seguimiento de objetivos" }
+];
+
+const interestOptions = [
+  { value: "home_furniture", label: "Hogar y muebles" },
+  { value: "technology", label: "Tecnología" },
+  { value: "gaming", label: "Videojuegos" },
+  { value: "sports", label: "Deportes" },
+  { value: "travel", label: "Viajes" },
+  { value: "music", label: "Música" },
+  { value: "education", label: "Educación" },
+  { value: "food", label: "Alimentación y cocina" },
+  { value: "fashion", label: "Indumentaria" },
+  { value: "other", label: "Otros intereses" }
 ];
 
 const fieldStyle: React.CSSProperties = {
@@ -162,6 +193,15 @@ export default function OnboardingGate({
   const [isShared, setIsShared] = useState(false);
   const [reserveAmount, setReserveAmount] = useState("");
   const [reserveCurrency, setReserveCurrency] = useState("ARS");
+  const [algorithmMode, setAlgorithmMode] = useState<"automatic" | "on-demand" | "follow-up" | "deep">("on-demand");
+  const [priorities, setPriorities] = useState<string[]>(["saving", "expense_organization"]);
+  const [alertIntensity, setAlertIntensity] = useState<"important_only" | "balanced" | "detailed">("balanced");
+  const [operationTypes, setOperationTypes] = useState<string[]>(["saving_plan", "expense_review"]);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [personalizationEnabled, setPersonalizationEnabled] = useState(true);
+  const [aiAssistanceConsent, setAiAssistanceConsent] = useState(false);
+  const [crossModuleDataConsent, setCrossModuleDataConsent] = useState(false);
+  const [adaptiveLearningConsent, setAdaptiveLearningConsent] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -216,6 +256,27 @@ export default function OnboardingGate({
         setReserveAmount(profile.protected_reserve_amount?.toString() ?? "");
         setReserveCurrency(profile.protected_reserve_currency ?? profile.currency ?? "ARS");
         if (profile.onboarding_completed && mode === "onboarding") setCompleted(true);
+      }
+      const { data: savedPreferences, error: preferencesError } = await supabase
+        .from("finance_algorithm_preferences")
+        .select("*")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+
+      if (preferencesError) {
+        if (active) { setError("No pudimos cargar tus preferencias. Verificá la migración de FINANCE: ALGORITHM en Supabase."); setLoading(false); }
+        return;
+      }
+      if (savedPreferences) {
+        setAlgorithmMode(savedPreferences.algorithm_mode ?? "on-demand");
+        setPriorities(savedPreferences.priorities ?? ["saving", "expense_organization"]);
+        setAlertIntensity(savedPreferences.alert_intensity ?? "balanced");
+        setOperationTypes(savedPreferences.operation_types ?? ["saving_plan", "expense_review"]);
+        setInterests(savedPreferences.interests ?? []);
+        setPersonalizationEnabled(savedPreferences.personalization_enabled ?? true);
+        setAiAssistanceConsent(savedPreferences.ai_assistance_consent ?? false);
+        setCrossModuleDataConsent(savedPreferences.cross_module_data_consent ?? false);
+        setAdaptiveLearningConsent(savedPreferences.adaptive_learning_consent ?? false);
       }
       setCommitments((savedCommitments ?? []) as Commitment[]);
       setLoading(false);
@@ -318,6 +379,25 @@ export default function OnboardingGate({
     if (saveError) throw saveError;
   }
 
+  async function savePreferences() {
+    const now = new Date().toISOString();
+    const { error: saveError } = await supabase.from("finance_algorithm_preferences").upsert({
+      user_id: userId,
+      algorithm_mode: algorithmMode,
+      priorities,
+      alert_intensity: alertIntensity,
+      operation_types: operationTypes,
+      interests,
+      personalization_enabled: personalizationEnabled,
+      ai_assistance_consent: aiAssistanceConsent,
+      cross_module_data_consent: crossModuleDataConsent,
+      adaptive_learning_consent: adaptiveLearningConsent,
+      consent_updated_at: now,
+      updated_at: now
+    }, { onConflict: "user_id" });
+    if (saveError) throw saveError;
+  }
+
   async function finish() {
     setSaving(true); setError("");
     try {
@@ -339,6 +419,11 @@ export default function OnboardingGate({
       if (step === 0) await saveIncome();
       if (step === 1 || step === 2) await saveCategories();
       if (step === 3) await saveReserve();
+      if (step === 5) {
+        await savePreferences();
+        await finish();
+        return;
+      }
       if (step < steps.length - 1) setStep((current) => current + 1);
       else await finish();
     } catch (e) {
@@ -369,6 +454,18 @@ export default function OnboardingGate({
         return;
       }
       setSaving(false);
+    }
+    if (step === 5) {
+      setSaving(true);
+      try {
+        await savePreferences();
+        await finish();
+      } catch {
+        setError("No pudimos guardar tus preferencias. Intentá nuevamente.");
+      } finally {
+        setSaving(false);
+      }
+      return;
     }
     if (step === 0) {
       setFrequency("none");
@@ -505,12 +602,83 @@ export default function OnboardingGate({
           </div>
         )}
 
+        {step === 5 && (
+          <div style={{ display: "grid", gap: 18 }}>
+            <section>
+              <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 8 }}>¿Cómo querés que trabaje VERA?</h3>
+              <p style={{ color: "#92909A", fontSize: 12, lineHeight: 1.5, marginBottom: 10 }}>Podés cambiar este modo más adelante desde tu perfil.</p>
+              <div style={{ display: "grid", gap: 8 }}>
+                {[
+                  ["automatic", "Automático", "Analiza los datos autorizados y destaca hallazgos relevantes."],
+                  ["on-demand", "A demanda", "Analiza cuando abrís una herramienta o pedís una evaluación."],
+                  ["follow-up", "Seguimiento", "Da seguimiento a objetivos y operaciones que configures."],
+                  ["deep", "Análisis profundo", "Realiza análisis más amplios cuando lo solicitás."]
+                ].map(([value, label, description]) => (
+                  <label key={value} className="onboarding-option" style={{ alignItems: "flex-start", padding: 10, border: algorithmMode === value ? "1px solid #8F72C5" : "1px solid #343640", borderRadius: 10 }}>
+                    <input type="radio" name="algorithm-mode" value={value} checked={algorithmMode === value} onChange={() => setAlgorithmMode(value as typeof algorithmMode)} />
+                    <span><strong style={{ display: "block", color: "#F2F0EB" }}>{label}</strong><span style={{ display: "block", color: "#AAA7B0", fontSize: 11, marginTop: 3 }}>{description}</span></span>
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 8 }}>¿Qué querés priorizar?</h3>
+              <div className="onboarding-options">{priorityOptions.map((item) => <label className="onboarding-option" key={item.value}><input type="checkbox" checked={priorities.includes(item.value)} onChange={() => toggle(item.value, priorities, setPriorities)} />{item.label}</label>)}</div>
+            </section>
+
+            <section>
+              <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 8 }}>¿Qué operaciones te interesan?</h3>
+              <div className="onboarding-options">{operationOptions.map((item) => <label className="onboarding-option" key={item.value}><input type="checkbox" checked={operationTypes.includes(item.value)} onChange={() => toggle(item.value, operationTypes, setOperationTypes)} />{item.label}</label>)}</div>
+            </section>
+
+            <section>
+              <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 8 }}>¿Qué temas te interesan?</h3>
+              <p style={{ color: "#92909A", fontSize: 11, lineHeight: 1.5, marginBottom: 9 }}>Estos intereses solo ayudan a adaptar el contenido. No significan que quieras comprar algo.</p>
+              <div className="onboarding-options">{interestOptions.map((item) => <label className="onboarding-option" key={item.value}><input type="checkbox" checked={interests.includes(item.value)} onChange={() => toggle(item.value, interests, setInterests)} />{item.label}</label>)}</div>
+            </section>
+
+            <section>
+              <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 8 }}>¿Con qué frecuencia querés recibir avisos?</h3>
+              <select style={fieldStyle} value={alertIntensity} onChange={(event) => setAlertIntensity(event.target.value as typeof alertIntensity)}>
+                <option value="important_only">Solo avisos importantes</option>
+                <option value="balanced">Equilibrado</option>
+                <option value="detailed">Más detalles y seguimiento</option>
+              </select>
+            </section>
+
+            <section style={{ borderTop: "1px solid #343640", paddingTop: 16 }}>
+              <h3 style={{ color: "#F2F0EB", fontSize: 15, marginBottom: 8 }}>Privacidad y permisos</h3>
+              <p style={{ color: "#AAA7B0", fontSize: 12, lineHeight: 1.55, marginBottom: 12 }}>Son permisos independientes. Podés mantenerlos desactivados y modificarlos después.</p>
+              <div style={{ display: "grid", gap: 12 }}>
+                <label className="onboarding-option" style={{ alignItems: "flex-start" }}>
+                  <input type="checkbox" checked={personalizationEnabled} onChange={(event) => setPersonalizationEnabled(event.target.checked)} />
+                  <span><strong style={{ display: "block", color: "#F2F0EB" }}>Personalización de VERA</strong><span style={{ color: "#AAA7B0", fontSize: 11 }}>Permite usar las preferencias elegidas para ordenar y adaptar las propuestas.</span></span>
+                </label>
+                <label className="onboarding-option" style={{ alignItems: "flex-start" }}>
+                  <input type="checkbox" checked={aiAssistanceConsent} onChange={(event) => setAiAssistanceConsent(event.target.checked)} />
+                  <span><strong style={{ display: "block", color: "#F2F0EB" }}>Asistencia mediante IA</strong><span style={{ color: "#AAA7B0", fontSize: 11 }}>Autorizás que funciones de IA procesen la información que compartas con ellas para elaborar respuestas. Revisá la política de privacidad y las condiciones del proveedor antes de activarlo.</span></span>
+                </label>
+                <label className="onboarding-option" style={{ alignItems: "flex-start" }}>
+                  <input type="checkbox" checked={crossModuleDataConsent} onChange={(event) => setCrossModuleDataConsent(event.target.checked)} />
+                  <span><strong style={{ display: "block", color: "#F2F0EB" }}>Análisis entre módulos</strong><span style={{ color: "#AAA7B0", fontSize: 11 }}>Autorizás relacionar datos de módulos financieros distintos para análisis más completos.</span></span>
+                </label>
+                <label className="onboarding-option" style={{ alignItems: "flex-start" }}>
+                  <input type="checkbox" checked={adaptiveLearningConsent} onChange={(event) => setAdaptiveLearningConsent(event.target.checked)} />
+                  <span><strong style={{ display: "block", color: "#F2F0EB" }}>Aprendizaje de mis preferencias</strong><span style={{ color: "#AAA7B0", fontSize: 11 }}>Autorizás guardar cómo aceptás, modificás o rechazás propuestas para adaptar futuras recomendaciones.</span></span>
+                </label>
+              </div>
+              <p style={{ color: "#92909A", fontSize: 10, lineHeight: 1.5, marginTop: 12 }}>Estos controles guardan tus elecciones, pero no activan por sí solos integraciones o procesamiento que todavía no estén implementados.</p>
+            </section>
+          </div>
+        )}
+
         {error && <p className="onboarding-error" role="alert">{error}</p>}
         <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
           <button type="button" className="onboarding-skip" disabled={saving || step === 0} onClick={() => { setError(""); setStep((current) => current - 1); }}>Anterior</button>
-          <button type="button" className="onboarding-submit" disabled={saving} onClick={step === 4 ? finish : next}>{saving ? "Guardando..." : step === 4 ? "Finalizar perfil" : "Guardar y continuar"}</button>
+          <button type="button" className="onboarding-submit" disabled={saving} onClick={next}>{saving ? "Guardando..." : step === 5 ? "Guardar preferencias y finalizar" : "Guardar y continuar"}</button>
         </div>
-        {step < 4 && <button type="button" className="onboarding-skip" disabled={saving} onClick={skipStep}>Completar esta etapa más tarde</button>}
+        {step < 5 && <button type="button" className="onboarding-skip" disabled={saving} onClick={skipStep}>Completar esta etapa más tarde</button>}
         {mode === "edit" && <a className="onboarding-skip" href="/perfil">Volver al perfil</a>}
         <p className="onboarding-privacy">Tus datos son privados, podés modificarlos y eliminar compromisos cuando quieras.</p>
       </section>
