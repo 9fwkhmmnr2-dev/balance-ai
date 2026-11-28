@@ -2,7 +2,6 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import MobileMenu from "./mobile-menu";
-import "../app/operaciones/operaciones.css";
 
 type OperationType =
   | "saving_plan"
